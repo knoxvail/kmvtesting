@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triad Senior Living | Design Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Inter",system-ui,sans-serif;background:#FCFCFB;color:#000;line-height:1.6;padding:clamp(32px,8vw,110px)}
+h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.8rem,3.6vw,2.8rem);letter-spacing:-0.015em;margin-bottom:8px}
+.sub{font-size:14px;color:#000;margin-bottom:56px}
+ul{list-style:none;max-width:760px}
+li{border-top:1px solid #E4E4E2}
+li:last-child{border-bottom:1px solid #E4E4E2}
+a{display:grid;grid-template-columns:60px 1fr auto;gap:20px;align-items:baseline;padding:28px 0;color:inherit;text-decoration:none;transition:padding-left .3s ease}
+a:hover{padding-left:14px}
+a:hover .name{color:#41607F}
+.n{font-family:"Source Serif 4",Georgia,serif;font-size:14px;color:#939498}
+.name{font-family:"Source Serif 4",Georgia,serif;font-size:clamp(1.2rem,2.2vw,1.7rem);font-weight:500;transition:color .2s ease}
+.desc{font-size:13px;text-align:right}
+@media (max-width:600px){a{grid-template-columns:40px 1fr}.desc{display:none}}
+</style>
+</head>
+<body>
+<h1>Triad Senior Living</h1>
+<p class="sub">Three design options. Each has a homepage and a contact page.</p>
+<ul>
+  <li><a href="v1-minimal/index.html"><span class="n">01</span><span class="name">Minimal</span><span class="desc">Quietest. No JavaScript, pure type and space.</span></a></li>
+  <li><a href="v2-editorial/index.html"><span class="n">02</span><span class="name">Editorial</span><span class="desc">Numbered sections, scroll reveals, sticky nav.</span></a></li>
+  <li><a href="http://localhost:4183"><span class="n">03</span><span class="name">Signature</span><span class="desc">Chosen version. Moved to Triad LLC\triadsl.com, served on port 4183.</span></a></li>
+</ul>
+</body>
+</html>
