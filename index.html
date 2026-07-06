@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>kmvtesting</title>
+  <style>
+    :root {
+      --bg: #FAFAFA;
+      --text: #09090B;
+      --muted: #52525B;
+      --border: #E4E4E7;
+      --accent: #2563EB;
+      --card-bg: #FFFFFF;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 4rem 1.25rem 2rem;
+      flex: 1;
+    }
+
+    .wordmark {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .wordmark .dot { color: var(--accent); }
+
+    .tagline {
+      color: var(--muted);
+      margin-top: 0.5rem;
+      margin-bottom: 3rem;
+    }
+
+    h2 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .experiments {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .experiments a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      min-height: 44px;
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 200ms ease, box-shadow 200ms ease;
+    }
+
+    .experiments a:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+    }
+
+    .experiments a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .experiments .name { font-weight: 600; }
+
+    .experiments .desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      flex: 1;
+    }
+
+    .experiments svg {
+      flex-shrink: 0;
+      color: var(--muted);
+      transition: color 200ms ease, transform 200ms ease;
+    }
+
+    .experiments a:hover svg {
+      color: var(--accent);
+      transform: translateX(3px);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1.25rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="wordmark">kmvtesting<span class="dot">.</span></h1>
+    <p class="tagline">A place to put things and look at them. Nothing here is finished.</p>
+
+    <h2>Experiments</h2>
+    <ul class="experiments">
+      <!-- Add a new experiment: copy one <li>, point href at the folder -->
+      <li>
+        <a href="/hello/">
+          <span class="name">hello</span>
+          <span class="desc">proof the deploy works</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </li>
+    </ul>
+  </main>
+
+  <footer>kmvtesting &middot; deployed on Vercel</footer>
+</body>
+</html>
