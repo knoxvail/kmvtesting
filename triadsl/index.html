@@ -56,7 +56,7 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .logo-block{display:flex;flex-direction:column;align-items:center;transform-origin:0 0;margin-top:-48px}
 .logo{position:relative;width:clamp(160px,17vw,240px);height:clamp(160px,17vw,240px)}
 .logo-word{font-family:"Cinzel",Georgia,serif;font-weight:600;font-size:clamp(2rem,3.4vw,3.3rem);letter-spacing:.16em;margin-top:34px;text-align:center;line-height:1.15}
-.shard{position:absolute;inset:0;width:100%;height:100%;transition:transform 0.55s cubic-bezier(0.3,1.2,0.5,1);will-change:transform}
+.shard{position:absolute;inset:0;width:100%;height:100%;transition:transform .6s cubic-bezier(.22,.61,.36,1);will-change:transform}
 .logo.tapped .shard-blue{transform:translate(-2.1%,3.1%)}
 .logo.tapped .shard-grey{transform:translate(-1.7%,-3.4%)}
 .logo.tapped .shard-black{transform:translate(3.7%,0.3%)}
@@ -131,7 +131,7 @@ footer{background:var(--ink);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
   .reveal.d1{transition-delay:.12s}
   .reveal.d2{transition-delay:.24s}
   .reveal.d3{transition-delay:.36s}
-  header{animation:navfade 1s ease both}
+  header{animation:navfade .9s cubic-bezier(.22,.61,.36,1) both}
   @keyframes navfade{from{opacity:0}to{opacity:1}}
   .map-wrap .pin{opacity:0;transition:opacity .5s ease}
   .map-wrap.in .pin{opacity:1}
@@ -315,13 +315,11 @@ footer{background:var(--ink);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
     var range = window.innerHeight * 0.55;
     var p = Math.max(0, Math.min(window.scrollY / range, 1));
     if (p === 0){
-      block.style.transform = '';
       block.style.opacity = '';
       block.style.visibility = '';
       navBrand.style.opacity = '0';
       return;
     }
-    block.style.transform = 'translateY(' + (-window.innerHeight * 0.28 * p) + 'px)';
     block.style.opacity = Math.max(0, 1 - p / 0.85);
     block.style.visibility = p >= 0.98 ? 'hidden' : 'visible';
     navBrand.style.opacity = p < 0.6 ? '0' : String((p - 0.6) / 0.4);
