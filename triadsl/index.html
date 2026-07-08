@@ -139,11 +139,9 @@ footer{background:var(--ink);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
   .logo-block.reveal.in .shard-black{animation:settleBlack 1.6s both}
   .logo-block.reveal.in .shard-blue{animation:settleBlue 1.6s .08s both}
   .logo-block.reveal.in .shard-grey{animation:settleGrey 1.6s .16s both}
-  .logo-block.reveal.in .logo{animation:logoClick 1.85s linear both}
-  @keyframes settleBlue{0%{transform:translate(-13%,19%);animation-timing-function:cubic-bezier(.22,.61,.36,1)}78%{transform:translate(-.8%,1.1%);animation-timing-function:cubic-bezier(.65,0,.55,1)}90%{transform:translate(.4%,-.6%);animation-timing-function:cubic-bezier(.2,.8,.3,1)}100%{transform:translate(0,0)}}
-  @keyframes settleGrey{0%{transform:translate(-10%,-20%);animation-timing-function:cubic-bezier(.22,.61,.36,1)}78%{transform:translate(-.6%,-1.2%);animation-timing-function:cubic-bezier(.65,0,.55,1)}90%{transform:translate(.3%,.6%);animation-timing-function:cubic-bezier(.2,.8,.3,1)}100%{transform:translate(0,0)}}
-  @keyframes settleBlack{0%{transform:translate(22%,1.7%);animation-timing-function:cubic-bezier(.22,.61,.36,1)}78%{transform:translate(1.3%,.1%);animation-timing-function:cubic-bezier(.65,0,.55,1)}90%{transform:translate(-.7%,0);animation-timing-function:cubic-bezier(.2,.8,.3,1)}100%{transform:translate(0,0)}}
-  @keyframes logoClick{0%,88%{transform:scale(1)}92%{transform:scale(1.012)}100%{transform:scale(1)}}
+  @keyframes settleBlue{0%{transform:translate(-13%,19%);animation-timing-function:cubic-bezier(.22,.61,.36,1)}78%{transform:translate(-.8%,1.1%);animation-timing-function:cubic-bezier(.33,.6,.3,1)}100%{transform:translate(0,0)}}
+  @keyframes settleGrey{0%{transform:translate(-10%,-20%);animation-timing-function:cubic-bezier(.22,.61,.36,1)}78%{transform:translate(-.6%,-1.2%);animation-timing-function:cubic-bezier(.33,.6,.3,1)}100%{transform:translate(0,0)}}
+  @keyframes settleBlack{0%{transform:translate(22%,1.7%);animation-timing-function:cubic-bezier(.22,.61,.36,1)}78%{transform:translate(1.3%,.1%);animation-timing-function:cubic-bezier(.33,.6,.3,1)}100%{transform:translate(0,0)}}
   header{animation:navfade .9s cubic-bezier(.22,.61,.36,1) both}
   @keyframes navfade{from{opacity:0}to{opacity:1}}
   .map-wrap .pin{opacity:0;transition:opacity .5s ease}
