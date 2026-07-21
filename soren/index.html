@@ -249,16 +249,28 @@
     .panel{ width:100%; }
   }
 
-  /* the mark, drawn in stroke on the right. Pure vector — nothing to decode,
-     so it is always smooth on every machine. */
+  /* the mark: sparks draw the Ø, then it cools to a standing amber logo.
+     A PLAIN video — the tint, the feathered edge and the espresso field it
+     sits on are all baked into the file by ffmpeg, so the browser composites
+     it like any ordinary video. NEVER add mix-blend-mode / mask / filter
+     here: those drag it off the fast path and it hitches on real machines.
+     No z-index/transform on the mount either — centered by negative margins. */
+  .fire-mount{ position:absolute; left:63%; top:50%;
+    width:clamp(456px,48vw,744px); aspect-ratio:1/1;
+    margin-left:calc(clamp(456px,48vw,744px) / -2);
+    margin-top:calc(clamp(456px,48vw,744px) / -2);
+    pointer-events:none; }
+  .fire-mount video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    opacity:0; transition:opacity 300ms ease-out; }
+  .fire-mount.lit video{ opacity:1; }
+  html:not(.anim) .fire-mount, .fire-mount.dead{ display:none; }
+
+  /* vector fallback — reduced motion, or if the film ever fails to play */
   .brand-mark{ position:absolute; left:63%; top:50%; transform:translate(-50%,-50%);
-    width:clamp(228px,25vw,396px); height:auto; z-index:0; pointer-events:none; }
+    width:clamp(228px,25vw,396px); height:auto; z-index:0; pointer-events:none; display:none; }
+  html:not(.anim) .brand-mark, .fire-mount.dead + .brand-mark{ display:block; }
   .brand-mark circle, .brand-mark line{ stroke:var(--gold); }
-  html.anim .brand-mark circle{ stroke-dasharray:176; stroke-dashoffset:176;
-    animation:draw 1.5s var(--expo) forwards; animation-delay:calc(var(--intro) + 0.5s); }
-  html.anim .brand-mark line{ stroke-dasharray:57; stroke-dashoffset:57;
-    animation:draw 0.8s var(--expo) forwards; animation-delay:calc(var(--intro) + 1.55s); }
-  @media (max-width:900px){ .brand-mark{ display:none; } }
+  @media (max-width:900px){ .fire-mount, .brand-mark{ display:none !important; } }
 
   /* scroll cue, under the logo on the right */
   .scroll-cue{ position:absolute; right:var(--pad-x); bottom:clamp(74px,12vh,120px); z-index:4;
@@ -634,6 +646,9 @@
 
 <!-- ============ 00 COVER ============ -->
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
+  <div class="fire-mount" id="fireMount" aria-hidden="true">
+    <video id="fireFilm" muted playsinline preload="auto" data-film="assets/soren-fire.mp4"></video>
+  </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" stroke-width="0.9"/>
     <line x1="16" y1="56" x2="56" y2="16" stroke-width="0.9" stroke-linecap="round"/>
@@ -1001,6 +1016,58 @@
   } else {
     if(heroPanel) heroPanel.classList.add('on');
     if(heroSpec) heroSpec.classList.add('on');
+  }
+
+  /* ---------- fire mark ---------- */
+  /* Plain video, played once, holding its last frame as the standing logo.
+     Two rules earned the hard way: pull the file into memory before playing
+     (Chrome trickle-loads media, so a readiness gate fires late on real
+     networks), and treat a refused play() as normal — Chrome pauses muted
+     video it considers not-visible, so re-poke on visibility, intersection
+     and first input. Only a real decode error falls back to the vector Ø. */
+  var fireMount = document.getElementById('fireMount');
+  var fireFilm = document.getElementById('fireFilm');
+  if(fireMount && fireFilm && animOn){
+    var fireT0 = performance.now();
+    var FIRE_HOLD = skipLoader ? 300 : 1900;   /* ignite as the curtain lifts */
+    var filmSrc = fireFilm.getAttribute('data-film');
+    fetch(filmSrc)
+      .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
+      .then(function(b){ fireFilm.src = URL.createObjectURL(b); })
+      .catch(function(){ fireFilm.src = filmSrc; });
+
+    var fireArmed = false;
+    var fireDead = function(){ fireMount.classList.add('dead'); };
+    var firePoke = function(){
+      if(!fireArmed || fireFilm.ended || !fireFilm.paused) return;
+      var p = fireFilm.play();
+      if(p && p.catch) p.catch(function(){});
+    };
+    var fireArm = function(){
+      var wait = Math.max(0, FIRE_HOLD - (performance.now() - fireT0));
+      setTimeout(function(){ fireArmed = true; firePoke(); }, wait);
+    };
+
+    fireFilm.addEventListener('playing', function(){ fireMount.classList.add('lit'); }, { once:true });
+    fireFilm.addEventListener('error', fireDead);
+    document.addEventListener('visibilitychange', firePoke);
+    ['pointerdown','keydown','wheel','touchstart'].forEach(function(evt){
+      window.addEventListener(evt, firePoke, { passive:true });
+    });
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(entries){
+        if(entries[0] && entries[0].isIntersecting) firePoke();
+      }, { threshold:0.05 }).observe(fireMount);
+    }
+
+    if(fireFilm.error){ fireDead(); }
+    else if(fireFilm.readyState >= 4){ fireArm(); }
+    else{
+      fireFilm.addEventListener('canplaythrough', fireArm, { once:true });
+      setTimeout(function(){ if(!fireArmed) fireArm(); }, 8000);  /* never wait forever */
+    }
+  } else if(fireMount){
+    fireMount.classList.add('dead');
   }
 
 
