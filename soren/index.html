@@ -256,7 +256,7 @@
   /* NOTE: no z-index / opacity / transform on the mount — any of them would
      create a stacking context and isolate the blend, bringing the rectangle
      back. Centered with negative margins instead of translate(-50%,-50%). */
-  .fire-mount{ position:absolute; left:63%; top:47%;
+  .fire-mount{ position:absolute; left:63%; top:50%;
     width:clamp(570px,60vw,930px); aspect-ratio:1/1;
     margin-left:calc(clamp(570px,60vw,930px) / -2);
     margin-top:calc(clamp(570px,60vw,930px) / -2);
@@ -280,7 +280,7 @@
   html:not(.anim) .fire-mount, .fire-mount.dead{ display:none; }
 
   /* vector fallback — shown when motion is reduced or the film can't play */
-  .brand-mark{ position:absolute; left:63%; top:47%; transform:translate(-50%,-50%);
+  .brand-mark{ position:absolute; left:63%; top:50%; transform:translate(-50%,-50%);
     width:clamp(285px,31.5vw,495px); height:auto; z-index:0; pointer-events:none; display:none; }
   html:not(.anim) .brand-mark, .fire-mount.dead + .brand-mark{ display:block; }
   .brand-mark circle, .brand-mark line{ stroke:var(--gold); }
