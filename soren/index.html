@@ -1065,8 +1065,15 @@
       var wait = Math.max(0, FIRE_HOLD - (performance.now() - fireT0));
       setTimeout(function(){ fireArmed = true; firePoke(); }, wait);
     };
-    fireFilm.addEventListener('playing', function(){ fireMount.classList.add('lit'); }, { once:true });
-    fireFilm.addEventListener('error', fireDead);
+    /* while the film plays, the veil holds one frame: an animated backdrop
+       under the blend forces a re-raster of the whole blended region every
+       veil frame on top of every film frame, and the film drops frames */
+    fireFilm.addEventListener('playing', function(){
+      fireMount.classList.add('lit');
+      window.__veilHold = true;
+    });
+    fireFilm.addEventListener('ended', function(){ window.__veilHold = false; });
+    fireFilm.addEventListener('error', function(){ window.__veilHold = false; fireDead(); });
     document.addEventListener('visibilitychange', firePoke);
     ['pointerdown','keydown','wheel','touchstart'].forEach(function(evt){
       window.addEventListener(evt, firePoke, { passive:true });
@@ -1277,6 +1284,7 @@
     function frame(ts){
       if(!running) return;
       requestAnimationFrame(frame);
+      if(window.__veilHold) return;   /* hold the last frame during the burn */
       if(ts - veilLast < VEIL_MIN) return;
       veilLast = ts;
       gl.uniform2f(locRes, cv.width, cv.height);
