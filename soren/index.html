@@ -264,11 +264,12 @@
   /* screen blend: black drops out, so the fire floats on the espresso field
      with no rectangle to hide — no vignette, no mask, no color matching.
      The fade lives on the video itself so no stacking-context box-flash. */
-  /* short fade only: animating opacity over the blend re-renders the whole
-     blend stack every display frame and drops film frames on 120Hz panels.
-     The clip opens near-black and does its own fade-in. */
+  /* plain video path — the screen blend is PRECOMPUTED into the file (fire
+     baked over the hero gradient plate), so the browser composites this like
+     any ordinary video. Never put mix-blend-mode / mask / filter here: they
+     drag the video off the fast path and it hitches on real machines. */
   .fire-mount video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-    mix-blend-mode:screen; opacity:0; transition:opacity 300ms ease-out; }
+    opacity:0; transition:opacity 300ms ease-out; }
   .fire-mount.lit video{ opacity:1; }
   /* the page's grain, doubled over the fire — a STATIC div with a STATIC
      mask (cheap, compositor-cached; the no-mask rule is for the video).
@@ -660,10 +661,6 @@
 
 <!-- ============ 00 COVER ============ -->
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
-  <!-- veil painted BELOW the fire film: a WebGL layer stacked over the
-       blended video forced the compositor to re-raster the sandwich every
-       frame and dropped film frames -->
-  <canvas id="veil" aria-hidden="true"></canvas>
   <div class="fire-mount" id="fireMount" aria-hidden="true">
     <video id="fireFilm" muted playsinline preload="auto" data-film="assets/soren-fire.mp4"></video>
     <div class="fire-grain" aria-hidden="true"></div>
@@ -672,6 +669,9 @@
     <circle cx="36" cy="36" r="28" stroke-width="0.9"/>
     <line x1="16" y1="56" x2="56" y2="16" stroke-width="0.9" stroke-linecap="round"/>
   </svg>
+  <!-- veil above the film: plain translucent canvas over plain video is the
+       cheap, proven layering — its wisps run across the mount uncut -->
+  <canvas id="veil" aria-hidden="true"></canvas>
 
   <div class="topbar">
     <a class="brand" href="#top">
