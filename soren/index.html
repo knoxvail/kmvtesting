@@ -273,14 +273,13 @@
   html:not(.anim) .brand-mark, .fire-mount.dead + .brand-mark{ display:block; }
   .brand-mark circle, .brand-mark line{ stroke:var(--gold); }
 
-  /* phones: the mark stays — smaller, centred, sitting behind the copy
-     (.hero-main is z-index 2, so every line of text reads over it) */
+  /* phones: the mark drops into the copy — headline, then the mark, then
+     the pitch. It sits in the flow (moved into the panel by script), so
+     nothing can overlap at any screen height. */
   @media (max-width:900px){
-    .fire-mount{ left:50%; top:50%;
-      width:min(76vw,300px);
-      margin-left:calc(min(76vw,300px) / -2);
-      margin-top:calc(min(76vw,300px) / -2); }
-    .brand-mark{ left:50%; top:50%; width:min(52vw,200px); }
+    .fire-mount{ position:static; left:auto; top:auto;
+      width:min(64vw,260px); margin:4px auto 20px; }
+    .brand-mark{ left:50%; top:46%; width:min(48vw,190px); }
   }
 
   /* scroll cue, under the logo on the right */
@@ -1061,6 +1060,13 @@
        whose plate matches its own hero gradient, or the box shows. */
     var smallScreen = window.matchMedia && window.matchMedia('(max-width:900px)').matches;
     var filmSrc = (smallScreen && fireFilm.getAttribute('data-film-sm')) || fireFilm.getAttribute('data-film');
+    /* on a phone the mark belongs in the reading order, under the headline */
+    if(smallScreen){
+      var headline = document.querySelector('.panel .display');
+      if(headline && headline.parentNode){
+        headline.parentNode.insertBefore(fireMount, headline.nextSibling);
+      }
+    }
     fetch(filmSrc)
       .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
       .then(function(b){ fireFilm.src = URL.createObjectURL(b); })
