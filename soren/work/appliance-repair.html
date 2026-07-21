@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Appliance Repair Co. — a Soren template</title>
+<meta name="description" content="Template site for an appliance repair company. Built by Soren.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Crect width='72' height='72' fill='%2310273B'/%3E%3Cpath d='M20 40 L36 24 L52 40' stroke='%23F26419' stroke-width='6' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      document.documentElement.classList.add('anim');
+    }
+  })();
+</script>
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --navy:#10273B; --navy-deep:#0B1C2C; --paper:#F5F7F8; --orange:#E4550A; --orange-deep:#C64A09;
+    --steel:#51677A; --line:#D6DEE4;
+    --sans:'Archivo', -apple-system, 'Segoe UI', sans-serif;
+    --expo:cubic-bezier(0.16,1,0.3,1);
+  }
+  html{ scroll-behavior:smooth; }
+  body{ background:var(--paper); color:var(--navy); font-family:var(--sans); line-height:1.55; overflow-x:hidden; }
+  ::selection{ background:var(--orange); color:#fff; }
+  a:focus-visible, button:focus-visible{ outline:3px solid var(--orange); outline-offset:2px; }
+  img{ max-width:100%; display:block; }
+
+  .wrap{ max-width:1140px; margin:0 auto; padding:0 clamp(20px,5vw,56px); }
+
+  header{ background:var(--navy); color:#fff; position:sticky; top:0; z-index:40;
+    box-shadow:0 1px 0 rgba(255,255,255,0.08); }
+  .bar{ display:flex; justify-content:space-between; align-items:center; padding:14px clamp(20px,5vw,56px); }
+  .logo{ font-weight:900; font-size:17px; letter-spacing:0.02em; text-transform:uppercase; }
+  .logo b{ color:var(--orange); }
+  .call{ display:inline-flex; align-items:center; gap:10px; background:var(--orange); color:#fff; border:0;
+    font-family:var(--sans); font-weight:700; font-size:14px; padding:13px 20px; cursor:pointer; min-height:46px;
+    text-decoration:none; transition:background 150ms ease-out, transform 150ms ease-out; }
+  .call:hover{ background:var(--orange-deep); transform:translateY(-1px); }
+  .call svg{ width:15px; height:15px; }
+
+  /* ================= hero ================= */
+  .hero{ background:var(--navy); color:#fff; position:relative; overflow:hidden; }
+  .hero::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:14px;
+    background:repeating-linear-gradient(-45deg, var(--orange) 0 16px, var(--navy-deep) 16px 32px); opacity:0.9; }
+  .hero .grid{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,0.95fr); gap:clamp(28px,5vw,64px);
+    align-items:center; padding:clamp(48px,7vh,92px) 0 clamp(60px,9vh,110px); }
+  @media (max-width:860px){ .hero .grid{ grid-template-columns:1fr; } .hero .photo{ max-width:560px; } }
+  .eyebrow{ color:var(--orange); font-weight:700; font-size:12.5px; letter-spacing:0.24em; text-transform:uppercase; margin-bottom:18px; }
+  .hero h1{ font-weight:900; font-size:clamp(40px,6.4vw,76px); line-height:1.02; letter-spacing:-0.015em; max-width:14ch; }
+  .hero h1 span{ color:var(--orange); }
+  .hero p.lead{ margin-top:20px; font-size:17.5px; color:#C3D0DA; max-width:48ch; }
+  .hero .cta-row{ display:flex; align-items:center; gap:18px; margin-top:30px; flex-wrap:wrap; }
+  .hero .call{ font-size:16px; padding:17px 28px; }
+  .hero .note{ font-size:13.5px; color:#8DA2B3; max-width:24ch; }
+  .ticks{ display:flex; gap:clamp(14px,3vw,36px); flex-wrap:wrap; margin-top:38px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.14); }
+  .ticks div{ font-size:13.5px; font-weight:500; color:#C3D0DA; display:flex; align-items:center; gap:9px; }
+  .ticks svg{ width:15px; height:15px; flex:none; }
+
+  .hero .photo{ position:relative; }
+  .hero .photo .ph{ position:relative; z-index:2; overflow:hidden; aspect-ratio:4/4.4; }
+  .hero .photo .ph img{ width:100%; height:100%; object-fit:cover; }
+  .hero .photo::before{ content:""; position:absolute; inset:18px -18px -18px 18px; border:2px solid var(--orange); z-index:1; }
+  .stamp{
+    position:absolute; z-index:3; right:-14px; top:-20px; width:118px; height:118px; border-radius:50%;
+    background:var(--orange); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-weight:900; text-transform:uppercase; text-align:center; line-height:1.15;
+    box-shadow:0 10px 26px -10px rgba(0,0,0,0.5); rotate:8deg;
+  }
+  .stamp .big{ font-size:17px; letter-spacing:0.02em; }
+  .stamp .sm{ font-size:9.5px; font-weight:700; letter-spacing:0.18em; margin-top:3px; }
+  html.anim .stamp{ opacity:0; transform:scale(1.6); }
+  html.anim .stamp.on{ opacity:1; transform:scale(1); transition:opacity 300ms ease-out, transform 420ms cubic-bezier(0.34,1.56,0.64,1); }
+  @media (max-width:860px){ .stamp{ right:6px; } }
+
+  /* ================= trust numbers ================= */
+  .nums{ background:#fff; border-bottom:1px solid var(--line); }
+  .nums .row{ display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+  @media (max-width:640px){ .nums .row{ grid-template-columns:1fr; } }
+  .num{ padding:clamp(28px,4vh,44px) clamp(16px,3vw,36px); text-align:center; border-left:1px solid var(--line); }
+  .num:first-child{ border-left:0; }
+  @media (max-width:640px){ .num{ border-left:0; border-top:1px solid var(--line); } .num:first-child{ border-top:0; } }
+  .num .val{ font-weight:900; font-size:clamp(34px,4.6vw,52px); letter-spacing:-0.02em; color:var(--navy); font-variant-numeric:tabular-nums; }
+  .num .val i{ font-style:normal; color:var(--orange); }
+  .num .lab{ font-size:12px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--steel); margin-top:6px; }
+
+  /* ================= services ================= */
+  .services{ padding:clamp(52px,8vh,96px) 0; }
+  h2.sec{ font-weight:900; font-size:clamp(30px,4.2vw,46px); letter-spacing:-0.01em; margin-bottom:8px; }
+  .sub{ color:var(--steel); font-size:16px; margin-bottom:38px; max-width:56ch; }
+  .grid6{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:2px; background:var(--line); border:1px solid var(--line); }
+  .cell{ background:#fff; padding:26px 24px; position:relative; overflow:hidden; }
+  .cell::before{ content:""; position:absolute; top:0; left:0; right:100%; height:3px; background:var(--orange); transition:right 220ms ease-out; }
+  .cell:hover::before{ right:0; }
+  .cell svg{ width:26px; height:26px; stroke:var(--orange); margin-bottom:14px; }
+  .cell h3{ font-size:17px; font-weight:700; margin-bottom:6px; }
+  .cell p{ font-size:14px; color:var(--steel); }
+
+  /* ================= steps ================= */
+  .steps{ background:#fff; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:clamp(52px,8vh,96px) 0; }
+  .steps-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:clamp(24px,4vw,48px); margin-top:36px; }
+  .step{ position:relative; padding-top:18px; }
+  .step::before{ content:""; position:absolute; top:0; left:0; width:100%; height:2px; background:var(--line); }
+  .step::after{ content:""; position:absolute; top:0; left:0; width:44px; height:2px; background:var(--orange); }
+  .step .n{ font-weight:900; font-size:14px; color:var(--orange); letter-spacing:0.12em; margin-bottom:10px; }
+  .step h3{ font-size:19px; font-weight:700; margin-bottom:8px; }
+  .step p{ font-size:14.5px; color:var(--steel); }
+
+  /* ================= promise band ================= */
+  .band-photo{ position:relative; color:#fff; overflow:hidden; }
+  .band-photo .bg{ position:absolute; inset:0; }
+  .band-photo .bg img{ width:100%; height:100%; object-fit:cover; }
+  .band-photo .bg::after{ content:""; position:absolute; inset:0; background:linear-gradient(90deg, rgba(11,28,44,0.94) 0%, rgba(11,28,44,0.72) 55%, rgba(11,28,44,0.45) 100%); }
+  .band-photo .inner{ position:relative; z-index:2; padding:clamp(56px,9vh,104px) 0; max-width:600px; }
+  .band-photo blockquote{ font-weight:800; font-size:clamp(24px,3.4vw,38px); line-height:1.18; letter-spacing:-0.01em; }
+  .band-photo blockquote span{ color:var(--orange); }
+  .band-photo .who{ margin-top:16px; font-size:13px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:#8DA2B3; }
+
+  /* ================= cta band ================= */
+  .band{ background:var(--navy); color:#fff; padding:clamp(48px,7vh,84px) 0; position:relative; overflow:hidden; }
+  .band::before{ content:""; position:absolute; top:0; left:0; right:0; height:14px;
+    background:repeating-linear-gradient(-45deg, var(--orange) 0 16px, var(--navy-deep) 16px 32px); opacity:0.9; }
+  .band-inner{ display:flex; justify-content:space-between; align-items:center; gap:24px; flex-wrap:wrap; padding-top:10px; }
+  .band h2{ font-weight:900; font-size:clamp(24px,3.4vw,38px); max-width:22ch; letter-spacing:-0.01em; }
+  .band h2 span{ color:var(--orange); }
+
+  footer{ padding:24px clamp(20px,5vw,56px); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+    font-size:12.5px; color:var(--steel); }
+  footer .credit a{ color:var(--orange); font-weight:700; text-decoration:none; }
+  footer .credit a:hover{ text-decoration:underline; }
+
+  html.anim .reveal{ opacity:0; transform:translateY(16px); transition:opacity 450ms ease-out, transform 450ms ease-out; }
+  html.anim .reveal.on{ opacity:1; transform:none; }
+
+  /* ---------- Soren entry curtain ---------- */
+  .s-enter{ position:fixed; inset:0; z-index:200; background:#10273B;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    transition:transform 700ms var(--expo); }
+  .s-enter.lift{ transform:translateY(-101%); }
+  .s-enter svg{ width:56px; height:56px; }
+  html.anim .s-enter circle{ stroke-dasharray:176; stroke-dashoffset:176; animation:sDraw 0.6s var(--expo) 0.1s forwards; }
+  html.anim .s-enter line{ stroke-dasharray:57; stroke-dashoffset:57; animation:sDraw 0.45s var(--expo) 0.5s forwards; }
+  @keyframes sDraw{ to{ stroke-dashoffset:0; } }
+  .s-enter .cap{ font-family:var(--sans); font-size:10px; font-weight:600; letter-spacing:0.42em; text-transform:uppercase; color:#E4550A; }
+  html.anim .s-enter .cap{ opacity:0; animation:sCap 0.5s ease-out 0.45s forwards; }
+  @keyframes sCap{ to{ opacity:1; } }
+  html:not(.anim) .s-enter{ display:none; }
+
+  /* return to the studio site */
+  .soren-return{ position:fixed; left:18px; bottom:18px; z-index:150;
+    display:inline-flex; align-items:center; gap:9px; min-height:44px; padding:12px 18px;
+    background:var(--navy); border-left:3px solid var(--orange);
+    font-family:var(--sans); font-weight:800; font-size:12px; letter-spacing:0.06em; text-transform:uppercase;
+    color:#fff; text-decoration:none; box-shadow:0 10px 24px -12px rgba(11,28,44,0.6);
+    transition:background 180ms ease-out, transform 180ms ease-out; }
+  .soren-return:hover{ background:var(--orange); transform:translateY(-2px); }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *, *::before, *::after{ animation:none !important; transition:none !important; }
+    .reveal, .stamp{ opacity:1 !important; transform:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="s-enter" id="sorenEnter" aria-hidden="true">
+  <svg viewBox="0 0 72 72" fill="none">
+    <circle cx="36" cy="36" r="28" stroke="#E4550A" stroke-width="1.2"/>
+    <line x1="16" y1="56" x2="56" y2="16" stroke="#E4550A" stroke-width="1.2" stroke-linecap="round"/>
+  </svg>
+  <span class="cap">A Soren Template</span>
+</div>
+
+<a class="soren-return" href="../index.html">← Return to Soren</a>
+
+<header>
+  <div class="bar">
+    <div class="logo">Appliance<b> Repair Co.</b></div>
+    <a class="call" href="tel:+15550142200">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.6 2z"/></svg>
+      (555) 014-2200
+    </a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap grid">
+    <div>
+      <div class="eyebrow reveal">Same-week appliance repair</div>
+      <h1 class="reveal">Broken today. <span>Fixed this week.</span></h1>
+      <p class="lead reveal">Washers, dryers, fridges, ovens. One call, a real arrival window, and a tech who shows up with the common parts already on the truck.</p>
+      <div class="cta-row reveal">
+        <a class="call" href="tel:+15550142200">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.6 2z"/></svg>
+          Call for a window
+        </a>
+        <span class="note">Sample number. Everything here swaps for the real business.</span>
+      </div>
+      <div class="ticks reveal">
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="#E4550A" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Licensed &amp; insured</div>
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="#E4550A" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Up-front flat pricing</div>
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="#E4550A" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> 90-day parts warranty</div>
+      </div>
+    </div>
+    <div class="photo reveal">
+      <span class="stamp" id="stamp" aria-hidden="true"><span class="big">Same</span><span class="big">week</span><span class="sm">or we say so</span></span>
+      <div class="ph"><img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=3840&q=80" alt="A technician in a hard hat working on a wall unit" fetchpriority="high"></div>
+    </div>
+  </div>
+</section>
+
+<section class="nums" aria-label="Track record">
+  <div class="wrap row">
+    <div class="num reveal"><div class="val"><span class="count" data-to="12">0</span><i>+</i></div><div class="lab">Years in the trade</div></div>
+    <div class="num reveal"><div class="val"><span class="count" data-to="4800">0</span><i>+</i></div><div class="lab">Machines fixed</div></div>
+    <div class="num reveal"><div class="val"><span class="count" data-to="90">0</span><i>-day</i></div><div class="lab">Parts warranty</div></div>
+  </div>
+</section>
+
+<section class="services">
+  <div class="wrap">
+    <h2 class="sec reveal">What we fix</h2>
+    <p class="sub reveal">If it hums, spins, heats, or cools and it stopped doing that, it's on this list.</p>
+    <div class="grid6">
+      <div class="cell reveal"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="5"/><circle cx="8" cy="6.5" r="0.8" fill="#E4550A"/></svg><h3>Washers</h3><p>Leaks, no-spin, error codes, mid-cycle stops.</p></div>
+      <div class="cell reveal"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="5"/><path d="M9.5 13a2.5 2.5 0 0 1 5 0"/></svg><h3>Dryers</h3><p>No heat, long cycles, loud drums, burnt smells.</p></div>
+      <div class="cell reveal"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M5 10h14M9 6.5v0M9 14v3"/></svg><h3>Refrigerators</h3><p>Warm boxes, ice buildup, compressors, water lines.</p></div>
+      <div class="cell reveal"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M8 13h8M8 16h5"/></svg><h3>Ovens &amp; ranges</h3><p>Uneven heat, dead igniters, broken elements.</p></div>
+      <div class="cell reveal"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 8h16M9 12h6M9 16h6"/></svg><h3>Dishwashers</h3><p>Standing water, bad pumps, doors that won't latch.</p></div>
+      <div class="cell reveal"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg><h3>Same-week visits</h3><p>Most jobs scheduled within the week, first-visit fix when parts allow.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="steps">
+  <div class="wrap">
+    <h2 class="sec reveal">How it goes</h2>
+    <div class="steps-grid">
+      <div class="step reveal"><div class="n">STEP 1</div><h3>Call and describe it</h3><p>Two minutes on the phone. You get a real arrival window, not a whole-day maybe.</p></div>
+      <div class="step reveal"><div class="n">STEP 2</div><h3>Flat quote at the door</h3><p>Diagnosis first, price before any work starts. No surprise line items.</p></div>
+      <div class="step reveal"><div class="n">STEP 3</div><h3>Fixed, tested, warrantied</h3><p>We run the machine before we leave. Parts carry a 90-day warranty.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band-photo">
+  <div class="bg" aria-hidden="true"><img src="https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=3840&q=80" alt="" loading="lazy"></div>
+  <div class="wrap">
+    <div class="inner reveal">
+      <blockquote>"We run the machine before we leave. <span>Every time.</span>"</blockquote>
+      <div class="who">The rule on every truck</div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap band-inner">
+    <h2 class="reveal">The laundry pile isn't going to <span>wait politely.</span></h2>
+    <a class="call reveal" href="tel:+15550142200">Call now</a>
+  </div>
+</section>
+
+<footer>
+  <span>Appliance Repair Co. · a demonstration template</span>
+  <span class="credit">Template by <a href="../index.html">Soren</a></span>
+</footer>
+
+<script>
+(function(){
+  var animOn = document.documentElement.classList.contains('anim');
+
+  function countUp(el){
+    if(el.dataset.done) return;
+    el.dataset.done = '1';
+    var to = parseInt(el.dataset.to, 10), t0 = null, DUR = 1400;
+    function fmt(n){ return n.toLocaleString('en-US'); }
+    if(!animOn){ el.textContent = fmt(to); return; }
+    function step(ts){
+      if(!t0) t0 = ts;
+      var p = Math.min(1, (ts - t0) / DUR);
+      var e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(Math.round(e * to));
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('on');
+        e.target.querySelectorAll('.count').forEach(countUp);
+        if(e.target.querySelector && e.target.querySelector('.stamp')){
+          setTimeout(function(){ e.target.querySelector('.stamp').classList.add('on'); }, 500);
+        }
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold:0.2 });
+  document.querySelectorAll('.reveal, .nums .row').forEach(function(el){ io.observe(el); });
+
+  if(!animOn){
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+    document.querySelectorAll('.count').forEach(countUp);
+  }
+
+  var en = document.getElementById('sorenEnter');
+  if(window.self !== window.top){
+    if(en){ en.remove(); en = null; }
+    var ret = document.querySelector('.soren-return');
+    if(ret){ ret.remove(); }
+  }
+  if(en){
+    if(animOn){
+      var lift = function(){ en.classList.add('lift'); setTimeout(function(){ en.remove(); }, 800); };
+      setTimeout(lift, 1050);
+      en.addEventListener('click', lift);
+    } else { en.remove(); }
+  }
+})();
+</script>
+</body>
+</html>

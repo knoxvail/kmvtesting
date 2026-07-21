@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Donut Shop — a Soren template</title>
+<meta name="description" content="Template site for a neighborhood donut shop. Built by Soren.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Crect width='72' height='72' fill='%23FFF4E4'/%3E%3Ccircle cx='36' cy='36' r='22' fill='%23F2688C'/%3E%3Ccircle cx='36' cy='36' r='8' fill='%23FFF4E4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      document.documentElement.classList.add('anim');
+    }
+  })();
+</script>
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --cream:#FFF4E4; --cocoa:#46281A; --pink:#E84D77; --pink-deep:#B93A5C; --butter:#FFC94D; --butter-deep:#D9A32B; --blush:#FFE1E9;
+    --round:'Fredoka', -apple-system, sans-serif;
+    --body:'Nunito', -apple-system, sans-serif;
+    --spring:cubic-bezier(0.34,1.56,0.44,1);
+    --expo:cubic-bezier(0.16,1,0.3,1);
+  }
+  html{ scroll-behavior:smooth; }
+  body{ background:var(--cream); color:var(--cocoa); font-family:var(--body); line-height:1.6; overflow-x:hidden; }
+  ::selection{ background:var(--butter); color:var(--cocoa); }
+  a:focus-visible, button:focus-visible{ outline:3px solid var(--pink); outline-offset:3px; border-radius:8px; }
+  img{ max-width:100%; display:block; }
+
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 clamp(20px,5vw,52px); }
+
+  header{ position:sticky; top:0; z-index:40; background:rgba(255,244,228,0.94); backdrop-filter:blur(6px);
+    border-bottom:3px dotted rgba(70,40,26,0.25); }
+  .bar{ display:flex; justify-content:space-between; align-items:center; padding:14px clamp(20px,5vw,52px); }
+  .logo{ font-family:var(--round); font-weight:700; font-size:21px; }
+  .logo span{ color:var(--pink); }
+  .bar nav{ display:flex; gap:4px; }
+  .bar nav a{ font-weight:800; font-size:13.5px; text-decoration:none; color:var(--cocoa); padding:12px 14px;
+    border-radius:999px; min-height:44px; display:inline-flex; align-items:center; transition:background 200ms; }
+  .bar nav a:hover{ background:var(--blush); }
+  @media (max-width:600px){ .bar nav a:nth-child(2){ display:none; } }
+
+  /* ================= hero ================= */
+  .hero{ position:relative; overflow:hidden; padding:clamp(48px,7vh,90px) 0 clamp(120px,16vh,150px); }
+  .hero .grid{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,0.95fr); gap:clamp(28px,5vw,64px); align-items:center; }
+  @media (max-width:820px){ .hero .grid{ grid-template-columns:1fr; text-align:center; }
+    .hero .discwrap{ order:-1; margin:0 auto; } .cta-row{ justify-content:center; } .hero .early{ text-align:center; } }
+  .hero h1{ font-family:var(--round); font-weight:700; font-size:clamp(42px,7vw,80px); line-height:1.04; letter-spacing:-0.01em; text-wrap:balance; }
+  .hero h1 span{ color:var(--pink); }
+  .hero p.lead{ margin:18px 0 0; font-size:18px; max-width:44ch; }
+  @media (max-width:820px){ .hero p.lead{ margin-inline:auto; } }
+  .cta-row{ display:flex; gap:14px; margin-top:30px; flex-wrap:wrap; }
+  .btn{ font-family:var(--round); font-weight:600; font-size:16px; border:0; border-radius:999px; cursor:pointer;
+    padding:16px 30px; min-height:50px; background:var(--pink); color:#fff; text-decoration:none; display:inline-flex; align-items:center;
+    box-shadow:0 6px 0 var(--pink-deep); transition:transform 220ms var(--spring), box-shadow 220ms var(--spring); }
+  .btn:hover{ transform:translateY(-3px); box-shadow:0 9px 0 var(--pink-deep); }
+  .btn:active{ transform:translateY(2px); box-shadow:0 3px 0 var(--pink-deep); }
+  .btn.alt{ background:var(--butter); color:var(--cocoa); box-shadow:0 6px 0 var(--butter-deep); }
+  .btn.alt:hover{ box-shadow:0 9px 0 var(--butter-deep); }
+  .hero .early{ margin-top:22px; font-size:13.5px; font-weight:800; letter-spacing:0.14em; text-transform:uppercase; color:#96654a; }
+
+  /* the record-player donut */
+  .discwrap{ position:relative; width:min(430px,82vw); }
+  .disc{ position:relative; width:100%; aspect-ratio:1; border-radius:50%; overflow:hidden;
+    box-shadow:0 30px 60px -22px rgba(70,40,26,0.5), 0 0 0 10px #fff, 0 0 0 12px rgba(70,40,26,0.12); }
+  .disc img{ width:100%; height:100%; object-fit:cover; }
+  html.anim .disc img{ animation:discSpin 70s linear infinite; }
+  @keyframes discSpin{ to{ transform:rotate(360deg); } }
+  .disc-tag{ position:absolute; right:-6px; bottom:8%; background:var(--cocoa); color:var(--cream);
+    font-family:var(--round); font-weight:600; font-size:13px; letter-spacing:0.06em;
+    border-radius:999px; padding:10px 18px; rotate:-6deg; box-shadow:0 8px 20px -8px rgba(70,40,26,0.5); }
+  .disc-tag b{ color:var(--butter); }
+  html.anim .discwrap{ animation:heroBob 7s ease-in-out infinite; }
+  @keyframes heroBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
+
+  /* sprinkles */
+  .spr{ position:absolute; width:12px; height:4px; border-radius:999px; pointer-events:none; opacity:0.85; }
+  html.anim .spr{ animation:sprFloat 6s ease-in-out infinite; }
+  @keyframes sprFloat{ 0%,100%{ transform:translateY(0) rotate(var(--r,20deg)); } 50%{ transform:translateY(-12px) rotate(calc(var(--r,20deg) + 14deg)); } }
+
+  /* wavy divider */
+  .wave{ display:block; width:100%; height:44px; margin-bottom:-1px; }
+
+  /* ================= ticker ================= */
+  .ticker{ background:var(--cocoa); color:var(--cream); overflow:hidden; white-space:nowrap; padding:12px 0;
+    font-family:var(--round); font-weight:600; font-size:14px; letter-spacing:0.12em; text-transform:uppercase; }
+  .ticker-track{ display:inline-block; }
+  html.anim .ticker-track{ animation:tick 24s linear infinite; }
+  .ticker b{ color:var(--butter); margin:0 12px; }
+  @keyframes tick{ to{ transform:translateX(-50%); } }
+  html:not(.anim) .ticker-track > span + span{ display:none; }
+
+  /* ================= menu ================= */
+  .menu{ padding:clamp(52px,8vh,96px) 0; }
+  .kicker{ font-weight:800; font-size:12.5px; letter-spacing:0.26em; text-transform:uppercase; color:var(--pink); text-align:center; margin-bottom:10px; }
+  h2.sec{ font-family:var(--round); font-weight:700; font-size:clamp(30px,4.6vw,50px); text-align:center; margin-bottom:8px; }
+  .menu .note-top{ text-align:center; font-size:15px; color:#7c5136; margin-bottom:44px; }
+  .favs{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:clamp(20px,3.5vw,36px); margin-bottom:clamp(44px,7vh,64px); }
+  .fav{ background:#fff; border-radius:26px; padding:26px 22px 24px; text-align:center;
+    box-shadow:0 10px 28px -16px rgba(70,40,26,0.4); transition:transform 260ms var(--spring), box-shadow 260ms var(--spring); }
+  .fav:hover{ transform:translateY(-8px) rotate(-0.8deg); box-shadow:0 20px 36px -16px rgba(70,40,26,0.45); }
+  .fav .ph{ width:min(190px,64%); aspect-ratio:1; border-radius:50%; overflow:hidden; margin:0 auto 18px;
+    box-shadow:0 14px 28px -14px rgba(70,40,26,0.5); }
+  .fav .ph img{ width:100%; height:100%; object-fit:cover; transition:transform 500ms var(--expo); }
+  .fav:hover .ph img{ transform:scale(1.07) rotate(4deg); }
+  .fav h3{ font-family:var(--round); font-weight:600; font-size:21px; }
+  .fav .price{ display:inline-block; font-weight:800; color:#fff; background:var(--pink); border-radius:999px;
+    padding:4px 14px; font-size:14px; margin:8px 0 10px; }
+  .fav p{ font-size:14.5px; color:#6b4a37; max-width:28ch; margin:0 auto; }
+  .fav .badge{ display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--pink); margin-bottom:12px; }
+
+  .regulars{ max-width:720px; margin:0 auto; }
+  .regulars h3{ font-family:var(--round); font-weight:600; font-size:22px; text-align:center; margin-bottom:18px; }
+  .reg-row{ display:flex; align-items:baseline; gap:12px; padding:12px 4px; font-size:16px; }
+  .reg-row .nm{ font-weight:800; white-space:nowrap; }
+  .reg-row .dots{ flex:1; border-bottom:3px dotted rgba(70,40,26,0.25); transform:translateY(-4px); }
+  .reg-row .pr{ font-weight:800; color:var(--pink); white-space:nowrap; }
+  .menu .note{ text-align:center; font-size:13.5px; color:#96654a; margin-top:30px; font-style:italic; }
+
+  /* ================= dozen ================= */
+  .dozen{ background:var(--blush); padding:clamp(52px,8vh,92px) 0; position:relative; overflow:hidden; }
+  .dozen .grid{ display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,0.8fr); gap:clamp(26px,5vw,60px); align-items:center; }
+  @media (max-width:760px){ .dozen .grid{ grid-template-columns:1fr; text-align:center; }
+    .dozen .roundph{ margin:0 auto; } .dozen .btn{ margin-inline:auto; } }
+  .dozen h2{ font-family:var(--round); font-weight:700; font-size:clamp(28px,4.2vw,46px); max-width:18ch; margin-bottom:14px; text-wrap:balance; }
+  .dozen h2 span{ color:var(--pink); }
+  .dozen p{ max-width:46ch; margin-bottom:26px; }
+  @media (max-width:760px){ .dozen h2, .dozen p{ margin-inline:auto; } }
+  .roundph{ width:min(340px,78vw); aspect-ratio:1; border-radius:50%; overflow:hidden;
+    box-shadow:0 24px 48px -20px rgba(70,40,26,0.45), 0 0 0 8px #fff; rotate:2deg; }
+  .roundph img{ width:100%; height:100%; object-fit:cover; }
+
+  /* ================= visit ================= */
+  .visit{ padding:clamp(52px,8vh,96px) 0; }
+  .visit-grid{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px); align-items:start; }
+  @media (max-width:700px){ .visit-grid{ grid-template-columns:1fr; } }
+  .visit h2{ font-family:var(--round); font-weight:700; font-size:clamp(28px,4vw,42px); margin-bottom:16px; }
+  .visit p.addr{ font-weight:800; }
+  .visit .muted{ font-size:13.5px; color:#96654a; margin:6px 0 22px; }
+  .hours{ width:100%; border-collapse:collapse; font-size:15.5px; background:#fff; border-radius:18px; overflow:hidden;
+    box-shadow:0 8px 24px -14px rgba(70,40,26,0.35); }
+  .hours td{ padding:13px 18px; border-bottom:2px dotted rgba(70,40,26,0.15); }
+  .hours tr:last-child td{ border-bottom:0; }
+  .hours td:last-child{ text-align:right; font-weight:800; color:var(--pink); }
+
+  footer{ border-top:3px dotted rgba(70,40,26,0.25); padding:24px clamp(20px,5vw,52px); display:flex;
+    justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; font-size:13px; }
+  footer .credit a{ color:var(--pink); font-weight:800; text-decoration:none; }
+  footer .credit a:hover{ text-decoration:underline; }
+
+  html.anim .reveal{ opacity:0; transform:translateY(20px); transition:opacity 500ms ease-out, transform 500ms var(--spring); }
+  html.anim .reveal.on{ opacity:1; transform:none; }
+
+  /* ---------- Soren entry curtain ---------- */
+  .s-enter{ position:fixed; inset:0; z-index:200; background:#46281A;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    transition:transform 700ms var(--expo); }
+  .s-enter.lift{ transform:translateY(-101%); }
+  .s-enter svg{ width:56px; height:56px; }
+  html.anim .s-enter circle{ stroke-dasharray:176; stroke-dashoffset:176; animation:sDraw 0.6s var(--expo) 0.1s forwards; }
+  html.anim .s-enter line{ stroke-dasharray:57; stroke-dashoffset:57; animation:sDraw 0.45s var(--expo) 0.5s forwards; }
+  @keyframes sDraw{ to{ stroke-dashoffset:0; } }
+  .s-enter .cap{ font-family:'Fredoka', sans-serif; font-size:10px; font-weight:600; letter-spacing:0.42em; text-transform:uppercase; color:#FFC94D; }
+  html.anim .s-enter .cap{ opacity:0; animation:sCap 0.5s ease-out 0.45s forwards; }
+  @keyframes sCap{ to{ opacity:1; } }
+  html:not(.anim) .s-enter{ display:none; }
+
+  /* return to the studio site */
+  .soren-return{ position:fixed; left:18px; bottom:18px; z-index:150;
+    display:inline-flex; align-items:center; gap:9px; min-height:44px; padding:12px 20px;
+    background:#fff; border:0; border-radius:999px;
+    font-family:var(--round); font-weight:600; font-size:13px;
+    color:var(--cocoa); text-decoration:none; box-shadow:0 5px 0 rgba(70,40,26,0.35);
+    transition:background 200ms ease-out, color 200ms ease-out, transform 200ms var(--spring), box-shadow 200ms var(--spring); }
+  .soren-return:hover{ background:var(--pink); color:#fff; transform:translateY(-2px); box-shadow:0 7px 0 var(--pink-deep); }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *, *::before, *::after{ animation:none !important; transition:none !important; }
+    .reveal{ opacity:1 !important; transform:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="s-enter" id="sorenEnter" aria-hidden="true">
+  <svg viewBox="0 0 72 72" fill="none">
+    <circle cx="36" cy="36" r="28" stroke="#FFC94D" stroke-width="1.2"/>
+    <line x1="16" y1="56" x2="56" y2="16" stroke="#FFC94D" stroke-width="1.2" stroke-linecap="round"/>
+  </svg>
+  <span class="cap">A Soren Template</span>
+</div>
+
+<a class="soren-return" href="../index.html">← Return to Soren</a>
+
+<header>
+  <div class="bar">
+    <div class="logo">Local <span>Donut</span> Shop</div>
+    <nav>
+      <a href="#menu">Menu</a>
+      <a href="#dozen">By the dozen</a>
+      <a href="#visit">Hours</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <span class="spr" style="left:6%; top:14%; background:var(--pink); --r:24deg;" aria-hidden="true"></span>
+  <span class="spr" style="left:12%; top:70%; background:var(--butter); --r:-18deg; animation-delay:-2s;" aria-hidden="true"></span>
+  <span class="spr" style="left:44%; top:8%; background:var(--butter); --r:40deg; animation-delay:-1s;" aria-hidden="true"></span>
+  <span class="spr" style="left:52%; top:88%; background:var(--pink); --r:-30deg; animation-delay:-3.4s;" aria-hidden="true"></span>
+  <span class="spr" style="left:90%; top:12%; background:var(--pink); --r:14deg; animation-delay:-4.2s;" aria-hidden="true"></span>
+  <span class="spr" style="left:94%; top:64%; background:var(--butter); --r:-24deg; animation-delay:-1.6s;" aria-hidden="true"></span>
+  <span class="spr" style="left:30%; top:92%; background:var(--cocoa); --r:10deg; animation-delay:-2.8s;" aria-hidden="true"></span>
+
+  <div class="wrap grid">
+    <div class="reveal on-load">
+      <h1>Hot donuts, <span>five a.m. sharp.</span></h1>
+      <p class="lead">Fried in small batches all morning, glazed while they're still too hot to hold. When the tray sells out, that flavor's done for the day.</p>
+      <div class="cta-row">
+        <a class="btn" href="#menu">See the menu</a>
+        <a class="btn alt" href="#visit">Get directions</a>
+      </div>
+      <p class="early">Open at 5 · Sold out by noon most Saturdays</p>
+    </div>
+    <div class="discwrap reveal on-load">
+      <div class="disc">
+        <img src="https://images.unsplash.com/photo-1626094309830-abbb0c99da4a?auto=format&fit=crop&w=2400&q=80" alt="A pink-glazed sprinkle donut on a pink background" fetchpriority="high">
+      </div>
+      <span class="disc-tag" aria-hidden="true">Glazed at <b>4:55 am</b></span>
+    </div>
+  </div>
+</section>
+
+<svg class="wave" viewBox="0 0 1440 44" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 24 C 120 44, 240 4, 360 24 C 480 44, 600 4, 720 24 C 840 44, 960 4, 1080 24 C 1200 44, 1320 4, 1440 24 L 1440 44 L 0 44 Z" fill="#46281A"/>
+</svg>
+
+<div class="ticker" aria-hidden="true"><div class="ticker-track">
+  <span>Glazed <b>●</b> Maple bar <b>●</b> Old fashioned <b>●</b> Strawberry sprinkle <b>●</b> Apple fritter <b>●</b> Cinnamon crumb <b>●</b> </span><span>Glazed <b>●</b> Maple bar <b>●</b> Old fashioned <b>●</b> Strawberry sprinkle <b>●</b> Apple fritter <b>●</b> Cinnamon crumb <b>●</b> </span>
+</div></div>
+
+<section class="menu wrap" id="menu">
+  <div class="kicker reveal">The case</div>
+  <h2 class="sec reveal">Made this morning. Gone by noon.</h2>
+  <p class="note-top reveal">Three regulars run the show. The rest of the case changes with the season.</p>
+  <div class="favs">
+    <div class="fav reveal">
+      <span class="badge">Most loved</span>
+      <div class="ph"><img src="https://images.unsplash.com/photo-1514517220017-8ce97a34a7b6?auto=format&fit=crop&w=1600&q=80" alt="A stack of fresh glazed donuts" loading="lazy"></div>
+      <h3>The glazed</h3>
+      <span class="price">$1.75</span>
+      <p>The one that built the shop. Still warm if you time it right.</p>
+    </div>
+    <div class="fav reveal">
+      <span class="badge">The pink one</span>
+      <div class="ph"><img src="https://images.unsplash.com/photo-1533910534207-90f31029a78e?auto=format&fit=crop&w=1600&q=80" alt="Two pink-frosted donuts with sprinkles" loading="lazy"></div>
+      <h3>Strawberry sprinkle</h3>
+      <span class="price">$2.50</span>
+      <p>Kids point at it through the glass. Adults order two.</p>
+    </div>
+    <div class="fav reveal">
+      <span class="badge">For dunkers</span>
+      <div class="ph"><img src="https://images.unsplash.com/photo-1551106652-a5bcf4b29ab6?auto=format&fit=crop&w=1600&q=80" alt="Chocolate-drizzled donuts stacked on a plate" loading="lazy"></div>
+      <h3>Chocolate drizzle</h3>
+      <span class="price">$2.75</span>
+      <p>Fudge stripes over vanilla glaze. Coffee's best friend.</p>
+    </div>
+  </div>
+  <div class="regulars reveal">
+    <h3>And the regulars</h3>
+    <div class="reg-row"><span class="nm">Maple bar</span><span class="dots"></span><span class="pr">$2.50</span></div>
+    <div class="reg-row"><span class="nm">Old fashioned</span><span class="dots"></span><span class="pr">$2.25</span></div>
+    <div class="reg-row"><span class="nm">Apple fritter</span><span class="dots"></span><span class="pr">$3.25</span></div>
+    <div class="reg-row"><span class="nm">Cinnamon crumb</span><span class="dots"></span><span class="pr">$2.25</span></div>
+    <div class="reg-row"><span class="nm">Drip coffee, bottomless-ish</span><span class="dots"></span><span class="pr">$2.00</span></div>
+  </div>
+  <p class="note reveal">Sample menu and prices. Every item here swaps for the real case.</p>
+</section>
+
+<section class="dozen" id="dozen">
+  <div class="wrap grid">
+    <div class="reveal">
+      <h2>Bring a box, <span>be the hero.</span></h2>
+      <p>A dozen for the office, the team, or the Saturday-morning bribe. Call ahead and we'll have it boxed and tied before you park.</p>
+      <a class="btn" href="#visit">Call in a dozen</a>
+    </div>
+    <div class="roundph reveal">
+      <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80" alt="Two coffees being toasted over a table" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section class="visit wrap" id="visit">
+  <div class="visit-grid">
+    <div class="reveal">
+      <h2>Find the pink awning.</h2>
+      <p class="addr">123 Main Street, Your Town</p>
+      <p class="muted">Sample address. Swaps for the real corner.</p>
+      <a class="btn alt" href="#visit">Get directions</a>
+    </div>
+    <div class="reveal">
+      <table class="hours">
+        <tr><td>Mon — Fri</td><td>5 am — 1 pm</td></tr>
+        <tr><td>Saturday</td><td>5 am — noon</td></tr>
+        <tr><td>Sunday</td><td>6 am — noon</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>Local Donut Shop · a demonstration template</span>
+  <span class="credit">Template by <a href="../index.html">Soren</a></span>
+</footer>
+
+<script>
+(function(){
+  var animOn = document.documentElement.classList.contains('anim');
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); } });
+  }, { threshold:0.16 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  if(!animOn){
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+  }
+  document.querySelectorAll('.on-load').forEach(function(el){
+    setTimeout(function(){ el.classList.add('on'); }, animOn ? 1150 : 0);
+  });
+  var en = document.getElementById('sorenEnter');
+  if(window.self !== window.top){
+    if(en){ en.remove(); en = null; }
+    var ret = document.querySelector('.soren-return');
+    if(ret){ ret.remove(); }
+  }
+  if(en){
+    if(animOn){
+      var lift = function(){ en.classList.add('lift'); setTimeout(function(){ en.remove(); }, 800); };
+      setTimeout(lift, 1050);
+      en.addEventListener('click', lift);
+    } else { en.remove(); }
+  }
+})();
+</script>
+</body>
+</html>

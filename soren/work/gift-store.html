@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quirky Gift Store — a Soren template</title>
+<meta name="description" content="Template site for an independent gift shop. Built by Soren.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Crect width='72' height='72' fill='%23F4EFE4'/%3E%3Ccircle cx='36' cy='36' r='24' fill='%23E4572E'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      document.documentElement.classList.add('anim');
+    }
+  })();
+</script>
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --paper:#F4EFE4; --ink:#191713; --poppy:#E4572E; --mustard:#EFB215; --card:#FFFFFF;
+    --serif:'DM Serif Display', Georgia, serif;
+    --grot:'Space Grotesk', -apple-system, sans-serif;
+    --ease:cubic-bezier(0.34,1.4,0.44,1);
+    --expo:cubic-bezier(0.16,1,0.3,1);
+  }
+  html{ scroll-behavior:smooth; }
+  body{ background:var(--paper); color:var(--ink); font-family:var(--grot); line-height:1.6; overflow-x:hidden; }
+  ::selection{ background:var(--mustard); color:var(--ink); }
+  a, button{ color:inherit; }
+  a:focus-visible, button:focus-visible{ outline:3px solid var(--poppy); outline-offset:3px; }
+  img{ max-width:100%; display:block; }
+
+  /* marquee */
+  .ticker{ background:var(--ink); color:var(--paper); overflow:hidden; white-space:nowrap; padding:10px 0;
+    font-size:12px; letter-spacing:0.22em; text-transform:uppercase; }
+  .ticker-track{ display:inline-block; }
+  html.anim .ticker-track{ animation:tick 26s linear infinite; }
+  .ticker b{ color:var(--mustard); font-weight:500; margin:0 14px; }
+  @keyframes tick{ to{ transform:translateX(-50%); } }
+  html:not(.anim) .ticker-track > span + span{ display:none; }
+
+  header.bar{ display:flex; justify-content:space-between; align-items:center; padding:18px clamp(20px,5vw,56px);
+    border-bottom:2px solid var(--ink); position:sticky; top:0; background:var(--paper); z-index:40; }
+  .logo{ font-family:var(--serif); font-size:22px; line-height:1; }
+  .logo i{ font-style:normal; color:var(--poppy); }
+  .bar nav{ display:flex; gap:6px; }
+  .bar nav a{ text-decoration:none; font-size:13px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase;
+    padding:12px 14px; border-radius:999px; transition:background 200ms ease-out; min-height:44px; display:inline-flex; align-items:center; cursor:pointer; }
+  .bar nav a:hover{ background:rgba(228,87,46,0.14); }
+  @media (max-width:640px){ .bar nav a:nth-child(2){ display:none; } }
+
+  .wrap{ max-width:1140px; margin:0 auto; padding:0 clamp(20px,5vw,56px); }
+
+  /* ================= hero ================= */
+  .hero{ position:relative; overflow:hidden; padding:clamp(56px,9vh,110px) 0 clamp(56px,9vh,110px); }
+  .hero .grid{ display:grid; grid-template-columns:minmax(0,1.18fr) minmax(0,0.82fr); gap:clamp(30px,5vw,70px); align-items:center; }
+  @media (max-width:860px){ .hero .grid{ grid-template-columns:1fr; } .hero .stack{ margin:26px auto 0; } }
+  .hero h1{ font-family:var(--serif); font-size:clamp(44px,6.8vw,82px); line-height:1.02; max-width:13ch; }
+  .hero h1 em{ font-style:italic; color:var(--poppy); position:relative; white-space:nowrap; }
+  .hero h1 em .squig{ position:absolute; left:0; right:0; bottom:-0.12em; width:100%; height:0.22em; overflow:visible; }
+  .hero h1 em .squig path{ stroke:var(--mustard); stroke-width:7; fill:none; stroke-linecap:round; }
+  html.anim .squig path{ stroke-dasharray:620; stroke-dashoffset:620; }
+  html.anim .on .squig path{ animation:squig 1s var(--expo) 0.5s forwards; }
+  @keyframes squig{ to{ stroke-dashoffset:0; } }
+  .hero p{ margin-top:24px; font-size:18px; max-width:44ch; }
+  .hero .cta-row{ display:flex; gap:14px; margin-top:32px; flex-wrap:wrap; }
+  .btn{ font-family:var(--grot); font-weight:700; font-size:14px; letter-spacing:0.04em; text-transform:uppercase;
+    border:2px solid var(--ink); background:var(--ink); color:var(--paper); padding:16px 26px; border-radius:999px;
+    cursor:pointer; transition:transform 220ms var(--ease), background 200ms ease-out, color 200ms ease-out, box-shadow 220ms var(--ease);
+    min-height:48px; display:inline-flex; align-items:center; gap:10px; text-decoration:none; }
+  .btn:hover{ transform:translateY(-3px); box-shadow:0 6px 0 rgba(25,23,19,0.25); }
+  .btn.ghost{ background:transparent; color:var(--ink); }
+  .btn.ghost:hover{ background:var(--mustard); }
+
+  /* spinning sticker */
+  .sticker{ position:absolute; top:clamp(10px,3vh,40px); right:clamp(8px,5vw,70px); width:clamp(104px,13vw,150px); z-index:5; pointer-events:none; }
+  html.anim .sticker svg{ animation:spin 40s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @media (max-width:860px){ .sticker{ display:none; } }
+
+  /* polaroid stack */
+  .stack{ position:relative; width:min(440px,88vw); aspect-ratio:1/1.02; }
+  .pol{ position:absolute; background:#fff; border:2px solid var(--ink); padding:12px 12px 40px;
+    box-shadow:6px 8px 0 rgba(25,23,19,0.9); transition:transform 350ms var(--ease), box-shadow 350ms var(--ease); }
+  .pol .ph{ overflow:hidden; }
+  .pol img{ width:100%; height:100%; object-fit:cover; }
+  .pol .cap{ position:absolute; left:14px; bottom:9px; font-size:12.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+  .pol .tape{ position:absolute; top:-13px; left:50%; width:86px; height:26px; transform:translateX(-50%) rotate(-3deg);
+    background:rgba(239,178,21,0.85); border:1px solid rgba(25,23,19,0.25); }
+  .pol-a{ width:62%; left:0; top:0; rotate:-5deg; z-index:3; }
+  .pol-a .ph{ aspect-ratio:1/1; }
+  .pol-b{ width:56%; right:0; top:16%; rotate:4deg; z-index:2; }
+  .pol-b .ph{ aspect-ratio:1/1.1; }
+  .pol-c{ width:52%; left:14%; bottom:0; rotate:-2deg; z-index:4; }
+  .pol-c .ph{ aspect-ratio:1/0.92; }
+  .pol:hover{ transform:translateY(-8px) rotate(0.5deg); box-shadow:9px 13px 0 rgba(25,23,19,0.9); z-index:9; }
+  html.anim .pol{ opacity:0; transform:translateY(30px) scale(0.96); }
+  html.anim .on .pol{ opacity:1; transform:none; transition:opacity 600ms ease-out, transform 700ms var(--ease), box-shadow 350ms var(--ease); }
+  html.anim .on .pol-b{ transition-delay:140ms; }
+  html.anim .on .pol-c{ transition-delay:280ms; }
+
+  /* ================= shelf grid ================= */
+  .shelf{ padding:clamp(52px,8vh,96px) 0; border-top:2px solid var(--ink); }
+  .kicker{ font-size:12px; font-weight:700; letter-spacing:0.3em; text-transform:uppercase; color:var(--poppy); margin-bottom:14px; }
+  .shelf h2{ font-family:var(--serif); font-size:clamp(34px,4.8vw,56px); margin-bottom:8px; }
+  .shelf .sub{ font-size:16px; color:#4c4638; margin-bottom:44px; max-width:52ch; }
+  .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:clamp(18px,3vw,30px); }
+  .card{ border:2px solid var(--ink); background:var(--card); border-radius:18px; overflow:hidden;
+    box-shadow:5px 6px 0 var(--ink); transition:transform 240ms var(--ease), box-shadow 240ms var(--ease), rotate 240ms var(--ease); }
+  .card:nth-child(odd){ rotate:-1deg; }
+  .card:nth-child(even){ rotate:1.1deg; }
+  .card:hover{ rotate:0deg; transform:translateY(-6px); box-shadow:7px 10px 0 var(--ink); }
+  .card .ph{ aspect-ratio:16/11; overflow:hidden; border-bottom:2px solid var(--ink); }
+  .card .ph img{ width:100%; height:100%; object-fit:cover; transition:transform 600ms var(--expo); }
+  .card:hover .ph img{ transform:scale(1.05); }
+  .card .pad{ padding:20px 20px 22px; }
+  .card .tag{ display:inline-block; font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase;
+    background:var(--mustard); border:2px solid var(--ink); border-radius:999px; padding:5px 12px; margin-bottom:14px; }
+  .card h3{ font-family:var(--serif); font-size:24px; margin-bottom:6px; }
+  .card p{ font-size:14.5px; color:#3d3a33; }
+
+  /* ================= statement ================= */
+  .statement{ background:var(--poppy); color:var(--paper); border-top:2px solid var(--ink); border-bottom:2px solid var(--ink);
+    padding:clamp(60px,9vh,104px) 0; position:relative; overflow:hidden; }
+  .statement p{ font-family:var(--serif); font-size:clamp(28px,4.2vw,48px); line-height:1.22; max-width:26ch; position:relative; z-index:2; }
+  .statement p em{ font-style:italic; color:var(--mustard); }
+  .statement .bigstar{ position:absolute; right:-40px; top:50%; width:clamp(160px,22vw,300px); height:auto; margin-top:calc(clamp(160px,22vw,300px) / -2); opacity:0.5; }
+  html.anim .bigstar{ animation:spin 60s linear infinite; }
+
+  /* ================= promises ================= */
+  .promise{ padding:clamp(52px,8vh,96px) 0; }
+  .prom-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:clamp(20px,4vw,44px); margin-top:38px; }
+  .prom{ border-top:2px solid var(--ink); padding-top:20px; }
+  .prom svg{ width:44px; height:44px; margin-bottom:14px; }
+  .prom h3{ font-family:var(--serif); font-size:23px; margin-bottom:6px; }
+  .prom p{ font-size:14.5px; color:#3d3a33; max-width:30ch; }
+
+  /* ================= visit ================= */
+  .visit{ padding:clamp(52px,8vh,96px) 0; border-top:2px solid var(--ink); }
+  .visit-grid{ display:grid; grid-template-columns:1.05fr 1fr; gap:clamp(24px,4vw,56px); align-items:center; }
+  @media (max-width:760px){ .visit-grid{ grid-template-columns:1fr; } }
+  .visit .ph{ border:2px solid var(--ink); box-shadow:6px 8px 0 var(--ink); overflow:hidden; aspect-ratio:4/3; rotate:-1.2deg; }
+  .visit .ph img{ width:100%; height:100%; object-fit:cover; }
+  .visit h2{ font-family:var(--serif); font-size:clamp(30px,4.2vw,46px); margin-bottom:20px; }
+  .hours{ width:100%; border-collapse:collapse; font-size:15px; margin-bottom:24px; }
+  .hours td{ padding:11px 4px; border-bottom:2px dotted rgba(25,23,19,0.3); }
+  .hours td:last-child{ text-align:right; font-weight:500; }
+  .hours .closed td{ color:#8a8578; }
+  .visit p.addr{ font-size:16px; font-weight:700; margin-bottom:6px; }
+  .visit .muted{ color:#6d6858; font-size:13.5px; margin-bottom:22px; }
+
+  footer{ border-top:2px solid var(--ink); padding:26px clamp(20px,5vw,56px); display:flex; flex-wrap:wrap; gap:12px;
+    justify-content:space-between; align-items:center; font-size:12.5px; letter-spacing:0.06em; }
+  footer .credit a{ color:var(--poppy); font-weight:700; text-decoration:none; border-bottom:2px solid transparent; transition:border-color 200ms; }
+  footer .credit a:hover{ border-color:var(--poppy); }
+
+  html.anim .reveal{ opacity:0; transform:translateY(22px); transition:opacity 550ms ease-out, transform 550ms cubic-bezier(0.22,1,0.36,1); }
+  html.anim .reveal.on{ opacity:1; transform:none; }
+
+  /* ---------- Soren entry curtain ---------- */
+  .s-enter{ position:fixed; inset:0; z-index:200; background:#191713;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    transition:transform 700ms var(--expo); }
+  .s-enter.lift{ transform:translateY(-101%); }
+  .s-enter svg{ width:56px; height:56px; }
+  html.anim .s-enter circle{ stroke-dasharray:176; stroke-dashoffset:176; animation:sDraw 0.6s var(--expo) 0.1s forwards; }
+  html.anim .s-enter line{ stroke-dasharray:57; stroke-dashoffset:57; animation:sDraw 0.45s var(--expo) 0.5s forwards; }
+  @keyframes sDraw{ to{ stroke-dashoffset:0; } }
+  .s-enter .cap{ font-family:var(--grot); font-size:10px; font-weight:600; letter-spacing:0.42em; text-transform:uppercase; color:#EFB215; }
+  html.anim .s-enter .cap{ opacity:0; animation:sCap 0.5s ease-out 0.45s forwards; }
+  @keyframes sCap{ to{ opacity:1; } }
+  html:not(.anim) .s-enter{ display:none; }
+
+  /* return to the studio site */
+  .soren-return{ position:fixed; left:18px; bottom:18px; z-index:150;
+    display:inline-flex; align-items:center; gap:9px; min-height:44px; padding:12px 18px;
+    background:var(--paper); border:2px solid var(--ink);
+    font-family:var(--grot); font-weight:700; font-size:12px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--ink); text-decoration:none; box-shadow:3px 4px 0 var(--ink);
+    transition:background 200ms ease-out, transform 200ms var(--ease), box-shadow 200ms var(--ease); }
+  .soren-return:hover{ background:var(--mustard); transform:translateY(-2px); box-shadow:4px 6px 0 var(--ink); }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *, *::before, *::after{ animation:none !important; transition:none !important; }
+    .reveal, .pol{ opacity:1 !important; transform:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="s-enter" id="sorenEnter" aria-hidden="true">
+  <svg viewBox="0 0 72 72" fill="none">
+    <circle cx="36" cy="36" r="28" stroke="#EFB215" stroke-width="1.2"/>
+    <line x1="16" y1="56" x2="56" y2="16" stroke="#EFB215" stroke-width="1.2" stroke-linecap="round"/>
+  </svg>
+  <span class="cap">A Soren Template</span>
+</div>
+
+<a class="soren-return" href="../index.html">← Return to Soren</a>
+
+<div class="ticker" aria-hidden="true"><div class="ticker-track">
+  <span>New oddities weekly <b>●</b> Cards that actually make people laugh <b>●</b> Gift wrap on the house <b>●</b> Local makers inside <b>●</b> </span><span>New oddities weekly <b>●</b> Cards that actually make people laugh <b>●</b> Gift wrap on the house <b>●</b> Local makers inside <b>●</b> </span>
+</div></div>
+
+<header class="bar">
+  <div class="logo">Quirky <i>Gift</i> Store</div>
+  <nav>
+    <a href="#shelves">The shelves</a>
+    <a href="#about">The vibe</a>
+    <a href="#visit">Visit</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="sticker" aria-hidden="true">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="56" fill="#EFB215" stroke="#191713" stroke-width="3"/>
+      <path id="circ" d="M 60,60 m -40,0 a 40,40 0 1,1 80,0 a 40,40 0 1,1 -80,0" fill="none"/>
+      <text font-family="Space Grotesk, sans-serif" font-size="13" font-weight="700" letter-spacing="6">
+        <textPath href="#circ" startOffset="4">WEIRD &amp; WONDERFUL</textPath>
+      </text>
+      <circle cx="60" cy="60" r="7" fill="#E4572E" stroke="#191713" stroke-width="2.5"/>
+    </svg>
+  </div>
+  <div class="wrap grid">
+    <div class="reveal on-load">
+      <h1>Gifts for people who <em>have everything.<svg class="squig" viewBox="0 0 300 18" preserveAspectRatio="none" aria-hidden="true"><path d="M4 12 Q 30 2, 56 10 T 108 10 T 160 10 T 212 10 T 264 10 L 296 8"/></svg></em></h1>
+      <p>Except the thing you're about to find here. Rubber chickens next to hand-poured candles next to cards you can't show your mother. That kind of store.</p>
+      <div class="cta-row">
+        <a class="btn" href="#visit">Find the shop</a>
+        <a class="btn ghost" href="#shelves">Browse the shelves</a>
+      </div>
+    </div>
+    <div class="stack reveal on-load" aria-label="Photos from around the shop">
+      <figure class="pol pol-a">
+        <span class="tape" aria-hidden="true"></span>
+        <div class="ph"><img src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1600&q=80" alt="A hot pink gift box with a gold ribbon" fetchpriority="high"></div>
+        <figcaption class="cap">the good wrap</figcaption>
+      </figure>
+      <figure class="pol pol-b">
+        <span class="tape" aria-hidden="true"></span>
+        <div class="ph"><img src="https://images.unsplash.com/photo-1524578271613-d550eacf6090?auto=format&fit=crop&w=1600&q=80" alt="A shelf of rainbow-colored book spines" loading="lazy"></div>
+        <figcaption class="cap">shelf no. 4</figcaption>
+      </figure>
+      <figure class="pol pol-c">
+        <span class="tape" aria-hidden="true"></span>
+        <div class="ph"><img src="https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=1600&q=80" alt="A hand-poured candle burning in a glass jar" loading="lazy"></div>
+        <figcaption class="cap">maker no. 12</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="shelf wrap" id="shelves">
+  <div class="kicker reveal">What's on the shelves</div>
+  <h2 class="reveal">A little of everything, none of it boring.</h2>
+  <p class="sub reveal">Four aisles, loosely organized, gloriously mislabeled. Ask us where anything is and we'll walk you there the long way.</p>
+  <div class="cards">
+    <div class="card reveal">
+      <div class="ph"><img src="https://images.unsplash.com/photo-1607344645866-009c320b63e0?auto=format&fit=crop&w=1600&q=80" alt="Gold ribbon bows laid out on a dark table" loading="lazy"></div>
+      <div class="pad"><span class="tag">Aisle 1</span><h3>Cards &amp; wrap</h3><p>Birthday, anniversary, apology. All funnier than they should be.</p></div>
+    </div>
+    <div class="card reveal">
+      <div class="ph"><img src="https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=1600&q=80" alt="A robot vacuum surrounded by spilled confetti" loading="lazy"></div>
+      <div class="pad"><span class="tag">Aisle 2</span><h3>Certified oddities</h3><p>Wind-up toys, desk sculptures, and things with no explanation.</p></div>
+    </div>
+    <div class="card reveal">
+      <div class="ph"><img src="https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1600&q=80" alt="Hand-poured candles glowing on a maker's shelf" loading="lazy"></div>
+      <div class="pad"><span class="tag">Aisle 3</span><h3>Local makers</h3><p>Candles, prints, and ceramics made within a few miles of the register.</p></div>
+    </div>
+    <div class="card reveal">
+      <div class="ph"><img src="https://images.unsplash.com/photo-1526947425960-945c6e72858f?auto=format&fit=crop&w=1600&q=80" alt="Small-batch bottles and a potted succulent" loading="lazy"></div>
+      <div class="pad"><span class="tag">Aisle 4</span><h3>Little luxuries</h3><p>Soaps and lotions good enough to keep for yourself.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="statement" id="about">
+  <svg class="bigstar" viewBox="0 0 100 100" aria-hidden="true">
+    <path d="M50 4 L57 38 L92 30 L64 50 L92 70 L57 62 L50 96 L43 62 L8 70 L36 50 L8 30 L43 38 Z" fill="none" stroke="#F4EFE4" stroke-width="1.6"/>
+  </svg>
+  <div class="wrap"><p class="reveal">Big-box stores sell what everyone wants. We sell what <em>nobody knew they wanted</em> until they walked in.</p></div>
+</section>
+
+<section class="promise wrap">
+  <div class="kicker reveal">House rules</div>
+  <h2 class="reveal" style="font-family:var(--serif); font-size:clamp(30px,4.2vw,48px);">Three promises, kept daily.</h2>
+  <div class="prom-grid">
+    <div class="prom reveal">
+      <svg viewBox="0 0 48 48" fill="none" stroke="#E4572E" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 30 Q 18 8 40 12"/><path d="M33 8 L40 12 L36 19"/></svg>
+      <h3>Free gift wrap</h3><p>Every purchase, every day, no minimum. Bows included.</p>
+    </div>
+    <div class="prom reveal">
+      <svg viewBox="0 0 48 48" fill="none" stroke="#E4572E" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M24 6 L28 19 L42 19 L31 27 L35 41 L24 33 L13 41 L17 27 L6 19 L20 19 Z"/></svg>
+      <h3>New weird weekly</h3><p>The oddities shelf restocks every Tuesday. It goes fast.</p>
+    </div>
+    <div class="prom reveal">
+      <svg viewBox="0 0 48 48" fill="none" stroke="#E4572E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 10 h30 a3 3 0 0 1 3 3 v14 a3 3 0 0 1 -3 3 h-16 l-9 9 v-9 h-5 a3 3 0 0 1 -3 -3 v-14 a3 3 0 0 1 3 -3 z"/><path d="M15 18 h18 M15 24 h11"/></svg>
+      <h3>Real recommendations</h3><p>Tell us who it's for. We're scary good at this part.</p>
+    </div>
+  </div>
+</section>
+
+<section class="visit wrap" id="visit">
+  <div class="visit-grid">
+    <div class="ph reveal"><img src="https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=2400&q=80" alt="An OPEN sign hanging in the shop window" loading="lazy"></div>
+    <div class="reveal">
+      <h2>Come get lost in here.</h2>
+      <p class="addr">123 Main Street, Your Town</p>
+      <p class="muted">Sample address. Every detail on this page swaps out for the real thing.</p>
+      <table class="hours">
+        <tr><td>Monday — Thursday</td><td>10 — 6</td></tr>
+        <tr><td>Friday — Saturday</td><td>10 — 8</td></tr>
+        <tr class="closed"><td>Sunday</td><td>Closed</td></tr>
+      </table>
+      <a class="btn" href="#visit">Get directions</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>Quirky Gift Store · a demonstration template</span>
+  <span class="credit">Template by <a href="../index.html">Soren</a></span>
+</footer>
+
+<script>
+(function(){
+  var animOn = document.documentElement.classList.contains('anim');
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); } });
+  }, { threshold:0.16 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  if(!animOn){
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+  }
+  document.querySelectorAll('.on-load').forEach(function(el){
+    setTimeout(function(){ el.classList.add('on'); }, animOn ? 1150 : 0);
+  });
+  var en = document.getElementById('sorenEnter');
+  if(window.self !== window.top){
+    if(en){ en.remove(); en = null; }
+    var ret = document.querySelector('.soren-return');
+    if(ret){ ret.remove(); }
+  }
+  if(en){
+    if(animOn){
+      var lift = function(){ en.classList.add('lift'); setTimeout(function(){ en.remove(); }, 800); };
+      setTimeout(lift, 1050);
+      en.addEventListener('click', lift);
+    } else { en.remove(); }
+  }
+})();
+</script>
+</body>
+</html>
