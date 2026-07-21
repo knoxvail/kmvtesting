@@ -268,6 +268,13 @@
   .fire-mount video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
     mix-blend-mode:screen; opacity:0; transition:opacity 300ms ease-out; }
   .fire-mount.lit video{ opacity:1; }
+  /* the page's grain, doubled over the fire — a STATIC div with a STATIC
+     mask (cheap, compositor-cached; the no-mask rule is for the video).
+     The radial mask dies inside the film's feather so no square shows. */
+  .fire-grain{ position:absolute; inset:0; pointer-events:none; opacity:0.13;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    -webkit-mask-image:radial-gradient(circle at 50% 47%, #000 45%, transparent 72%);
+    mask-image:radial-gradient(circle at 50% 47%, #000 45%, transparent 72%); }
   html:not(.anim) .fire-mount, .fire-mount.dead{ display:none; }
 
   /* vector fallback — shown when motion is reduced or the film can't play */
@@ -653,6 +660,7 @@
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
   <div class="fire-mount" id="fireMount" aria-hidden="true">
     <video id="fireFilm" muted playsinline preload="auto" data-film="assets/soren-fire.mp4"></video>
+    <div class="fire-grain" aria-hidden="true"></div>
   </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" stroke-width="0.9"/>
