@@ -262,8 +262,11 @@
   /* screen blend: black drops out, so the fire floats on the espresso field
      with no rectangle to hide — no vignette, no mask, no color matching.
      The fade lives on the video itself so no stacking-context box-flash. */
+  /* short fade only: animating opacity over the blend re-renders the whole
+     blend stack every display frame and drops film frames on 120Hz panels.
+     The clip opens near-black and does its own fade-in. */
   .fire-mount video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-    mix-blend-mode:screen; opacity:0; transition:opacity 1400ms var(--ease); }
+    mix-blend-mode:screen; opacity:0; transition:opacity 300ms ease-out; }
   .fire-mount.lit video{ opacity:1; }
   html:not(.anim) .fire-mount, .fire-mount.dead{ display:none; }
 
@@ -649,7 +652,7 @@
 <!-- ============ 00 COVER ============ -->
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
   <div class="fire-mount" id="fireMount" aria-hidden="true">
-    <video id="fireFilm" muted playsinline preload="auto" src="assets/soren-fire.mp4"></video>
+    <video id="fireFilm" muted playsinline preload="auto" data-film="assets/soren-fire.mp4"></video>
   </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" stroke-width="0.9"/>
@@ -1030,6 +1033,14 @@
   if(fireMount && fireFilm && animOn){
     var fireT0 = performance.now();
     var FIRE_HOLD = skipLoader ? 600 : 3200;   /* ignite only after the intro settles */
+    /* pull the whole film into memory first (~1.5MB): canplaythrough then
+       fires from cache, so ignition is on schedule and playback can never
+       stall on a slow connection — Chrome trickle-loads media otherwise. */
+    var filmSrc = fireFilm.getAttribute('data-film');
+    fetch(filmSrc)
+      .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
+      .then(function(b){ fireFilm.src = URL.createObjectURL(b); })
+      .catch(function(){ fireFilm.src = filmSrc; });
     var fireArmed = false;
     var fireDead = function(){ fireMount.classList.add('dead'); };
     var firePoke = function(){
