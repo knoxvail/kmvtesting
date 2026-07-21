@@ -658,7 +658,8 @@
 <!-- ============ 00 COVER ============ -->
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
   <div class="fire-mount" id="fireMount" aria-hidden="true">
-    <video id="fireFilm" muted playsinline preload="auto" data-film="assets/soren-fire.mp4"></video>
+    <video id="fireFilm" muted playsinline preload="auto"
+           data-film="assets/soren-fire.mp4" data-film-sm="assets/soren-fire-m.mp4"></video>
   </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" stroke-width="0.9"/>
@@ -1055,7 +1056,11 @@
   if(fireMount && fireFilm && animOn){
     var fireT0 = performance.now();
     var FIRE_HOLD = skipLoader ? 300 : 1900;   /* ignite as the curtain lifts */
-    var filmSrc = fireFilm.getAttribute('data-film');
+    /* the film carries the page background baked in, and that background
+       resolves differently on a phone — so each breakpoint gets the cut
+       whose plate matches its own hero gradient, or the box shows. */
+    var smallScreen = window.matchMedia && window.matchMedia('(max-width:900px)').matches;
+    var filmSrc = (smallScreen && fireFilm.getAttribute('data-film-sm')) || fireFilm.getAttribute('data-film');
     fetch(filmSrc)
       .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
       .then(function(b){ fireFilm.src = URL.createObjectURL(b); })
