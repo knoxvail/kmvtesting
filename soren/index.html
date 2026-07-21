@@ -249,43 +249,16 @@
     .panel{ width:100%; }
   }
 
-  /* the mark, seared in fire on the right — the film ignites, draws the Ø,
-     cools, and holds its last ember frame as the resting logo. Plain video
-     path: no mask, no filter, no canvas — the only overlay is one static
-     gradient, so decode stays on the fast path. */
-  /* NOTE: no z-index / opacity / transform on the mount — any of them would
-     create a stacking context and isolate the blend, bringing the rectangle
-     back. Centered with negative margins instead of translate(-50%,-50%). */
-  .fire-mount{ position:absolute; left:63%; top:50%;
-    width:clamp(456px,48vw,744px); aspect-ratio:1/1;
-    margin-left:calc(clamp(456px,48vw,744px) / -2);
-    margin-top:calc(clamp(456px,48vw,744px) / -2);
-    pointer-events:none; }
-  /* screen blend: black drops out, so the fire floats on the espresso field
-     with no rectangle to hide — no vignette, no mask, no color matching.
-     The fade lives on the video itself so no stacking-context box-flash. */
-  /* plain video path — the screen blend is PRECOMPUTED into the file (fire
-     baked over the hero gradient plate), so the browser composites this like
-     any ordinary video. Never put mix-blend-mode / mask / filter here: they
-     drag the video off the fast path and it hitches on real machines. */
-  .fire-mount video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-    opacity:0; transition:opacity 300ms ease-out; }
-  .fire-mount.lit video{ opacity:1; }
-  /* the page's grain, doubled over the fire — a STATIC div with a STATIC
-     mask (cheap, compositor-cached; the no-mask rule is for the video).
-     The radial mask dies inside the film's feather so no square shows. */
-  .fire-grain{ position:absolute; inset:0; pointer-events:none; opacity:0.13;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
-    -webkit-mask-image:radial-gradient(circle at 50% 47%, #000 45%, transparent 72%);
-    mask-image:radial-gradient(circle at 50% 47%, #000 45%, transparent 72%); }
-  html:not(.anim) .fire-mount, .fire-mount.dead{ display:none; }
-
-  /* vector fallback — shown when motion is reduced or the film can't play */
+  /* the mark, drawn in stroke on the right. Pure vector — nothing to decode,
+     so it is always smooth on every machine. */
   .brand-mark{ position:absolute; left:63%; top:50%; transform:translate(-50%,-50%);
-    width:clamp(228px,25vw,396px); height:auto; z-index:0; pointer-events:none; display:none; }
-  html:not(.anim) .brand-mark, .fire-mount.dead + .brand-mark{ display:block; }
+    width:clamp(228px,25vw,396px); height:auto; z-index:0; pointer-events:none; }
   .brand-mark circle, .brand-mark line{ stroke:var(--gold); }
-  @media (max-width:900px){ .fire-mount, .brand-mark{ display:none !important; } }
+  html.anim .brand-mark circle{ stroke-dasharray:176; stroke-dashoffset:176;
+    animation:draw 1.5s var(--expo) forwards; animation-delay:calc(var(--intro) + 0.5s); }
+  html.anim .brand-mark line{ stroke-dasharray:57; stroke-dashoffset:57;
+    animation:draw 0.8s var(--expo) forwards; animation-delay:calc(var(--intro) + 1.55s); }
+  @media (max-width:900px){ .brand-mark{ display:none; } }
 
   /* scroll cue, under the logo on the right */
   .scroll-cue{ position:absolute; right:var(--pad-x); bottom:clamp(74px,12vh,120px); z-index:4;
@@ -661,10 +634,6 @@
 
 <!-- ============ 00 COVER ============ -->
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
-  <div class="fire-mount" id="fireMount" aria-hidden="true">
-    <video id="fireFilm" muted playsinline preload="auto" data-film="assets/soren-fire.mp4"></video>
-    <div class="fire-grain" aria-hidden="true"></div>
-  </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" stroke-width="0.9"/>
     <line x1="16" y1="56" x2="56" y2="16" stroke-width="0.9" stroke-linecap="round"/>
@@ -1034,64 +1003,6 @@
     if(heroSpec) heroSpec.classList.add('on');
   }
 
-  /* ---------- fire mark ---------- */
-  /* Rules: wait for full buffer (a buffered start can never stall), fade in
-     only once frames are actually rendering, play once and hold the cooled
-     ember frame. A refused play() is never fatal — the film is re-poked on
-     visibility, intersection, and first input, because some browsers refuse
-     autoplay for media they consider not-yet-visible. Only a real decode
-     error swaps in the vector Ø. */
-  var fireMount = document.getElementById('fireMount');
-  var fireFilm = document.getElementById('fireFilm');
-  if(fireMount && fireFilm && animOn){
-    var fireT0 = performance.now();
-    var FIRE_HOLD = skipLoader ? 300 : 1900;   /* ignite right as the curtain lifts */
-    /* pull the whole film into memory first (~1.5MB): canplaythrough then
-       fires from cache, so ignition is on schedule and playback can never
-       stall on a slow connection — Chrome trickle-loads media otherwise. */
-    var filmSrc = fireFilm.getAttribute('data-film');
-    fetch(filmSrc)
-      .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
-      .then(function(b){ fireFilm.src = URL.createObjectURL(b); })
-      .catch(function(){ fireFilm.src = filmSrc; });
-    var fireArmed = false;
-    var fireDead = function(){ fireMount.classList.add('dead'); };
-    var firePoke = function(){
-      if(!fireArmed || fireFilm.ended || !fireFilm.paused) return;
-      var p = fireFilm.play();
-      if(p && p.catch) p.catch(function(){});
-    };
-    var fireArm = function(){
-      var wait = Math.max(0, FIRE_HOLD - (performance.now() - fireT0));
-      setTimeout(function(){ fireArmed = true; firePoke(); }, wait);
-    };
-    fireFilm.addEventListener('playing', function(){ fireMount.classList.add('lit'); }, { once:true });
-    fireFilm.addEventListener('ended', function(){ window.__veilGo = true; }, { once:true });
-    fireFilm.addEventListener('error', fireDead);
-    setTimeout(function(){ window.__veilGo = true; }, 14000);  /* smoke never waits forever */
-    document.addEventListener('visibilitychange', firePoke);
-    ['pointerdown','keydown','wheel','touchstart'].forEach(function(evt){
-      window.addEventListener(evt, firePoke, { passive:true });
-    });
-    if('IntersectionObserver' in window){
-      new IntersectionObserver(function(entries){
-        if(entries[0] && entries[0].isIntersecting) firePoke();
-      }, { threshold:0.05 }).observe(fireMount);
-    }
-    if(fireFilm.error){ fireDead(); }
-    else if(fireFilm.readyState >= 4){ fireArm(); }
-    else{
-      fireFilm.addEventListener('canplaythrough', fireArm, { once:true });
-      /* if a full buffer never reports after 10s, arm anyway and let the
-         pokes start it — 1.7MB streams fine progressively */
-      setTimeout(function(){ if(!fireArmed) fireArm(); }, 10000);
-    }
-  } else if(fireMount){
-    fireMount.classList.add('dead');
-    window.__veilGo = true;   /* no film -> smoke starts right away */
-  } else {
-    window.__veilGo = true;
-  }
 
   /* ---------- magnetic pull ---------- */
   if(animOn && finePtr){
@@ -1264,10 +1175,10 @@
     gl.uniform1f(locGrain, 0.0);
 
     var running = false, lit = false;
-    /* the veil is soft noise — render small and let CSS upscale. ~900px
+    /* the veil is soft noise — render small and let CSS upscale. A ~1280px
        internal width reads identically and costs a fraction of full-res
        × DPR. Layout reads stay out of the frame loop, and 30fps is plenty
-       for ambient smoke — the GPU budget belongs to the fire film. */
+       for ambient smoke. */
     function resize(){
       var w = hero.clientWidth || 1, h = hero.clientHeight || 1;
       var s = Math.min(1, 1280 / w);
@@ -1282,10 +1193,6 @@
     function frame(ts){
       if(!running) return;
       requestAnimationFrame(frame);
-      /* the veil enters only after the fire has finished: an animated layer
-         over a playing video knocks it off the fast composite path — while
-         the mark burns, nothing on the page moves */
-      if(!window.__veilGo) return;
       if(ts - veilLast < VEIL_MIN) return;
       veilLast = ts;
       gl.uniform2f(locRes, cv.width, cv.height);
@@ -1331,11 +1238,10 @@
   window.addEventListener('load', sizePortals);
 
   /* wake deferred portals as the gallery approaches.
-     The generous 1400px margin fires the moment the page opens, which set
-     four iframes (one with its own film) loading during the hero burn — so
-     the far observer only arms once the fire mark has finished (or 12s
-     passes). A close-range observer stays live from the start so a fast
-     scroller still gets portals the moment they genuinely approach. */
+     The generous 1400px margin fires the moment the page opens, which would
+     set four iframes loading under the intro — so it arms only after the
+     intro settles. A close-range observer stays live from the start so a
+     fast scroller still gets portals the moment they genuinely approach. */
   if(rideEl){
     if('IntersectionObserver' in window){
       var portalsAwake = false;
@@ -1359,14 +1265,9 @@
         o.observe(rideEl);
       };
       wakeObs(500);                          /* imminent need wins immediately */
-      var armFarWake = function(){ if(!portalsAwake) wakeObs(1400); };
-      var fireGate = document.getElementById('fireFilm');
-      if(fireGate && animOn){
-        fireGate.addEventListener('ended', armFarWake, { once:true });
-        setTimeout(armFarWake, 12000);       /* in case the film never runs */
-      } else {
-        armFarWake();
-      }
+      /* the far-margin observer waits out the intro so four iframes don't
+         load underneath it */
+      setTimeout(function(){ if(!portalsAwake) wakeObs(1400); }, 4000);
     } else {
       document.querySelectorAll('iframe[data-src]').forEach(function(f){
         f.src = f.getAttribute('data-src'); f.removeAttribute('data-src');
