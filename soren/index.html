@@ -1376,7 +1376,11 @@
       wakeObs(500);                          /* a fast scroller still gets them */
       /* otherwise the four templates (one with its own film) load only once
          the hero has finished — they are far off screen until then */
-      onStageClear(function(){ if(!portalsAwake) wakeObs(1400); });
+      /* last in the queue: after the mark, after the veil, after the copy
+         has finished falling in */
+      onStageClear(function(){
+        setTimeout(function(){ if(!portalsAwake) wakeObs(1400); }, 1600);
+      });
     } else {
       document.querySelectorAll('iframe[data-src]').forEach(function(f){
         f.src = f.getAttribute('data-src'); f.removeAttribute('data-src');
