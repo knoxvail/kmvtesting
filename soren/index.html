@@ -296,10 +296,16 @@
   html.anim .scroll-cue{ opacity:0; animation:fadeIn 0.9s var(--ease) forwards; animation-delay:calc(var(--intro) + 1.4s); }
   @media (max-width:900px){ .scroll-cue{ display:none; } }
 
-  html.anim .panel{ opacity:0; transform:translateY(26px); }
-  html.anim .panel.on{ opacity:1; transform:none;
-    transition:opacity 900ms var(--ease), transform 900ms var(--ease);
-    transition-delay:calc(var(--intro) + 0.1s); }
+  /* the copy waterfalls line by line once the mark has finished. The mount
+     is excluded — on phones it lives inside this panel and must not fade. */
+  html.anim .panel > *:not(.fire-mount){ opacity:0; transform:translateY(24px); }
+  html.anim .panel.on > *:not(.fire-mount){ opacity:1; transform:none;
+    transition:opacity 820ms var(--ease), transform 820ms var(--ease); }
+  html.anim .panel.on > .kick{ transition-delay:0ms; }
+  html.anim .panel.on > .display{ transition-delay:110ms; }
+  html.anim .panel.on > .deck{ transition-delay:430ms; }
+  html.anim .panel.on > .cta-row{ transition-delay:600ms; }
+  html.anim .panel.on > .panel-spec{ transition-delay:760ms; }
   .panel .kick{ font-family:var(--mono); font-size:11px; letter-spacing:0.3em; text-transform:uppercase;
     color:var(--gold); margin-bottom:18px; }
   .panel h1{ max-width:11ch; }
@@ -661,6 +667,7 @@
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
   <div class="fire-mount" id="fireMount" aria-hidden="true">
     <video id="fireFilm" muted playsinline preload="auto"
+           data-film-alpha="assets/soren-fire.webm"
            data-film="assets/soren-fire.mp4" data-film-sm="assets/soren-fire-m.mp4"></video>
   </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
@@ -1006,63 +1013,50 @@
   }
   setTimeout(clearStage, 12000);   /* the page never waits forever */
 
-  /* ---------- loader ---------- */
+  /* ---------- loader ----------
+     Gone. The mark IS the intro now: a curtain would just delay the one
+     thing that has to be on screen first. */
   var loader = document.getElementById('loader');
-  if(loader && animOn && !skipLoader){
-    document.body.classList.add('is-loading');
-    var count = document.getElementById('lCount');
-    var t0 = null, DUR = 1500;
-    function pad(n){ return (n < 10 ? '00' : n < 100 ? '0' : '') + n; }
-    function step(ts){
-      if(!t0) t0 = ts;
-      var p = Math.min(1, (ts - t0) / DUR);
-      var e = 1 - Math.pow(1 - p, 3);
-      if(count) count.textContent = pad(Math.round(e * 100));
-      if(p < 1){ requestAnimationFrame(step); }
-      else{
-        setTimeout(function(){
-          loader.classList.add('lift');
-          document.body.classList.remove('is-loading');
-          setTimeout(function(){ if(loader.parentNode) loader.parentNode.removeChild(loader); }, 1000);
-        }, 180);
-      }
-    }
-    requestAnimationFrame(step);
-    try{ sessionStorage.setItem('sorenIntro','1'); }catch(e){}
-  } else if(loader){
-    loader.parentNode.removeChild(loader);
-  }
+  if(loader && loader.parentNode) loader.parentNode.removeChild(loader);
+  document.body.classList.remove('is-loading');
+  try{ sessionStorage.setItem('sorenIntro','1'); }catch(e){}
 
-  /* ---------- hero intro pieces ---------- */
+  /* ---------- hero copy ----------
+     Waterfalls in behind the mark: headline first, then the pitch, the
+     buttons and the spec rows. Held until the mark has finished so the
+     film gets the machine to itself. */
   var heroPanel = document.getElementById('heroPanel');
   var heroSpec = document.getElementById('heroSpec');
-  if(animOn){
-    requestAnimationFrame(function(){
-      if(heroPanel) heroPanel.classList.add('on');
-      if(heroSpec) heroSpec.classList.add('on');
-    });
-  } else {
+  function showCopy(){
     if(heroPanel) heroPanel.classList.add('on');
     if(heroSpec) heroSpec.classList.add('on');
   }
+  if(animOn){ onStageClear(function(){ setTimeout(showCopy, 260); }); }
+  else{ showCopy(); }
 
   /* ---------- fire mark ---------- */
-  /* Plain video, played once, holding its last frame as the standing logo.
-     Two rules earned the hard way: pull the file into memory before playing
-     (Chrome trickle-loads media, so a readiness gate fires late on real
-     networks), and treat a refused play() as normal — Chrome pauses muted
-     video it considers not-visible, so re-poke on visibility, intersection
-     and first input. Only a real decode error falls back to the vector Ø. */
+  /* First thing on the page and nothing else competing: the source is set
+     inline (a blob prefetch means downloading the WHOLE file before a
+     single frame can show — that was the multi-second wait), playback
+     starts the instant enough is buffered, and a refused play() is normal
+     — Chrome pauses muted video it thinks isn't visible, so re-poke on
+     visibility, intersection and first input. Only a decode error falls
+     back to the vector Ø. */
   var fireMount = document.getElementById('fireMount');
   var fireFilm = document.getElementById('fireFilm');
   if(fireMount && fireFilm && animOn){
-    var fireT0 = performance.now();
-    var FIRE_HOLD = skipLoader ? 300 : 1900;   /* ignite as the curtain lifts */
-    /* the film carries the page background baked in, and that background
-       resolves differently on a phone — so each breakpoint gets the cut
-       whose plate matches its own hero gradient, or the box shows. */
     var smallScreen = window.matchMedia && window.matchMedia('(max-width:900px)').matches;
-    var filmSrc = (smallScreen && fireFilm.getAttribute('data-film-sm')) || fireFilm.getAttribute('data-film');
+    /* First choice: the WebM, which carries a real alpha channel — the mark
+       is genuinely transparent, so there is no box to match at any window
+       size. Safari plays VP9 but ignores alpha in WebM (it would render the
+       black), so it falls back to the MP4 cuts that have the page
+       background baked in per breakpoint. */
+    var isSafari = /^((?!chrome|chromium|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+    var canAlpha = !isSafari && fireFilm.canPlayType &&
+                   fireFilm.canPlayType('video/webm; codecs="vp9"') !== '';
+    var filmSrc = (canAlpha && fireFilm.getAttribute('data-film-alpha')) ||
+                  (smallScreen && fireFilm.getAttribute('data-film-sm')) ||
+                  fireFilm.getAttribute('data-film');
     /* on a phone the mark belongs in the reading order, under the headline */
     if(smallScreen){
       var headline = document.querySelector('.panel .display');
@@ -1070,22 +1064,15 @@
         headline.parentNode.insertBefore(fireMount, headline.nextSibling);
       }
     }
-    fetch(filmSrc)
-      .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
-      .then(function(b){ fireFilm.src = URL.createObjectURL(b); })
-      .catch(function(){ fireFilm.src = filmSrc; });
+    fireFilm.src = filmSrc;
 
-    var fireArmed = false;
     var fireDead = function(){ fireMount.classList.add('dead'); };
     var firePoke = function(){
-      if(!fireArmed || fireFilm.ended || !fireFilm.paused) return;
+      if(fireFilm.ended || !fireFilm.paused) return;
       var p = fireFilm.play();
       if(p && p.catch) p.catch(function(){});
     };
-    var fireArm = function(){
-      var wait = Math.max(0, FIRE_HOLD - (performance.now() - fireT0));
-      setTimeout(function(){ fireArmed = true; firePoke(); }, wait);
-    };
+    var fireArm = firePoke;
 
     fireFilm.addEventListener('playing', function(){ fireMount.classList.add('lit'); }, { once:true });
     fireFilm.addEventListener('ended', clearStage, { once:true });
@@ -1100,11 +1087,14 @@
       }, { threshold:0.05 }).observe(fireMount);
     }
 
+    /* go the moment any of these say "ready" — whichever lands first wins */
     if(fireFilm.error){ fireDead(); }
-    else if(fireFilm.readyState >= 4){ fireArm(); }
     else{
-      fireFilm.addEventListener('canplaythrough', fireArm, { once:true });
-      setTimeout(function(){ if(!fireArmed) fireArm(); }, 8000);  /* never wait forever */
+      ['loadeddata','canplay','canplaythrough'].forEach(function(evt){
+        fireFilm.addEventListener(evt, fireArm, { once:true });
+      });
+      firePoke();                                  /* try straight away */
+      setTimeout(fireArm, 1200);                   /* and again shortly after */
     }
   } else {
     if(fireMount) fireMount.classList.add('dead');
