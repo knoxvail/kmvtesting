@@ -978,6 +978,20 @@
   var finePtr = docEl.classList.contains('fine');
   var skipLoader = docEl.classList.contains('skip-loader');
 
+  /* ---------- stage gate ----------
+     One thing at a time. The mark plays on an otherwise still page: the
+     WebGL veil and every template iframe queue up here and start only once
+     the film has finished (or failed, or timed out). Doing all of it at
+     once is what made the hero stutter. */
+  var stageClear = false, stageQueue = [];
+  function onStageClear(fn){ if(stageClear){ fn(); } else { stageQueue.push(fn); } }
+  function clearStage(){
+    if(stageClear) return;
+    stageClear = true;
+    stageQueue.splice(0).forEach(function(fn){ fn(); });
+  }
+  setTimeout(clearStage, 12000);   /* the page never waits forever */
+
   /* ---------- loader ---------- */
   var loader = document.getElementById('loader');
   if(loader && animOn && !skipLoader){
@@ -1049,7 +1063,8 @@
     };
 
     fireFilm.addEventListener('playing', function(){ fireMount.classList.add('lit'); }, { once:true });
-    fireFilm.addEventListener('error', fireDead);
+    fireFilm.addEventListener('ended', clearStage, { once:true });
+    fireFilm.addEventListener('error', function(){ fireDead(); clearStage(); });
     document.addEventListener('visibilitychange', firePoke);
     ['pointerdown','keydown','wheel','touchstart'].forEach(function(evt){
       window.addEventListener(evt, firePoke, { passive:true });
@@ -1066,8 +1081,9 @@
       fireFilm.addEventListener('canplaythrough', fireArm, { once:true });
       setTimeout(function(){ if(!fireArmed) fireArm(); }, 8000);  /* never wait forever */
     }
-  } else if(fireMount){
-    fireMount.classList.add('dead');
+  } else {
+    if(fireMount) fireMount.classList.add('dead');
+    clearStage();          /* no film to wait on */
   }
 
 
@@ -1269,14 +1285,18 @@
     }
     resize();
     window.addEventListener('resize', resize);
-    if('IntersectionObserver' in window){
-      new IntersectionObserver(function(es){
-        es.forEach(function(e){
-          if(e.isIntersecting && !running){ running = true; requestAnimationFrame(frame); }
-          else if(!e.isIntersecting){ running = false; }
-        });
-      }, { threshold:0.02 }).observe(hero);
-    } else { running = true; requestAnimationFrame(frame); }
+    /* the veil is hidden (opacity 0) until its first frame draws, so waiting
+       here means it simply arrives after the mark instead of freezing */
+    onStageClear(function(){
+      if('IntersectionObserver' in window){
+        new IntersectionObserver(function(es){
+          es.forEach(function(e){
+            if(e.isIntersecting && !running){ running = true; requestAnimationFrame(frame); }
+            else if(!e.isIntersecting){ running = false; }
+          });
+        }, { threshold:0.02 }).observe(hero);
+      } else { running = true; requestAnimationFrame(frame); }
+    });
   })();
 
   /* ---------- horizontal gallery ride ---------- */
@@ -1331,10 +1351,10 @@
         }, { rootMargin:margin + 'px 0px ' + margin + 'px 0px' });
         o.observe(rideEl);
       };
-      wakeObs(500);                          /* imminent need wins immediately */
-      /* the far-margin observer waits out the intro so four iframes don't
-         load underneath it */
-      setTimeout(function(){ if(!portalsAwake) wakeObs(1400); }, 4000);
+      wakeObs(500);                          /* a fast scroller still gets them */
+      /* otherwise the four templates (one with its own film) load only once
+         the hero has finished — they are far off screen until then */
+      onStageClear(function(){ if(!portalsAwake) wakeObs(1400); });
     } else {
       document.querySelectorAll('iframe[data-src]').forEach(function(f){
         f.src = f.getAttribute('data-src'); f.removeAttribute('data-src');
