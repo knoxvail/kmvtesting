@@ -277,7 +277,10 @@
      the pitch. It sits in the flow (moved into the panel by script), so
      nothing can overlap at any screen height. */
   @media (max-width:900px){
-    .fire-mount{ position:static; left:auto; top:auto;
+    /* relative, not static — the video inside is absolutely positioned and
+       needs this element as its containing block, or it stretches to fill
+       the whole panel */
+    .fire-mount{ position:relative; left:auto; top:auto;
       width:min(64vw,260px); margin:4px auto 20px; }
     .brand-mark{ left:50%; top:46%; width:min(48vw,190px); }
   }
