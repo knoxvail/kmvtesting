@@ -201,7 +201,9 @@
 
   /* ================= hero ================= */
   .hero{ min-height:100svh; display:flex; flex-direction:column; overflow:hidden; }
-  #veil{ position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0;
+  /* explicit size: a canvas with inset:0 alone renders at its intrinsic
+     (internal) resolution — width/height stretch the small render to fill */
+  #veil{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:0;
     transition:opacity 1800ms ease-out; }
   #veil.lit{ opacity:0.55; }
 
