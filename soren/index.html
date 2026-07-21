@@ -1066,7 +1066,9 @@
       setTimeout(function(){ fireArmed = true; firePoke(); }, wait);
     };
     fireFilm.addEventListener('playing', function(){ fireMount.classList.add('lit'); }, { once:true });
+    fireFilm.addEventListener('ended', function(){ window.__veilGo = true; }, { once:true });
     fireFilm.addEventListener('error', fireDead);
+    setTimeout(function(){ window.__veilGo = true; }, 14000);  /* smoke never waits forever */
     document.addEventListener('visibilitychange', firePoke);
     ['pointerdown','keydown','wheel','touchstart'].forEach(function(evt){
       window.addEventListener(evt, firePoke, { passive:true });
@@ -1086,6 +1088,9 @@
     }
   } else if(fireMount){
     fireMount.classList.add('dead');
+    window.__veilGo = true;   /* no film -> smoke starts right away */
+  } else {
+    window.__veilGo = true;
   }
 
   /* ---------- magnetic pull ---------- */
@@ -1277,6 +1282,10 @@
     function frame(ts){
       if(!running) return;
       requestAnimationFrame(frame);
+      /* the veil enters only after the fire has finished: an animated layer
+         over a playing video knocks it off the fast composite path — while
+         the mark burns, nothing on the page moves */
+      if(!window.__veilGo) return;
       if(ts - veilLast < VEIL_MIN) return;
       veilLast = ts;
       gl.uniform2f(locRes, cv.width, cv.height);
