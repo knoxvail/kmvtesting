@@ -213,7 +213,10 @@
     padding:26px var(--pad-x);
     border-bottom:1px solid rgba(200,157,95,0.16);
   }
-  html.anim .topbar{ opacity:0; animation:fadeIn 0.9s var(--ease) forwards; animation-delay:calc(var(--intro) + 0.9s); }
+  /* last in: the bar arrives once the headline has landed */
+  html.anim .topbar{ opacity:0; transform:translateY(-12px); }
+  html.anim .topbar.on{ opacity:1; transform:none;
+    transition:opacity 800ms var(--ease), transform 800ms var(--ease); }
   @keyframes fadeIn{ to{ opacity:1; } }
   .brand{ display:flex; align-items:center; gap:14px; text-decoration:none; }
   .brand .bmark{ width:30px; height:30px; display:block; }
@@ -262,6 +265,13 @@
     margin-left:calc(clamp(320px,34vw,540px) / -2);
     margin-top:calc(clamp(320px,34vw,540px) / -2);
     pointer-events:none; }
+  /* the mark draws itself dead centre, then slides to its resting place on
+     the right once the burn is done (13% of the hero == 63% - 50%) */
+  @media (min-width:901px){
+    html.anim .fire-mount{ transform:translateX(-13vw); }
+    html.anim .fire-mount.placed{ transform:none;
+      transition:transform 1100ms cubic-bezier(0.65,0,0.35,1); }
+  }
   .fire-mount video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
     opacity:0; transition:opacity 300ms ease-out; }
   .fire-mount.lit video{ opacity:1; }
@@ -293,7 +303,8 @@
   html.anim .scroll-cue .mouse i{ animation:wheel 1.8s ease-in-out infinite; }
   @keyframes wheel{ 0%{ opacity:0; transform:translateY(0); } 25%{ opacity:1; } 70%{ opacity:1; transform:translateY(9px); } 100%{ opacity:0; transform:translateY(9px); } }
   .scroll-cue .lbl{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.3em; text-transform:uppercase; color:var(--greige-d); }
-  html.anim .scroll-cue{ opacity:0; animation:fadeIn 0.9s var(--ease) forwards; animation-delay:calc(var(--intro) + 1.4s); }
+  html.anim .scroll-cue{ opacity:0; }
+  html.anim .scroll-cue.on{ opacity:1; transition:opacity 900ms var(--ease); }
   @media (max-width:900px){ .scroll-cue{ display:none; } }
 
   /* the copy waterfalls line by line once the mark has finished. The mount
@@ -1027,12 +1038,29 @@
      film gets the machine to itself. */
   var heroPanel = document.getElementById('heroPanel');
   var heroSpec = document.getElementById('heroSpec');
+  var topbarEl = document.querySelector('.topbar');
+  var cueEl = document.querySelector('.scroll-cue');
   function showCopy(){
     if(heroPanel) heroPanel.classList.add('on');
     if(heroSpec) heroSpec.classList.add('on');
   }
-  if(animOn){ onStageClear(function(){ setTimeout(showCopy, 260); }); }
-  else{ showCopy(); }
+  function showChrome(){
+    if(topbarEl) topbarEl.classList.add('on');
+    if(cueEl) cueEl.classList.add('on');
+  }
+  if(animOn){
+    /* the whole intro reads as one move: the mark burns dead centre, slides
+       to its place on the right, the headline falls in behind it, and the
+       bar arrives last. */
+    onStageClear(function(){
+      var mount = document.getElementById('fireMount');
+      if(mount) mount.classList.add('placed');
+      setTimeout(showCopy, 780);      /* as the slide settles */
+      setTimeout(showChrome, 1450);   /* after the headline has landed */
+    });
+  } else {
+    showCopy(); showChrome();
+  }
 
   /* ---------- fire mark ---------- */
   /* First thing on the page and nothing else competing: the source is set
