@@ -1207,6 +1207,13 @@
     var cv = document.getElementById('veil');
     var hero = document.getElementById('top');
     if(!cv || !hero) return;
+    /* phones skip the veil: the mark sits in the copy there (so it paints
+       above this canvas) and would miss the tint the rest of the hero gets,
+       which shows as a lighter square. Cheaper on a phone GPU besides. */
+    if(window.matchMedia && window.matchMedia('(max-width:900px)').matches){
+      cv.style.display = 'none';
+      return;
+    }
     var gl = cv.getContext('webgl', { antialias:false, alpha:true });
     if(!gl){ cv.style.display = 'none'; return; }
 
