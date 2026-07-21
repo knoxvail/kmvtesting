@@ -256,10 +256,10 @@
   /* NOTE: no z-index / opacity / transform on the mount — any of them would
      create a stacking context and isolate the blend, bringing the rectangle
      back. Centered with negative margins instead of translate(-50%,-50%). */
-  .fire-mount{ position:absolute; left:66%; top:47%;
-    width:clamp(456px,48vw,744px); aspect-ratio:1/1;
-    margin-left:calc(clamp(456px,48vw,744px) / -2);
-    margin-top:calc(clamp(456px,48vw,744px) / -2);
+  .fire-mount{ position:absolute; left:63%; top:47%;
+    width:clamp(570px,60vw,930px); aspect-ratio:1/1;
+    margin-left:calc(clamp(570px,60vw,930px) / -2);
+    margin-top:calc(clamp(570px,60vw,930px) / -2);
     pointer-events:none; }
   /* screen blend: black drops out, so the fire floats on the espresso field
      with no rectangle to hide — no vignette, no mask, no color matching.
@@ -280,8 +280,8 @@
   html:not(.anim) .fire-mount, .fire-mount.dead{ display:none; }
 
   /* vector fallback — shown when motion is reduced or the film can't play */
-  .brand-mark{ position:absolute; left:66%; top:47%; transform:translate(-50%,-50%);
-    width:clamp(228px,25vw,396px); height:auto; z-index:0; pointer-events:none; display:none; }
+  .brand-mark{ position:absolute; left:63%; top:47%; transform:translate(-50%,-50%);
+    width:clamp(285px,31.5vw,495px); height:auto; z-index:0; pointer-events:none; display:none; }
   html:not(.anim) .brand-mark, .fire-mount.dead + .brand-mark{ display:block; }
   .brand-mark circle, .brand-mark line{ stroke:var(--gold); }
   @media (max-width:900px){ .fire-mount, .brand-mark{ display:none !important; } }
@@ -1251,7 +1251,9 @@
       0.784, 0.616, 0.373,
       0.078, 0.055, 0.027
     ]));
-    gl.uniform1f(locGrain, 0.22);
+    /* no shader dither — per-pixel grain turns to blur blocks when the small
+       render is upscaled; the .grain overlay provides grain at native res */
+    gl.uniform1f(locGrain, 0.0);
 
     var running = false, lit = false;
     /* the veil is soft noise — render small and let CSS upscale. ~900px
@@ -1260,7 +1262,7 @@
        for ambient smoke — the GPU budget belongs to the fire film. */
     function resize(){
       var w = hero.clientWidth || 1, h = hero.clientHeight || 1;
-      var s = Math.min(1, 900 / w);
+      var s = Math.min(1, 1280 / w);
       var tw = Math.max(2, Math.round(w * s)), th = Math.max(2, Math.round(h * s));
       if(cv.width !== tw || cv.height !== th){
         cv.width = tw; cv.height = th;
