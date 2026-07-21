@@ -660,6 +660,10 @@
 
 <!-- ============ 00 COVER ============ -->
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
+  <!-- veil painted BELOW the fire film: a WebGL layer stacked over the
+       blended video forced the compositor to re-raster the sandwich every
+       frame and dropped film frames -->
+  <canvas id="veil" aria-hidden="true"></canvas>
   <div class="fire-mount" id="fireMount" aria-hidden="true">
     <video id="fireFilm" muted playsinline preload="auto" data-film="assets/soren-fire.mp4"></video>
     <div class="fire-grain" aria-hidden="true"></div>
@@ -668,7 +672,6 @@
     <circle cx="36" cy="36" r="28" stroke-width="0.9"/>
     <line x1="16" y1="56" x2="56" y2="16" stroke-width="0.9" stroke-linecap="round"/>
   </svg>
-  <canvas id="veil" aria-hidden="true"></canvas>
 
   <div class="topbar">
     <a class="brand" href="#top">
