@@ -153,7 +153,7 @@
   /* ===== Soren studio chrome — espresso frame + return bar =====
      Shown only when the template is viewed on its own; inside the gallery
      portals it is removed so the preview reads as a real site. */
-  :root{ --soren-bar:78px; --soren-edge:17px; }
+  :root{ --soren-bar:70px; --soren-edge:11px; --soren-round:16px; }
   body{ padding-top:var(--soren-bar); }
   /* three zones: the way out on the left, what you're looking at in the
      middle, whose window it is on the right */
@@ -162,10 +162,10 @@
     padding:0 clamp(14px,2.4vw,24px); background:#1D150C;
     border-bottom:1px solid rgba(200,157,95,0.34);
     font-family:'Space Mono', ui-monospace, monospace; }
-  .soren-back{ justify-self:start; display:inline-flex; align-items:center; gap:11px;
-    min-height:52px; padding:17px clamp(20px,2.6vw,34px);
+  .soren-back{ justify-self:start; display:inline-flex; align-items:center; gap:10px;
+    min-height:44px; padding:13px clamp(17px,2.1vw,26px); border-radius:5px;
     background:#C89D5F; color:#1D150C; text-decoration:none; border:1px solid #C89D5F;
-    font-size:12.5px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase;
+    font-size:11px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;
     transition:background 200ms ease-out, border-color 200ms ease-out; }
   .soren-back:hover{ background:#EAE3D3; border-color:#EAE3D3; }
   .soren-bar .sb-note{ justify-self:center; text-align:center;
@@ -176,16 +176,20 @@
   .soren-bar .sb-id svg{ width:27px; height:27px; flex:none; }
   .soren-bar .sb-name{ font-family:'Fraunces', Georgia, serif; color:#EAE3D3;
     font-size:15px; letter-spacing:0.3em; text-transform:uppercase; text-indent:0.3em; }
-  /* the frame reads as a window you are looking through */
+  /* the frame reads as a window you are looking through: a rounded opening
+     with everything outside it filled by an enormous shadow spread, so the
+     inner corners curve while the screen edges stay square */
   .soren-frame{ position:fixed; left:0; right:0; bottom:0; top:var(--soren-bar);
-    z-index:190; pointer-events:none; border:var(--soren-edge) solid #1D150C; border-top:0; }
+    z-index:190; pointer-events:none; overflow:hidden; }
+  .soren-frame::after{ content:""; position:absolute; inset:var(--soren-edge);
+    border-radius:var(--soren-round); box-shadow:0 0 0 9999px #1D150C; }
   html.embedded body{ padding-top:0; }
   html.embedded .soren-bar, html.embedded .soren-frame{ display:none; }
   @media (max-width:820px){
-    :root{ --soren-bar:64px; --soren-edge:10px; }
+    :root{ --soren-bar:60px; --soren-edge:8px; --soren-round:12px; }
     .soren-bar{ grid-template-columns:auto 1fr; }
     .soren-bar .sb-note{ display:none; }
-    .soren-back{ min-height:44px; padding:13px 16px; font-size:10.5px; letter-spacing:0.14em; }
+    .soren-back{ min-height:42px; padding:12px 15px; font-size:10px; letter-spacing:0.13em; }
     .soren-bar .sb-name{ font-size:13px; }
   }
 
