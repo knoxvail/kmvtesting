@@ -294,6 +294,11 @@
        the whole panel */
     .fire-mount{ position:relative; left:auto; top:auto;
       width:min(64vw,260px); margin:4px auto 20px; }
+    /* burns on the screen's centre line, then settles down into the copy.
+       --rise is measured at runtime so it is exact on any handset. */
+    html.anim .fire-mount{ transform:translateY(var(--rise,0px)); }
+    html.anim .fire-mount.placed{ transform:none;
+      transition:transform 1100ms cubic-bezier(0.65,0,0.35,1); }
     .brand-mark{ left:50%; top:46%; width:min(48vw,190px); }
   }
 
@@ -1093,6 +1098,13 @@
       if(headline && headline.parentNode){
         headline.parentNode.insertBefore(fireMount, headline.nextSibling);
       }
+      /* lift it to the middle of the screen for the burn — the slide back
+         down is what .placed undoes */
+      requestAnimationFrame(function(){
+        var r = fireMount.getBoundingClientRect();
+        var rise = Math.round(window.innerHeight / 2 - (r.top + r.height / 2));
+        fireMount.style.setProperty('--rise', rise + 'px');
+      });
     }
     fireFilm.src = filmSrc;
 
