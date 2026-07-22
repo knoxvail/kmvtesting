@@ -1205,9 +1205,13 @@
     };
     placeMount(smallScreen);
     var mq = window.matchMedia('(max-width:900px)');
-    var onBreak = function(ev){ placeMount(ev.matches); };
-    if(mq.addEventListener) mq.addEventListener('change', onBreak);
-    else if(mq.addListener) mq.addListener(onBreak);
+    var reHome = function(){ placeMount(mq.matches); };
+    if(mq.addEventListener) mq.addEventListener('change', reHome);
+    else if(mq.addListener) mq.addListener(reHome);
+    /* belt and braces: some environments resize without firing the media
+       query change event, and resize always fires. placeMount is a no-op
+       when the mark is already in the right parent. */
+    window.addEventListener('resize', reHome);
 
     if(smallScreen){
       setRise();
