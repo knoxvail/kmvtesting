@@ -1108,6 +1108,9 @@
          fires in a background tab, which would leave the lift unset. */
       var setRise = function(){
         if(fireMount.classList.contains('placed')) return;
+        /* zero it first — measuring while the lift is applied would read
+           the lifted position and cancel itself out to 0 */
+        fireMount.style.setProperty('--rise', '0px');
         var r = fireMount.getBoundingClientRect();
         fireMount.style.setProperty('--rise',
           Math.round(window.innerHeight / 2 - (r.top + r.height / 2)) + 'px');
