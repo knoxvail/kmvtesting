@@ -1104,12 +1104,16 @@
         headline.parentNode.insertBefore(fireMount, headline.nextSibling);
       }
       /* lift it to the middle of the screen for the burn — the slide back
-         down is what .placed undoes */
-      requestAnimationFrame(function(){
+         down is what .placed undoes. Measured synchronously: rAF never
+         fires in a background tab, which would leave the lift unset. */
+      var setRise = function(){
+        if(fireMount.classList.contains('placed')) return;
         var r = fireMount.getBoundingClientRect();
-        var rise = Math.round(window.innerHeight / 2 - (r.top + r.height / 2));
-        fireMount.style.setProperty('--rise', rise + 'px');
-      });
+        fireMount.style.setProperty('--rise',
+          Math.round(window.innerHeight / 2 - (r.top + r.height / 2)) + 'px');
+      };
+      setRise();
+      window.addEventListener('load', setRise);   /* again once fonts settle */
     }
     fireFilm.src = filmSrc;
 
