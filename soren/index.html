@@ -1530,7 +1530,10 @@
         if(y < 4 || y > vh * 1.2) return;
         if(hs && !hs.dataset.par){ hs.dataset.par = '1'; hs.style.transition = 'none'; }
         var p = Math.min(1, y / vh);
-        if(hp) hp.style.transform = 'translateY(' + (p * -34).toFixed(1) + 'px)';
+        /* never transform the panel while the mark lives inside it: any
+           transform makes it a stacking context, which isolates the mark's
+           screen blend and paints its black square. */
+        if(hp && !hp.contains(fireMount)) hp.style.transform = 'translateY(' + (p * -34).toFixed(1) + 'px)';
         if(hs) hs.style.transform = 'translateY(' + (p * -64).toFixed(1) + 'px)';
       });
     }, { passive:true });
