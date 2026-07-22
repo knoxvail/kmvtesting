@@ -93,7 +93,7 @@
   .l-core{ text-align:center; }
   .l-core svg{ width:64px; height:64px; display:block; margin:0 auto 26px; }
   html.anim .l-core circle{ stroke-dasharray:176; stroke-dashoffset:176; animation:draw 1.15s var(--expo) 0.15s forwards; }
-  html.anim .l-core line{ stroke-dasharray:57; stroke-dashoffset:57; animation:draw 0.6s var(--expo) 0.95s forwards; }
+  html.anim .l-core line{ stroke-dasharray:68; stroke-dashoffset:68; animation:draw 0.6s var(--expo) 0.95s forwards; }
   .l-word{ display:flex; justify-content:center; gap:0.55em; font-family:var(--serif); font-weight:400;
     font-size:15px; letter-spacing:0.35em; text-transform:uppercase; color:var(--bone); text-indent:0.35em; }
   .l-word span{ opacity:0; }
@@ -223,7 +223,7 @@
   .brand .bmark circle, .brand .bmark line{ stroke:var(--gold); }
   html.anim .brand .bmark circle{ stroke-dasharray:176; stroke-dashoffset:176;
     animation:draw 1.2s var(--expo) forwards; animation-delay:calc(var(--intro) + 0.55s); }
-  html.anim .brand .bmark line{ stroke-dasharray:57; stroke-dashoffset:57;
+  html.anim .brand .bmark line{ stroke-dasharray:68; stroke-dashoffset:68;
     animation:draw 0.65s var(--expo) forwards; animation-delay:calc(var(--intro) + 1.5s); }
   .brand .bname{ font-family:var(--serif); font-weight:400; font-size:17px; letter-spacing:0.3em; text-transform:uppercase; text-indent:0.3em; }
   .brand .bsub{ font-family:var(--mono); font-size:9px; letter-spacing:0.24em; text-transform:uppercase; color:var(--greige-d); }
@@ -429,11 +429,23 @@
   .track{ display:flex; height:100%; will-change:transform; }
   .scene{ position:relative; flex:0 0 100vw; width:100vw; height:100%; overflow:hidden;
     display:flex; align-items:center; --tp:1; }
+  /* phones ride sideways too — same sticky stage, same one-scene-per-screen.
+     Each scene stacks its own copy above its portal instead of using the
+     floating placard, which needs desktop width to read. Everything is
+     tuned to fit a single screen so no scene scrolls internally. */
   @media (max-width:760px){
-    .ride{ height:auto; }
-    .stage{ position:relative; height:auto; }
-    .track{ display:block; height:auto; }
-    .scene{ width:100%; height:auto; padding:clamp(56px,9vh,84px) 0; }
+    .ride{ height:640vh; }
+    .scene{ padding:0; }
+    .scene-grid{ gap:18px; align-content:center; }
+    .scene-num{ font-size:clamp(96px,30vw,170px); bottom:auto; top:1.5vh;
+      right:calc(var(--pad-x) * 0.4); opacity:0.7; }
+    .scene--alt .scene-num{ left:auto; right:calc(var(--pad-x) * 0.4); }
+    .scene-head{ order:0; }
+    .rh-title{ font-size:clamp(26px,7.4vw,34px); }
+    .rh-desc{ margin-top:9px; font-size:13.5px; line-height:1.5; max-width:38ch; }
+    .rh-feat{ display:none; }
+    .rh-cta{ margin-top:14px; padding:13px 20px; font-size:9.5px; }
+    .portal{ aspect-ratio:16/11; }
   }
 
   .scene-bg{ position:absolute; inset:0; pointer-events:none; transition:filter 400ms ease-out;
@@ -605,9 +617,9 @@
   .contact .inner{ padding-top:clamp(90px,13vh,150px); padding-bottom:clamp(80px,11vh,130px); }
   .seal{ width:46px; height:46px; }
   html.anim .revealed .seal circle{ stroke-dasharray:176; stroke-dashoffset:176; animation:draw 1.1s var(--expo) 0.2s forwards; }
-  html.anim .revealed .seal line{ stroke-dasharray:57; stroke-dashoffset:57; animation:draw 0.6s var(--expo) 0.95s forwards; }
+  html.anim .revealed .seal line{ stroke-dasharray:68; stroke-dashoffset:68; animation:draw 0.6s var(--expo) 0.95s forwards; }
   html.anim .seal circle, html.anim .seal line{ stroke-dasharray:176; stroke-dashoffset:176; }
-  html.anim .seal line{ stroke-dasharray:57; stroke-dashoffset:57; }
+  html.anim .seal line{ stroke-dasharray:68; stroke-dashoffset:68; }
   .wordmark{
     font-size:clamp(62px,12.5vw,150px); font-weight:400; letter-spacing:0.18em; text-transform:uppercase; line-height:1;
     font-variation-settings:'opsz' 144, 'SOFT' 30; margin:clamp(24px,4vh,42px) 0 clamp(18px,3vh,30px);
@@ -674,7 +686,7 @@
   <div class="l-core">
     <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
       <circle cx="36" cy="36" r="28" stroke="#C89D5F" stroke-width="1.2"/>
-      <line x1="16" y1="56" x2="56" y2="16" stroke="#C89D5F" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="12" y1="60" x2="60" y2="12" stroke="#C89D5F" stroke-width="1.2" stroke-linecap="round"/>
     </svg>
     <div class="l-word"><span>S</span><span>O</span><span>R</span><span>E</span><span>N</span></div>
   </div>
@@ -708,7 +720,7 @@
   </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" stroke-width="0.9"/>
-    <line x1="16" y1="56" x2="56" y2="16" stroke-width="0.9" stroke-linecap="round"/>
+    <line x1="12" y1="60" x2="60" y2="12" stroke-width="0.9" stroke-linecap="round"/>
   </svg>
   <!-- veil above the film: plain translucent canvas over plain video is the
        cheap, proven layering — its wisps run across the mount uncut -->
@@ -718,7 +730,7 @@
     <a class="brand" href="#top">
       <svg class="bmark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
         <circle cx="36" cy="36" r="28" stroke-width="2.2"/>
-        <line x1="16" y1="56" x2="56" y2="16" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="12" y1="60" x2="60" y2="12" stroke-width="2.2" stroke-linecap="round"/>
       </svg>
       <span class="bname">Soren</span>
       <span class="bsub">Web Studio · Orange County, CA</span>
@@ -1009,7 +1021,7 @@
   <div class="inner reveal">
     <svg class="seal" viewBox="0 0 72 72" fill="none" aria-hidden="true">
       <circle cx="36" cy="36" r="28" stroke="#C89D5F" stroke-width="1.1"/>
-      <line x1="16" y1="56" x2="56" y2="16" stroke="#C89D5F" stroke-width="1.1" stroke-linecap="round"/>
+      <line x1="12" y1="60" x2="60" y2="12" stroke="#C89D5F" stroke-width="1.1" stroke-linecap="round"/>
     </svg>
     <h2 class="wordmark">
       <span class="w"><span>S</span></span><span class="w"><span data-d="1">O</span></span><span class="w"><span data-d="2">R</span></span><span class="w"><span data-d="3">E</span></span><span class="w"><span data-d="4">N</span></span>
@@ -1473,7 +1485,6 @@
 
   function rideScroll(){
     if(!rideEl || !track) return;
-    if(smallScr.matches){ docEl.classList.remove('ride-mode'); track.style.transform = ''; return; }
     var vh = window.innerHeight;
     var r = rideEl.getBoundingClientRect();
     var travel = r.height - vh;
