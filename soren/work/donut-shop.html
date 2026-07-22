@@ -170,14 +170,39 @@
   @keyframes sCap{ to{ opacity:1; } }
   html:not(.anim) .s-enter{ display:none; }
 
-  /* return to the studio site */
-  .soren-return{ position:fixed; left:18px; bottom:18px; z-index:150;
-    display:inline-flex; align-items:center; gap:9px; min-height:44px; padding:12px 20px;
-    background:#fff; border:0; border-radius:999px;
-    font-family:var(--round); font-weight:600; font-size:13px;
-    color:var(--cocoa); text-decoration:none; box-shadow:0 5px 0 rgba(70,40,26,0.35);
-    transition:background 200ms ease-out, color 200ms ease-out, transform 200ms var(--spring), box-shadow 200ms var(--spring); }
-  .soren-return:hover{ background:var(--pink); color:#fff; transform:translateY(-2px); box-shadow:0 7px 0 var(--pink-deep); }
+  /* ===== Soren studio chrome — espresso frame + return bar =====
+     Shown only when the template is viewed on its own; inside the gallery
+     portals it is removed so the preview reads as a real site. */
+  :root{ --soren-bar:66px; }
+  body{ padding-top:var(--soren-bar); }
+  .soren-bar{ position:fixed; top:0; left:0; right:0; height:var(--soren-bar); z-index:200;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:0 clamp(14px,3vw,26px); background:#1D150C;
+    border-bottom:1px solid rgba(200,157,95,0.34);
+    font-family:'Space Mono', ui-monospace, monospace; }
+  .soren-bar .sb-id{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .soren-bar .sb-id svg{ width:26px; height:26px; flex:none; }
+  .soren-bar .sb-name{ font-family:'Fraunces', Georgia, serif; color:#EAE3D3;
+    font-size:15px; letter-spacing:0.3em; text-transform:uppercase; text-indent:0.3em; }
+  .soren-bar .sb-note{ font-size:9px; letter-spacing:0.24em; text-transform:uppercase;
+    color:rgba(234,227,211,0.5); white-space:nowrap; }
+  .soren-bar .sb-note b{ color:#C89D5F; font-weight:400; }
+  .soren-back{ display:inline-flex; align-items:center; gap:10px; flex:none;
+    min-height:44px; padding:13px clamp(16px,2.4vw,26px);
+    background:#C89D5F; color:#1D150C; text-decoration:none; border:1px solid #C89D5F;
+    font-size:11.5px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase;
+    transition:background 200ms ease-out, border-color 200ms ease-out; }
+  .soren-back:hover{ background:#EAE3D3; border-color:#EAE3D3; }
+  .soren-frame{ position:fixed; left:0; right:0; bottom:0; top:var(--soren-bar);
+    z-index:190; pointer-events:none; border:9px solid #1D150C; border-top:0; }
+  html.embedded body{ padding-top:0; }
+  html.embedded .soren-bar, html.embedded .soren-frame{ display:none; }
+  @media (max-width:700px){
+    :root{ --soren-bar:58px; }
+    .soren-bar .sb-note{ display:none; }
+    .soren-back{ padding:12px 15px; font-size:10px; letter-spacing:0.14em; }
+    .soren-frame{ border-width:6px; }
+  }
 
   @media (prefers-reduced-motion: reduce){
     html{ scroll-behavior:auto; }
@@ -196,7 +221,18 @@
   <span class="cap">A Soren Template</span>
 </div>
 
-<a class="soren-return" href="../index.html">← Return to Soren</a>
+<div class="soren-bar" id="sorenBar">
+  <span class="sb-id">
+    <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
+      <circle cx="36" cy="36" r="28" stroke="#C89D5F" stroke-width="2.4"/>
+      <line x1="12" y1="60" x2="60" y2="12" stroke="#C89D5F" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+    <span class="sb-name">Soren</span>
+    <span class="sb-note">Template preview · <b>Local Donut Shop</b></span>
+  </span>
+  <a class="soren-back" id="sorenBack" href="../index.html">← Return to Soren</a>
+</div>
+<div class="soren-frame" aria-hidden="true"></div>
 
 <header>
   <div class="bar">
@@ -334,9 +370,17 @@
   });
   var en = document.getElementById('sorenEnter');
   if(window.self !== window.top){
+    document.documentElement.classList.add('embedded');
     if(en){ en.remove(); en = null; }
-    var ret = document.querySelector('.soren-return');
-    if(ret){ ret.remove(); }
+    var bar = document.getElementById('sorenBar'); if(bar){ bar.remove(); }
+    var frm = document.querySelector('.soren-frame'); if(frm){ frm.remove(); }
+  }
+  /* tell the studio site to skip its intro and land where they left off */
+  var backBtn = document.getElementById('sorenBack');
+  if(backBtn){
+    backBtn.addEventListener('click', function(){
+      try{ sessionStorage.setItem('sorenBack', '1'); }catch(e){}
+    });
   }
   if(en){
     if(animOn){

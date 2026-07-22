@@ -332,6 +332,14 @@
   html.anim .scroll-cue.on{ opacity:1; transition:opacity 900ms var(--ease); }
   @media (max-width:900px){ .scroll-cue{ display:none; } }
 
+  /* returning from a template: everything is simply already there */
+  html.instant .panel > *, html.instant .topbar, html.instant .scroll-cue,
+  html.instant .fire-mount, html.instant .fire-mount video, html.instant #veil{
+    opacity:1 !important; transform:none !important; transition:none !important;
+    animation:none !important; }
+  html.instant .scene .fall{ opacity:1 !important; transform:none !important;
+    transition:none !important; }
+
   /* the copy waterfalls line by line once the mark has finished. The mount
      is excluded — on phones it lives inside this panel and must not fade. */
   html.anim .panel > *:not(.fire-mount){ opacity:0; transform:translateY(24px); }
@@ -424,17 +432,18 @@
     text-transform:uppercase; color:var(--greige-d); }
   .ride-cue b{ color:var(--gold); font-weight:400; }
 
-  .ride{ position:relative; height:820vh; }
-  .stage{ position:sticky; top:0; height:100svh; overflow:hidden; }
-  .track{ display:flex; height:100%; will-change:transform; }
-  .scene{ position:relative; flex:0 0 100vw; width:100vw; height:100%; overflow:hidden;
+  /* The gallery reads straight down — one template per screen, no sideways
+     travel. Each scene's copy still waterfalls in, driven by that scene's
+     own position in the viewport. */
+  .ride{ position:relative; }
+  .stage{ position:relative; }
+  .track{ display:block; }
+  .scene{ position:relative; width:100%; min-height:100svh; overflow:hidden;
     display:flex; align-items:center; --tp:1; }
-  /* phones ride sideways too — same sticky stage, same one-scene-per-screen.
-     Each scene stacks its own copy above its portal instead of using the
-     floating placard, which needs desktop width to read. Everything is
-     tuned to fit a single screen so no scene scrolls internally. */
+  /* phones: each scene stacks its own copy above its portal instead of the
+     floating placard, which needs desktop width to read. Tuned so a scene
+     fits one screen without scrolling inside itself. */
   @media (max-width:760px){
-    .ride{ height:640vh; }
     .scene{ padding:0; }
     .scene-grid{ gap:18px; align-content:center; }
     .scene-num{ font-size:clamp(96px,30vw,170px); bottom:auto; top:1.5vh;
@@ -551,22 +560,6 @@
   .scene-copy{ transition:opacity 350ms ease-out; }
   html.anim .scene-copy{ opacity:calc(min(var(--tp) * 4, 1)); }
 
-  /* bottom scrubber — the rail's second life during the ride */
-  .bbar{ position:fixed; left:50%; bottom:24px; z-index:70; pointer-events:none;
-    display:flex; flex-direction:column; align-items:center; gap:10px;
-    transform:translate(-50%, 90px); opacity:0;
-    transition:transform 650ms var(--expo) 0ms, opacity 480ms ease-out 0ms; }
-  html.ride-mode .bbar{ transform:translate(-50%, 0); opacity:1;
-    transition-delay:280ms, 280ms; }
-  .bbar .bline{ position:relative; width:min(430px,56vw); height:1px; background:rgba(200,157,95,0.25); overflow:hidden; }
-  .bbar .bline i{ position:absolute; inset:0; background:var(--gold);
-    transform:scaleX(var(--rp,0)); transform-origin:left center; }
-  .bbar .blabel{ font-family:var(--mono); font-size:9px; letter-spacing:0.3em; text-transform:uppercase;
-    color:var(--gold); white-space:nowrap; }
-  @media (max-width:860px){ .bbar{ display:none; } }
-
-  .rail{ transition:transform 650ms var(--expo) 280ms, opacity 480ms ease-out 280ms; }
-  html.ride-mode .rail{ transform:translateY(46vh); opacity:0; transition-delay:0ms, 0ms; }
 
   .work-note{ position:relative; z-index:2; padding:clamp(30px,5vh,54px) var(--pad-x) clamp(60px,9vh,90px);
     font-family:var(--mono); font-size:10.5px; letter-spacing:0.24em;
@@ -676,7 +669,6 @@
     .stage{ position:relative !important; height:auto !important; }
     .track{ display:block !important; transform:none !important; }
     .scene{ width:100% !important; height:auto !important; padding:clamp(56px,9vh,90px) 0 !important; }
-    .bbar{ display:none !important; }
   }
 </style>
 </head>
@@ -704,11 +696,6 @@
   <span class="num" id="railNum">00 / 05</span>
   <div class="line"><i id="railFill"></i></div>
   <span class="sec" id="railSec">Cover</span>
-</div>
-
-<div class="bbar" id="bbar" aria-hidden="true">
-  <div class="bline"><i></i></div>
-  <span class="blabel" id="bbarLabel">01 / 04 · The Canyon Café</span>
 </div>
 
 <!-- ============ 00 COVER ============ -->
@@ -1052,6 +1039,25 @@
      WebGL veil and every template iframe queue up here and start only once
      the film has finished (or failed, or timed out). Doing all of it at
      once is what made the hero stutter. */
+  /* Coming back from a template: no intro, no waterfall, land exactly where
+     they left off. Set by the template's Return to Soren button. */
+  var returning = false;
+  try{
+    returning = sessionStorage.getItem('sorenBack') === '1';
+    if(returning){ sessionStorage.removeItem('sorenBack'); }
+  }catch(e){}
+  if(returning){
+    docEl.classList.add('instant');
+    if('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    var backTo = 0;
+    try{ backTo = parseInt(sessionStorage.getItem('sorenScroll') || '0', 10) || 0; }catch(e){}
+    var landHere = function(){ window.scrollTo(0, backTo); };
+    landHere();
+    window.addEventListener('load', landHere);
+    /* the portals size themselves late; hold the position through that */
+    setTimeout(landHere, 60); setTimeout(landHere, 320);
+  }
+
   var stageClear = false, stageQueue = [];
   function onStageClear(fn){ if(stageClear){ fn(); } else { stageQueue.push(fn); } }
   function clearStage(){
@@ -1085,7 +1091,7 @@
     if(topbarEl) topbarEl.classList.add('on');
     if(cueEl) cueEl.classList.add('on');
   }
-  if(animOn){
+  if(animOn && !returning){
     /* the whole intro reads as one move: the mark burns dead centre, slides
        to its place on the right, the headline falls in behind it, and the
        bar arrives last. */
@@ -1097,6 +1103,11 @@
     });
   } else {
     showCopy(); showChrome();
+    if(returning){
+      var m0 = document.getElementById('fireMount');
+      if(m0) m0.classList.add('placed', 'lit');
+      clearStage();               /* veil + portals start straight away */
+    }
   }
 
   /* ---------- fire mark ---------- */
@@ -1172,8 +1183,14 @@
       }, { threshold:0.05 }).observe(fireMount);
     }
 
+    /* on a return trip the mark is already "finished": hold its last frame */
+    if(returning){
+      fireFilm.addEventListener('loadeddata', function(){
+        try{ fireFilm.currentTime = Math.max(0, (fireFilm.duration || 4) - 0.05); }catch(e){}
+      }, { once:true });
+    }
     /* go the moment any of these say "ready" — whichever lands first wins */
-    if(fireFilm.error){ fireDead(); }
+    else if(fireFilm.error){ fireDead(); }
     else{
       ['loadeddata','canplay','canplaythrough'].forEach(function(evt){
         fireFilm.addEventListener(evt, fireArm, { once:true });
@@ -1410,8 +1427,6 @@
   var rideEl = document.getElementById('ride');
   var track = document.getElementById('rideTrack');
   var scenes = Array.prototype.slice.call(document.querySelectorAll('.scene'));
-  var bbar = document.getElementById('bbar');
-  var bbarLabel = document.getElementById('bbarLabel');
   var smallScr = window.matchMedia('(max-width:760px)');
 
   function sizePortals(){
@@ -1473,48 +1488,20 @@
     }
   }
 
-  /* scroll drives: text falls in, then the track slides right */
-  var WEIGHTS = [1.9, 1, 1, 1];
-  var wTotal = WEIGHTS.reduce(function(a,b){ return a + b; }, 0);
-  var BOUNDS = [];
-  (function(){
-    var acc = 0;
-    WEIGHTS.forEach(function(w){ BOUNDS.push([acc / wTotal, (acc + w) / wTotal]); acc += w; });
-  })();
-  var TEXT_BEAT = 0.55;
-
+  /* Straight down the page: every scene waterfalls its own copy in from its
+     own position in the viewport. The copy is fully in by the time the
+     scene is centred, and holds from there. */
   function rideScroll(){
-    if(!rideEl || !track) return;
+    if(!rideEl) return;
     var vh = window.innerHeight;
-    var r = rideEl.getBoundingClientRect();
-    var travel = r.height - vh;
-    if(travel < 50) return;
-    var P = Math.min(1, Math.max(0, -r.top / travel));
-    var active = r.top <= 2 && r.bottom >= vh - 2;
-    docEl.classList.toggle('ride-mode', active);
-
-    var x = 0, idx = 0;
-    scenes.forEach(function(scene, i){
-      var b = BOUNDS[i];
-      var t = Math.min(1, Math.max(0, (P - b[0]) / (b[1] - b[0])));
-      var tp = Math.min(1, t / TEXT_BEAT);
+    scenes.forEach(function(scene){
+      var r = scene.getBoundingClientRect();
+      /* 0 as the scene's top reaches the bottom of the screen, 1 once it
+         has risen through the lower two-thirds */
+      var t = (vh - r.top) / (vh * 0.62);
+      var tp = Math.min(1, Math.max(0, t));
       scene.style.setProperty('--tp', tp.toFixed(3));
-      if(i < scenes.length - 1){
-        var slide = Math.min(1, Math.max(0, (t - TEXT_BEAT) / (1 - TEXT_BEAT)));
-        var e = slide < 0.5 ? 2 * slide * slide : 1 - Math.pow(-2 * slide + 2, 2) / 2;
-        x += e;
-      }
-      if(t > 0 && t < 1){ idx = i; }
-      else if(t >= 1){ idx = Math.min(i + 1, scenes.length - 1); }
     });
-    track.style.transform = 'translate3d(' + (-x * window.innerWidth).toFixed(1) + 'px,0,0)';
-
-    if(bbar){
-      bbar.style.setProperty('--rp', P.toFixed(3));
-      var name = scenes[idx] ? scenes[idx].getAttribute('data-name') : '';
-      var label = '0' + (idx + 1) + ' / 04 · ' + name;
-      if(bbarLabel && bbarLabel.textContent !== label){ bbarLabel.textContent = label; }
-    }
   }
   if(animOn && rideEl){
     var rideTick = false;
@@ -1555,6 +1542,8 @@
   if(wipe){
     document.querySelectorAll('.portal-link').forEach(function(card){
       card.addEventListener('click', function(ev){
+        /* remember exactly where they were so the return trip lands here */
+        try{ sessionStorage.setItem('sorenScroll', String(window.scrollY || 0)); }catch(e){}
         if(!animOn) return;
         ev.preventDefault();
         var href = card.getAttribute('href');
