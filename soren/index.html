@@ -242,7 +242,7 @@
      the veil canvas. */
   .hero-main{
     position:relative; flex:1; display:flex; align-items:stretch; justify-content:flex-start;
-    padding:0 0 clamp(58px,9vh,88px) 0; width:100%; margin:0;
+    padding:0; width:100%; margin:0;
   }
 
   /* the copy floats free on the dark field — no box */
@@ -323,7 +323,7 @@
   }
 
   /* scroll cue, under the logo on the right */
-  .scroll-cue{ position:absolute; right:var(--pad-x); bottom:clamp(74px,12vh,120px); z-index:4;
+  .scroll-cue{ position:absolute; right:var(--pad-x); bottom:clamp(30px,5vh,58px); z-index:4;
     display:flex; align-items:center; gap:14px; pointer-events:none; }
   .scroll-cue .mouse{ width:22px; height:34px; border:1.5px solid var(--gold); border-radius:12px; position:relative; flex:none; }
   .scroll-cue .mouse i{ position:absolute; left:50%; top:7px; width:3px; height:6px; margin-left:-1.5px; border-radius:2px; background:var(--gold); }
@@ -386,16 +386,6 @@
   .ps-row:last-child{ border-bottom:0; }
   .ps-k{ font-size:10px; letter-spacing:0.24em; text-transform:uppercase; color:var(--gold); padding-top:2px; }
   .ps-v{ font-size:12.5px; line-height:1.6; letter-spacing:0.03em; color:rgba(234,227,211,0.88); }
-
-  /* marquee */
-  .mq{ position:absolute; left:0; right:0; bottom:0; z-index:3; overflow:hidden;
-    border-top:1px solid rgba(200,157,95,0.16); padding:15px 0; background:rgba(20,14,7,0.4); }
-  .mq-track{ display:inline-flex; white-space:nowrap; width:max-content; }
-  .mq-track span{ font-family:var(--mono); font-size:10px; letter-spacing:0.32em; text-transform:uppercase;
-    color:rgba(200,157,95,0.55); padding-right:0.32em; }
-  html.anim .mq-track{ animation:mq 46s linear infinite; }
-  @keyframes mq{ to{ transform:translateX(-50%); } }
-  html:not(.anim) .mq-track span + span{ display:none; }
 
   @keyframes draw{ to{ stroke-dashoffset:0; } }
 
@@ -754,9 +744,6 @@
     </div>
   </div>
 
-  <div class="mq" aria-hidden="true"><div class="mq-track">
-    <span>Websites, your way · Only Forward · Orange County, California · Small by design · Precision over volume · </span><span>Websites, your way · Only Forward · Orange County, California · Small by design · Precision over volume · </span>
-  </div></div>
 </section>
 
 <!-- ============ 01 THE OFFER ============ -->
