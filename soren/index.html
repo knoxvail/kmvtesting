@@ -249,7 +249,9 @@
   }
   @media (max-width:900px){
     .hero-main{ justify-content:stretch; }
-    .panel{ width:100%; }
+    /* symmetric side padding, so the centred mark lands on the screen's
+       centre line rather than the centre of an offset content box */
+    .panel{ width:100%; padding-right:var(--pad-x); }
   }
 
   /* the mark: sparks draw the Ø, then it cools to a standing amber logo.
