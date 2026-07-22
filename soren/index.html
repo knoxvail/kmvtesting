@@ -387,6 +387,30 @@
   .ps-k{ font-size:10px; letter-spacing:0.24em; text-transform:uppercase; color:var(--gold); padding-top:2px; }
   .ps-v{ font-size:12.5px; line-height:1.6; letter-spacing:0.03em; color:rgba(234,227,211,0.88); }
 
+  /* ================= cursor =================
+     Snappy by construction: the position is written straight onto the
+     wrapper on every pointer move with NO transition, so it sits exactly
+     under the pointer. Only the look (arrow -> ring) is allowed to
+     animate, and that lives on the children. */
+  html.cur-on, html.cur-on *{ cursor:none; }
+  .cur{ position:fixed; top:0; left:0; z-index:400; pointer-events:none;
+    width:0; height:0; opacity:0; will-change:transform; }
+  .cur.awake{ opacity:1; }
+  .cur-arrow{ position:absolute; top:-1px; left:-1px; width:23px; height:23px; display:block;
+    transition:opacity 160ms ease-out, transform 200ms var(--ease);
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
+  .cur-ring{ position:absolute; top:0; left:0; width:132px; height:132px; margin:-66px 0 0 -66px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center; text-align:center;
+    border:1px solid rgba(234,227,211,0.7); background:rgba(29,21,12,0.22);
+    -webkit-backdrop-filter:blur(1.5px); backdrop-filter:blur(1.5px);
+    font-family:var(--mono); font-size:9.5px; letter-spacing:0.26em; text-transform:uppercase;
+    color:var(--bone); line-height:1.5;
+    opacity:0; transform:scale(0.55);
+    transition:opacity 200ms ease-out, transform 340ms var(--expo); }
+  html.cur-view .cur-ring{ opacity:1; transform:scale(1); }
+  html.cur-view .cur-arrow{ opacity:0; transform:scale(0.6); }
+  @media (max-width:900px){ .cur{ display:none; } }
+
   @keyframes draw{ to{ stroke-dashoffset:0; } }
 
   /* ================= offer table ================= */
@@ -679,6 +703,14 @@
     <span class="l-count" id="lCount">000</span>
     <span class="l-tag">Only Forward</span>
   </div>
+</div>
+
+<div class="cur" id="cur" aria-hidden="true">
+  <svg class="cur-arrow" viewBox="0 0 24 24">
+    <path d="M5.2 2.6 L5.2 19.8 L9.5 15.7 L12.3 21.6 L15.1 20.2 L12.4 14.5 L18.4 14.2 Z"
+          fill="#8B5E34" stroke="#EAE3D3" stroke-width="1.1" stroke-linejoin="round"/>
+  </svg>
+  <span class="cur-ring">View<br>template</span>
 </div>
 
 <div class="grain" aria-hidden="true"></div>
@@ -1200,6 +1232,29 @@
     clearStage();          /* no film to wait on */
   }
 
+
+  /* ---------- cursor ----------
+     Fine pointers only. Position is written directly on every move — no
+     interpolation, no rAF queue — so it never trails the pointer. It swells
+     into the "View template" ring over the gallery portals. */
+  var cur = document.getElementById('cur');
+  if(cur && window.matchMedia && window.matchMedia('(pointer:fine)').matches){
+    docEl.classList.add('cur-on');
+    var curMove = function(ev){
+      cur.style.transform = 'translate3d(' + ev.clientX + 'px,' + ev.clientY + 'px,0)';
+      if(!cur.classList.contains('awake')) cur.classList.add('awake');
+    };
+    window.addEventListener('pointermove', curMove, { passive:true });
+    window.addEventListener('pointerdown', curMove, { passive:true });
+    document.addEventListener('pointerleave', function(){ cur.classList.remove('awake'); });
+    document.addEventListener('pointerenter', function(){ cur.classList.add('awake'); });
+    document.querySelectorAll('.portal-link').forEach(function(el){
+      el.addEventListener('pointerenter', function(){ docEl.classList.add('cur-view'); });
+      el.addEventListener('pointerleave', function(){ docEl.classList.remove('cur-view'); });
+    });
+  } else if(cur){
+    cur.remove();
+  }
 
   /* ---------- magnetic pull ---------- */
   if(animOn && finePtr){
