@@ -333,6 +333,7 @@
   @media (max-width:900px){ .scroll-cue{ display:none; } }
 
   /* returning from a template: everything is simply already there */
+  html.instant{ scroll-behavior:auto; }
   html.instant .panel > *, html.instant .topbar, html.instant .scroll-cue,
   html.instant .fire-mount, html.instant .fire-mount video, html.instant #veil{
     opacity:1 !important; transform:none !important; transition:none !important;
@@ -1051,7 +1052,13 @@
     if('scrollRestoration' in history) history.scrollRestoration = 'manual';
     var backTo = 0;
     try{ backTo = parseInt(sessionStorage.getItem('sorenScroll') || '0', 10) || 0; }catch(e){}
-    var landHere = function(){ window.scrollTo(0, backTo); };
+    /* jump, never glide: the page sets scroll-behavior:smooth, which would
+       animate the restore (and not run at all in a throttled tab) */
+    var landHere = function(){
+      try{ window.scrollTo({ top: backTo, left: 0, behavior: 'instant' }); }
+      catch(e){ window.scrollTo(0, backTo); }
+      if(Math.abs(window.scrollY - backTo) > 2){ docEl.scrollTop = backTo; }
+    };
     landHere();
     window.addEventListener('load', landHere);
     /* the portals size themselves late; hold the position through that */
