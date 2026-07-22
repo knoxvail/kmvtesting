@@ -1172,24 +1172,44 @@
     }
     /* both routes are see-through, so the mark may travel */
     fireMount.classList.add('free');
-    /* on a phone the mark belongs in the reading order, under the headline */
-    if(smallScreen){
-      var headline = document.querySelector('.panel .display');
-      if(headline && headline.parentNode){
-        headline.parentNode.insertBefore(fireMount, headline.nextSibling);
+    /* lift it to the middle of the screen for the burn — the slide back down
+       is what .placed undoes. Measured synchronously: rAF never fires in a
+       background tab, which would leave the lift unset. */
+    var setRise = function(){
+      if(fireMount.classList.contains('placed')) return;
+      /* zero it first — measuring while the lift is applied would read the
+         lifted position and cancel itself out to 0 */
+      fireMount.style.setProperty('--rise', '0px');
+      var r = fireMount.getBoundingClientRect();
+      fireMount.style.setProperty('--rise',
+        Math.round(window.innerHeight / 2 - (r.top + r.height / 2)) + 'px');
+    };
+
+    /* On a phone the mark belongs in the reading order, under the headline;
+       on a desktop it floats in the hero. Re-run on breakpoint changes —
+       otherwise a window resized across the breakpoint leaves the mark
+       parented to the wrong element and it lands in the wrong place. */
+    var heroSection = document.getElementById('top');
+    var markSvg = document.querySelector('.brand-mark');
+    var placeMount = function(small){
+      if(small){
+        var headline = document.querySelector('.panel .display');
+        if(headline && headline.parentNode && fireMount.parentElement !== headline.parentNode){
+          headline.parentNode.insertBefore(fireMount, headline.nextSibling);
+        }
+        setRise();
+      } else if(heroSection && fireMount.parentElement !== heroSection){
+        heroSection.insertBefore(fireMount, markSvg || heroSection.firstChild);
+        fireMount.style.removeProperty('--rise');
       }
-      /* lift it to the middle of the screen for the burn — the slide back
-         down is what .placed undoes. Measured synchronously: rAF never
-         fires in a background tab, which would leave the lift unset. */
-      var setRise = function(){
-        if(fireMount.classList.contains('placed')) return;
-        /* zero it first — measuring while the lift is applied would read
-           the lifted position and cancel itself out to 0 */
-        fireMount.style.setProperty('--rise', '0px');
-        var r = fireMount.getBoundingClientRect();
-        fireMount.style.setProperty('--rise',
-          Math.round(window.innerHeight / 2 - (r.top + r.height / 2)) + 'px');
-      };
+    };
+    placeMount(smallScreen);
+    var mq = window.matchMedia('(max-width:900px)');
+    var onBreak = function(ev){ placeMount(ev.matches); };
+    if(mq.addEventListener) mq.addEventListener('change', onBreak);
+    else if(mq.addListener) mq.addListener(onBreak);
+
+    if(smallScreen){
       setRise();
       window.addEventListener('load', setRise);   /* again once fonts settle */
     }
