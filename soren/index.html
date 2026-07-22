@@ -9,7 +9,7 @@
 <meta property="og:description" content="Custom websites for local businesses, designed and built by hand in Orange County. Hosting covered. You keep your code.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://sorendesign.io/">
-<meta name="theme-color" content="#EFE5CE">
+<meta name="theme-color" content="#F7EFDD">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Crect width='72' height='72' fill='%23241B10'/%3E%3Ccircle cx='36' cy='36' r='22' fill='none' stroke='%23C89D5F' stroke-width='3'/%3E%3Cline x1='20' y1='52' x2='52' y2='20' stroke='%23C89D5F' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,9 +43,9 @@
        (.s-dark vs .s-cream) keeps working — only the roles inverted:
        the espresso family is now the warm paper the site sits on, and the
        cream family is now the chocolate of the feature sections. */
-    --espresso:#EFE5CE;        /* page — warm cream, not white */
-    --espresso-deep:#E7DBC0;   /* the quieter band */
-    --umber:#F7EFDC;           /* lightest point of the hero wash */
+    --espresso:#F7EFDD;        /* page — bright warm cream */
+    --espresso-deep:#F2E8D2;   /* the quieter band */
+    --umber:#FDF8EC;           /* lightest point of the hero wash */
     --cream:#2B1E12;           /* feature sections — warm chocolate */
     --cream-hi:#352516;
     --ink:#F0E9DB;             /* type on chocolate */
@@ -213,8 +213,9 @@
      (internal) resolution — width/height stretch the small render to fill */
   #veil{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:0;
     transition:opacity 1800ms ease-out; }
-  /* on paper the veil reads as a soft warm shadow rather than a glow */
-  #veil.lit{ opacity:0.30; }
+  /* barely there on paper — enough to keep the hero from looking flat,
+     not enough to muddy it */
+  #veil.lit{ opacity:0.14; }
 
   .topbar{
     position:relative; z-index:4;
@@ -531,9 +532,9 @@
   .scene-copy{ position:absolute; left:var(--pad-x); top:50%; transform:translateY(-50%); z-index:4;
     width:min(360px,26vw); }
   .scene-copy::before{ content:""; position:absolute; inset:-40px -56px -44px -48px; z-index:-1; pointer-events:none;
-    background:radial-gradient(ellipse 105% 100% at 42% 50%, rgba(239,229,206,0.92) 0%, rgba(239,229,206,0.6) 58%, rgba(239,229,206,0) 80%); }
-  .scene-copy .rh-title{ font-size:clamp(28px,3vw,44px); text-shadow:0 2px 22px rgba(239,229,206,0.9); }
-  .scene-copy .rh-desc{ max-width:none; text-shadow:0 1px 14px rgba(239,229,206,0.85); }
+    background:radial-gradient(ellipse 105% 100% at 42% 50%, rgba(247,239,221,0.92) 0%, rgba(247,239,221,0.6) 58%, rgba(247,239,221,0) 80%); }
+  .scene-copy .rh-title{ font-size:clamp(28px,3vw,44px); text-shadow:0 2px 22px rgba(247,239,221,0.9); }
+  .scene-copy .rh-desc{ max-width:none; text-shadow:0 1px 14px rgba(247,239,221,0.85); }
   @media (max-width:760px){ .scene-copy{ display:none; } }
   html:not(.anim) .scene-copy{ display:none; }
 
@@ -743,8 +744,8 @@
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
   <div class="fire-mount" id="fireMount" aria-hidden="true">
     <video id="fireFilm" muted playsinline preload="auto"
-           data-film-alpha="assets/soren-scorch.webm"
-           data-film-blend="assets/soren-scorch-w.mp4"></video>
+           data-film-alpha="assets/soren-fire.webm"
+           data-film-blend="assets/soren-fire-w.mp4"></video>
   </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" stroke-width="0.9"/>
