@@ -134,6 +134,10 @@
   .rail.lite .num{ color:var(--greige-l); }
   .rail.lite .line{ background:rgba(34,26,16,0.16); }
   .rail.lite .line i{ background:var(--gold-ink); }
+  /* the rail is chrome, not part of the mark's moment — it arrives with the
+     top bar once the copy has fallen in */
+  html.anim .rail{ opacity:0; }
+  html.anim .rail.on{ opacity:1; transition:opacity 900ms var(--ease); }
   @media (max-width:860px){ .rail{ display:none; } }
 
   /* ================= sections ================= */
@@ -284,10 +288,10 @@
   /* burns centre stage a little smaller, then grows into full size as it
      travels to its resting place on the right */
   @media (min-width:901px){
-    html.anim .fire-mount.free.alpha{ transform:translateX(-13vw) scale(0.78); }
+    html.anim .fire-mount.free.alpha{ transform:translateX(-13vw) scale(0.39); }
     html.anim .fire-mount.free.alpha.placed{ transform:none;
       transition:transform 1200ms cubic-bezier(0.65,0,0.35,1); }
-    html.anim .fire-mount.free.blend video{ transform:translateX(-13vw) scale(0.78); }
+    html.anim .fire-mount.free.blend video{ transform:translateX(-13vw) scale(0.39); }
     html.anim .fire-mount.free.blend.placed video{ transform:none;
       transition:opacity 300ms ease-out, transform 1200ms cubic-bezier(0.65,0,0.35,1); }
   }
@@ -313,10 +317,10 @@
       width:min(64vw,260px); margin:4px auto 20px; }
     /* burns on the screen's centre line, then settles down into the copy.
        --rise is measured at runtime so it is exact on any handset. */
-    html.anim .fire-mount.free.alpha{ transform:translateY(var(--rise,0px)) scale(0.8); }
+    html.anim .fire-mount.free.alpha{ transform:translateY(var(--rise,0px)) scale(0.4); }
     html.anim .fire-mount.free.alpha.placed{ transform:none;
       transition:transform 1200ms cubic-bezier(0.65,0,0.35,1); }
-    html.anim .fire-mount.free.blend video{ transform:translateY(var(--rise,0px)) scale(0.8); }
+    html.anim .fire-mount.free.blend video{ transform:translateY(var(--rise,0px)) scale(0.4); }
     html.anim .fire-mount.free.blend.placed video{ transform:none;
       transition:opacity 300ms ease-out, transform 1200ms cubic-bezier(0.65,0,0.35,1); }
     .brand-mark{ left:50%; top:46%; width:min(48vw,190px); }
@@ -337,6 +341,7 @@
   /* returning from a template: everything is simply already there */
   html.instant{ scroll-behavior:auto; }
   html.instant .panel > *, html.instant .topbar, html.instant .scroll-cue,
+  html.instant .rail,
   html.instant .fire-mount, html.instant .fire-mount video, html.instant #veil{
     opacity:1 !important; transform:none !important; transition:none !important;
     animation:none !important; }
@@ -1112,9 +1117,11 @@
     if(heroPanel) heroPanel.classList.add('on');
     if(heroSpec) heroSpec.classList.add('on');
   }
+  var railEl = document.querySelector('.rail');
   function showChrome(){
     if(topbarEl) topbarEl.classList.add('on');
     if(cueEl) cueEl.classList.add('on');
+    if(railEl) railEl.classList.add('on');
   }
   if(animOn && !returning){
     /* the whole intro reads as one move: the mark burns dead centre, slides
