@@ -269,9 +269,12 @@
     pointer-events:none; }
   /* the mark draws itself dead centre, then slides to its resting place on
      the right once the burn is done (13% of the hero == 63% - 50%) */
+  /* ONLY the transparent (.alpha) cut may move. The fallback cut has the
+     page background baked into it, so shifting it off the spot that plate
+     was computed for is exactly what makes a box appear. */
   @media (min-width:901px){
-    html.anim .fire-mount{ transform:translateX(-13vw); }
-    html.anim .fire-mount.placed{ transform:none;
+    html.anim .fire-mount.alpha{ transform:translateX(-13vw); }
+    html.anim .fire-mount.alpha.placed{ transform:none;
       transition:transform 1100ms cubic-bezier(0.65,0,0.35,1); }
   }
   .fire-mount video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
@@ -296,8 +299,8 @@
       width:min(64vw,260px); margin:4px auto 20px; }
     /* burns on the screen's centre line, then settles down into the copy.
        --rise is measured at runtime so it is exact on any handset. */
-    html.anim .fire-mount{ transform:translateY(var(--rise,0px)); }
-    html.anim .fire-mount.placed{ transform:none;
+    html.anim .fire-mount.alpha{ transform:translateY(var(--rise,0px)); }
+    html.anim .fire-mount.alpha.placed{ transform:none;
       transition:transform 1100ms cubic-bezier(0.65,0,0.35,1); }
     .brand-mark{ left:50%; top:46%; width:min(48vw,190px); }
   }
@@ -1092,6 +1095,8 @@
     var filmSrc = (canAlpha && fireFilm.getAttribute('data-film-alpha')) ||
                   (smallScreen && fireFilm.getAttribute('data-film-sm')) ||
                   fireFilm.getAttribute('data-film');
+    /* only the transparent cut is allowed to travel (see the CSS note) */
+    if(canAlpha && fireFilm.getAttribute('data-film-alpha')) fireMount.classList.add('alpha');
     /* on a phone the mark belongs in the reading order, under the headline */
     if(smallScreen){
       var headline = document.querySelector('.panel .display');
