@@ -542,24 +542,27 @@
   .fall{ --k:calc(min(max(var(--tp) * 2.8 - var(--fi, 0) * 0.38, 0), 1)); }
   html.anim .fall{ opacity:var(--k); transform:translateY(calc((var(--k) - 1) * -38px)); }
   .rh-tag{ display:flex; align-items:center; gap:12px; font-family:var(--mono); font-size:9.5px;
-    letter-spacing:0.3em; text-transform:uppercase; color:var(--tintB); margin-bottom:18px; }
-  .rh-tag .rl{ width:44px; height:1px; background:var(--tintB); opacity:0.5; }
+    letter-spacing:0.3em; text-transform:uppercase; color:var(--tintD,var(--tintB)); margin-bottom:18px; }
+  .rh-tag .rl{ width:44px; height:1px; background:var(--tintD,var(--tintB)); opacity:0.5; }
   .rh-title{ color:var(--bone); font-weight:400; line-height:1.05; font-size:clamp(36px,4.4vw,60px); text-wrap:balance; }
   [data-font="cafe"] .rh-title{ font-family:'Anton', 'Arial Narrow', sans-serif; font-weight:400; text-transform:uppercase; letter-spacing:0.03em; }
   [data-font="gift"] .rh-title{ font-family:'DM Serif Display', Georgia, serif; }
   [data-font="appl"] .rh-title{ font-family:'Archivo', sans-serif; font-weight:900; letter-spacing:-0.015em; text-transform:none; }
   [data-font="donut"] .rh-title{ font-family:'Fredoka', sans-serif; font-weight:600; }
-  .rh-title .acc{ color:var(--tintB); }
+  /* --tintD is the template's tint darkened enough to read as type on
+     paper; --tintB stays for fills, borders and dots */
+  .rh-title .acc{ color:var(--tintD,var(--tintB)); }
   .rh-desc{ margin-top:14px; font-size:15px; line-height:1.6; color:rgba(36,26,16,0.78); max-width:34ch; }
   .rh-feat{ margin-top:18px; font-family:var(--mono); font-size:9.5px; letter-spacing:0.22em;
-    text-transform:uppercase; color:var(--tintB); line-height:2.1; }
+    text-transform:uppercase; color:var(--tintD,var(--tintB)); line-height:2.1; }
   .rh-cta{ display:inline-flex; align-items:center; gap:12px; margin-top:clamp(20px,3vh,30px);
     font-family:var(--sans); font-weight:400; font-size:10.5px; letter-spacing:0.36em; text-transform:uppercase;
     color:var(--bone); text-decoration:none; border:1px solid var(--tintH); padding:15px 24px;
     position:relative; overflow:hidden; z-index:1; transition:color 250ms ease-out, border-color 250ms ease-out; }
   .rh-cta::before{ content:""; position:absolute; inset:0; background:var(--tintB);
     transform:scaleY(0); transform-origin:bottom center; transition:transform 320ms var(--ease); z-index:-1; }
-  .rh-cta:hover{ color:var(--espresso-deep); border-color:var(--tintB); }
+  /* the tints are bright, so the label goes dark when one fills in */
+  .rh-cta:hover{ color:#241A10; border-color:var(--tintB); }
   .rh-cta:hover::before{ transform:scaleY(1); }
   .rh-cta .arr{ transition:transform 250ms ease-out; }
   .rh-cta:hover .arr{ transform:translateX(8px); }
@@ -573,7 +576,9 @@
   .portal-scale{ position:absolute; inset:9px; overflow:hidden; background:var(--espresso); }
   .portal-scale iframe{ position:absolute; top:0; left:0; border:0; pointer-events:none;
     width:1440px; height:900px; transform-origin:top left; background:var(--espresso); }
-  .portal-tag{ position:absolute; top:-12px; left:22px; z-index:3; background:var(--espresso-deep);
+  /* the chips stay dark on the light page — they read as labels pinned to
+     the preview, and the bright per-template tints need a dark ground */
+  .portal-tag{ position:absolute; top:-12px; left:22px; z-index:3; background:rgba(36,26,16,0.92);
     color:var(--tintB); font-family:var(--mono); font-size:9px; letter-spacing:0.3em; text-transform:uppercase;
     padding:6px 12px; border:1px solid var(--tintH); }
   .portal-cta{ position:absolute; right:18px; bottom:16px; z-index:3;
@@ -581,7 +586,7 @@
     font-family:var(--mono); font-size:9px; letter-spacing:0.26em; text-transform:uppercase;
     color:var(--tintB); background:rgba(20,14,7,0.82); border:1px solid var(--tintH);
     padding:10px 14px; transition:background-color 250ms ease-out, color 250ms ease-out; }
-  .portal:hover .portal-cta{ background:var(--tintB); color:var(--espresso-deep); }
+  .portal:hover .portal-cta{ background:var(--tintB); color:#241A10; }
   .portal-live{ position:absolute; left:18px; bottom:16px; z-index:3; display:inline-flex; align-items:center; gap:8px;
     font-family:var(--mono); font-size:8.5px; letter-spacing:0.26em; text-transform:uppercase;
     color:rgba(234,227,211,0.75); background:rgba(20,14,7,0.82); border:1px solid rgba(234,227,211,0.2);
@@ -866,7 +871,7 @@
     <div class="stage">
       <div class="track" id="rideTrack">
 
-        <div class="scene" data-font="cafe" data-name="Canyon Coffee Co." style="--glow1:rgba(163,73,31,0.42); --glow2:rgba(232,169,79,0.18); --tintB:#E8A94F; --tintH:rgba(232,169,79,0.4); --ghostnum:rgba(232,169,79,0.06);">
+        <div class="scene" data-font="cafe" data-name="Canyon Coffee Co." style="--glow1:rgba(163,73,31,0.42); --glow2:rgba(232,169,79,0.18); --tintB:#E8A94F; --tintD:#8A5410; --tintH:rgba(232,169,79,0.4); --ghostnum:rgba(36,26,16,0.055);">
           <div class="scene-bg" aria-hidden="true"></div>
           <span class="scene-num" aria-hidden="true">01</span>
           <div class="scene-copy">
@@ -893,7 +898,7 @@
           </div>
         </div>
 
-        <div class="scene scene--alt" data-font="gift" data-name="Quirky Gift Store" style="--glow1:rgba(228,87,46,0.22); --glow2:rgba(239,178,21,0.12); --tintB:#EFB215; --tintH:rgba(239,178,21,0.35); --ghostnum:rgba(239,178,21,0.055);">
+        <div class="scene scene--alt" data-font="gift" data-name="Quirky Gift Store" style="--glow1:rgba(228,87,46,0.22); --glow2:rgba(239,178,21,0.12); --tintB:#EFB215; --tintD:#7F5D00; --tintH:rgba(239,178,21,0.35); --ghostnum:rgba(36,26,16,0.055);">
           <div class="scene-bg" aria-hidden="true"></div>
           <span class="scene-num" aria-hidden="true">02</span>
           <div class="scene-copy">
@@ -920,7 +925,7 @@
           </div>
         </div>
 
-        <div class="scene" data-font="appl" data-name="Appliance Repair Co." style="--glow1:rgba(228,85,10,0.20); --glow2:rgba(35,64,92,0.35); --tintB:#F08A4B; --tintH:rgba(240,138,75,0.35); --ghostnum:rgba(240,138,75,0.055);">
+        <div class="scene" data-font="appl" data-name="Appliance Repair Co." style="--glow1:rgba(228,85,10,0.20); --glow2:rgba(35,64,92,0.35); --tintB:#F08A4B; --tintD:#96450F; --tintH:rgba(240,138,75,0.35); --ghostnum:rgba(36,26,16,0.055);">
           <div class="scene-bg" aria-hidden="true"></div>
           <span class="scene-num" aria-hidden="true">03</span>
           <div class="scene-copy">
@@ -947,7 +952,7 @@
           </div>
         </div>
 
-        <div class="scene scene--alt" data-font="donut" data-name="Local Donut Shop" style="--glow1:rgba(232,77,119,0.22); --glow2:rgba(255,201,77,0.12); --tintB:#FFC94D; --tintH:rgba(255,201,77,0.35); --ghostnum:rgba(255,201,77,0.05);">
+        <div class="scene scene--alt" data-font="donut" data-name="Local Donut Shop" style="--glow1:rgba(232,77,119,0.22); --glow2:rgba(255,201,77,0.12); --tintB:#FFC94D; --tintD:#845F00; --tintH:rgba(255,201,77,0.35); --ghostnum:rgba(36,26,16,0.055);">
           <div class="scene-bg" aria-hidden="true"></div>
           <span class="scene-num" aria-hidden="true">04</span>
           <div class="scene-copy">
