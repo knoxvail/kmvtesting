@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soren · Websites, your way.</title>
-<meta name="description" content="Soren designs, writes, builds, and hosts custom websites for local businesses in Orange County. You own the domain and every file. Only forward.">
-<meta property="og:title" content="Soren · Websites, your way.">
-<meta property="og:description" content="Custom websites for local businesses, designed and built by hand in Orange County. Hosting covered. You keep your code.">
+<title>Soren · Websites, done right.</title>
+<meta name="description" content="Custom websites, designed and built to order and handed over clean. No templates. You own every file.">
+<meta property="og:title" content="Soren · Websites, done right.">
+<meta property="og:description" content="Custom websites, built to order and handed over clean. No templates. You own every file.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://sorendesign.io/">
 <meta name="theme-color" content="#F7EFDD">
@@ -22,8 +22,7 @@
   "url": "https://sorendesign.io/",
   "email": "kvail@sorenmgt.com",
   "telephone": "+1-949-308-5700",
-  "description": "Custom websites for local businesses, designed and built by hand. Hosting covered, code owned by the client.",
-  "areaServed": "Orange County, California",
+  "description": "Custom websites, designed and built to order. Hosting covered, every file owned by the client.",
   "parentOrganization": { "@type": "Organization", "name": "Soren Management LLC" }
 }
 </script>
@@ -213,9 +212,7 @@
      (internal) resolution — width/height stretch the small render to fill */
   #veil{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:0;
     transition:opacity 1800ms ease-out; }
-  /* barely there on paper — enough to keep the hero from looking flat,
-     not enough to muddy it */
-  #veil.lit{ opacity:0.14; }
+  #veil.lit{ opacity:0.27; }
 
   .topbar{
     position:relative; z-index:4;
@@ -238,12 +235,19 @@
   .brand .bname{ font-family:var(--serif); font-weight:400; font-size:17px; letter-spacing:0.3em; text-transform:uppercase; text-indent:0.3em; }
   .brand .bsub{ font-family:var(--mono); font-size:9px; letter-spacing:0.24em; text-transform:uppercase; color:var(--greige-d); }
   @media (max-width:760px){ .brand .bsub{ display:none; } }
-  .nav{ display:flex; gap:clamp(10px,2.4vw,30px); }
+  .topbar-right{ display:flex; align-items:center; gap:clamp(16px,2.6vw,32px); }
+  .nav{ display:flex; gap:clamp(12px,2.2vw,28px); }
   .nav a{ font-family:var(--mono); font-size:10px; letter-spacing:0.22em; text-transform:uppercase;
     color:var(--greige-d); text-decoration:none; padding:12px 2px; transition:color 200ms ease-out; }
-  .nav a .sl{ color:var(--gold); font-weight:700; }
   .nav a:hover{ color:var(--bone); }
-  @media (max-width:640px){ .nav a:nth-child(2), .nav a:nth-child(3){ display:none; } }
+  /* the one deliberate call to action, in the button language of the site */
+  .nav-cta{ display:inline-flex; align-items:center; min-height:44px; padding:13px clamp(16px,1.8vw,22px);
+    font-family:var(--sans); font-weight:600; font-size:11px; letter-spacing:0.12em; text-transform:uppercase;
+    color:#F7EFDD; background:var(--bone); border:2px solid var(--bone); text-decoration:none;
+    transition:background-color 200ms ease-out, border-color 200ms ease-out; }
+  .nav-cta:hover{ background:var(--gold); border-color:var(--gold); }
+  @media (max-width:640px){ .nav{ display:none; } }
+  @media (max-width:420px){ .nav-cta{ font-size:10px; letter-spacing:0.08em; padding:12px 14px; } }
 
   /* NO z-index here: it would create a stacking context, and on phones the
      mark lives inside this element — an isolated screen blend renders the
@@ -640,6 +644,32 @@
     color:rgba(36,26,16,0.88); text-decoration:none; transition:color 200ms ease-out; }
   .con-row dd a:hover{ color:var(--gold-bright); }
   @media (max-width:560px){ .con-row{ grid-template-columns:86px 1fr; } }
+
+  /* contact: a phone and a short inquiry box */
+  .contact-lead{ font-family:var(--sans); font-weight:300; font-size:clamp(15px,1.9vw,18px);
+    color:rgba(36,26,16,0.7); letter-spacing:0.01em; line-height:1.7;
+    margin:clamp(6px,1.5vh,14px) auto clamp(28px,4vh,42px); max-width:40ch; }
+  .contact-phone{ display:inline-block; font-family:var(--serif); font-weight:400;
+    font-size:clamp(26px,4.4vw,44px); letter-spacing:0.02em; color:var(--bone); text-decoration:none;
+    border-bottom:2px solid transparent; padding-bottom:2px;
+    transition:border-color 200ms ease-out; margin-bottom:clamp(36px,5.5vh,58px); }
+  .contact-phone:hover{ border-color:var(--gold); }
+  .inquiry{ max-width:560px; margin:0 auto; text-align:left; display:grid; gap:16px; }
+  .inq-row{ display:grid; gap:16px; grid-template-columns:1fr 1fr; }
+  @media (max-width:560px){ .inq-row{ grid-template-columns:1fr; } }
+  .inquiry label{ display:block; font-family:var(--mono); font-size:9px; letter-spacing:0.26em;
+    text-transform:uppercase; color:var(--gold); margin-bottom:9px; }
+  .inquiry input, .inquiry textarea{ width:100%; font-family:var(--mono); font-size:13px; color:var(--bone);
+    background:transparent; border:1px solid var(--hair-d); padding:14px 15px; letter-spacing:0.03em;
+    transition:border-color 200ms ease-out; }
+  .inquiry input:focus, .inquiry textarea:focus{ outline:none; border-color:var(--gold); }
+  .inquiry textarea{ min-height:120px; resize:vertical; line-height:1.6; }
+  .inq-send{ justify-self:start; margin-top:4px; display:inline-flex; align-items:center; gap:11px;
+    font-family:var(--sans); font-weight:600; font-size:12.5px; letter-spacing:0.14em; text-transform:uppercase;
+    color:#F7EFDD; background:var(--bone); border:2px solid var(--bone); padding:17px 30px; min-height:52px;
+    cursor:pointer; transition:background-color 200ms ease-out, border-color 200ms ease-out; }
+  .inq-send:hover{ background:var(--gold); border-color:var(--gold); }
+  .inq-note{ font-family:var(--mono); font-size:10px; letter-spacing:0.06em; color:var(--greige-d); margin-top:4px; }
   .forward{
     display:inline-flex; align-items:center; gap:12px; margin-top:clamp(32px,5vh,50px);
     font-family:var(--sans); font-weight:600; font-size:13px; letter-spacing:0.14em; text-transform:uppercase;
@@ -724,14 +754,14 @@
         <line x1="12" y1="60" x2="60" y2="12" stroke-width="2.2" stroke-linecap="round"/>
       </svg>
       <span class="bname">Soren</span>
-      <span class="bsub">Web Studio · Orange County, CA</span>
     </a>
-    <nav class="nav" aria-label="Sections">
-      <a href="#offer"><span class="sl">/01</span> The Offer</a>
-      <a href="#work"><span class="sl">/02</span> The Work</a>
-      <a href="#process"><span class="sl">/03</span> Process</a>
-      <a href="#contact"><span class="sl">/05</span> Contact</a>
-    </nav>
+    <div class="topbar-right">
+      <nav class="nav" aria-label="Sections">
+        <a href="#work">Work</a>
+        <a href="#process">Process</a>
+      </nav>
+      <a class="nav-cta" href="#contact">Have a website with us</a>
+    </div>
   </div>
 
   <span class="scroll-cue" aria-hidden="true">
@@ -741,17 +771,12 @@
 
   <div class="hero-main">
     <div class="panel" id="heroPanel">
-      <p class="kick">A one-person web studio</p>
-      <h1 class="display">Websites, <em>your way.</em></h1>
-      <p class="deck">Soren designs, writes, builds, and hosts <b>custom websites for local businesses</b>. No templates, no page builders. You own the domain and every file.</p>
+      <h1 class="display">Websites, <em>done right.</em></h1>
+      <p class="deck">Custom sites, built to order and handed over clean. <b>No templates. You own every file.</b></p>
       <div class="cta-row">
-        <a class="btn-ghost magnet" href="#work">See the work <span class="arr">→</span></a>
-        <a class="txt-link" href="mailto:kvail@sorenmgt.com">Start yours</a>
+        <a class="btn-ghost" href="#work">See the work <span class="arr">→</span></a>
+        <a class="txt-link" href="#contact">Get in touch</a>
       </div>
-      <dl class="panel-spec" aria-label="What Soren provides">
-        <div class="ps-row"><dt class="ps-k">Includes</dt><dd class="ps-v">Design · Copy · Build · Hosting · Three edits a month</dd></div>
-        <div class="ps-row"><dt class="ps-k">Status</dt><dd class="ps-v">Taking new builds · MMXXVI</dd></div>
-      </dl>
     </div>
   </div>
 
@@ -760,7 +785,7 @@
 <!-- ============ 01 THE OFFER ============ -->
 <section class="s-cream" id="offer" data-tone="cream" data-num="01" data-name="The Offer">
   <div class="inner reveal">
-    <div class="sec-tag"><span class="sl">/01</span><span class="rule"></span><span>The Offer</span></div>
+    <div class="sec-tag"><span class="rule"></span><span>The Offer</span></div>
     <div class="offer-head">
       <h2 class="statement">
         <span class="w"><span>Built</span></span>
@@ -774,8 +799,8 @@
         <span class="w"><span data-d="3"><em>you.</em></span></span>
       </h2>
       <div class="side fade" data-d="4">
-        <p>Not a template with your name dropped in. The site starts from what your business actually is, who walks through the door, and what they came for.</p>
-        <p class="sig">Small by design · Precision over volume</p>
+        <p>Not a template with a logo dropped in. Every site is built from the brand it belongs to.</p>
+        <p class="sig">Small by design</p>
       </div>
     </div>
     <div class="spec">
@@ -800,8 +825,8 @@
         <span class="chip">Monthly</span>
       </div>
       <div class="spec-row fade" data-d="5">
-        <span class="n">/ 05</span><h3>Three edits a month</h3>
-        <p>New hours, new menu, new photos. Answered within two business days.</p>
+        <span class="n">/ 05</span><h3>Ongoing edits</h3>
+        <p>Copy, images, sections — updated within two business days.</p>
         <span class="chip">Monthly</span>
       </div>
       <div class="spec-row fade" data-d="6">
@@ -818,14 +843,14 @@
   <div class="inner ride-intro">
     <div class="work-head reveal">
       <div>
-        <div class="sec-tag"><span class="sl">/02</span><span class="rule"></span><span>The Work</span></div>
+        <div class="sec-tag"><span class="rule"></span><span>The Work</span></div>
         <h2 class="statement">
           <span class="w"><span>Every</span></span>
           <span class="w"><span>build,</span></span>
           <span class="w"><span data-d="2"><em>its own.</em></span></span>
         </h2>
       </div>
-      <p class="body fade" data-d="3">Four templates, four different personalities. Each window below is the real site, running live. Step in whenever you like.</p>
+      <p class="body fade" data-d="3">Four builds, four different personalities. Each window is the live site — step in whenever you like.</p>
     </div>
     <p class="ride-cue reveal fade">Scroll to ride through the gallery <b>↓</b></p>
   </div>
@@ -951,7 +976,7 @@
 <!-- ============ 03 THE PROCESS ============ -->
 <section class="s-cream" id="process" data-tone="cream" data-num="03" data-name="The Process">
   <div class="inner reveal">
-    <div class="sec-tag"><span class="sl">/03</span><span class="rule"></span><span>The Process</span></div>
+    <div class="sec-tag"><span class="rule"></span><span>The Process</span></div>
     <h2 class="statement">
       <span class="w"><span>Three</span></span>
       <span class="w"><span>steps,</span></span>
@@ -984,7 +1009,7 @@
 <section class="s-deep own" id="ownership" data-tone="dark" data-num="04" data-name="Ownership">
   <div class="inner reveal">
     <div>
-      <div class="sec-tag"><span class="sl">/04</span><span class="rule"></span><span>Ownership</span></div>
+      <div class="sec-tag"><span class="rule"></span><span>Ownership</span></div>
       <h2 class="statement">
         <span class="w"><span>You</span></span>
         <span class="w"><span>keep</span></span><br>
@@ -1013,18 +1038,22 @@
     <h2 class="wordmark">
       <span class="w"><span>S</span></span><span class="w"><span data-d="1">O</span></span><span class="w"><span data-d="2">R</span></span><span class="w"><span data-d="3">E</span></span><span class="w"><span data-d="4">N</span></span>
     </h2>
-    <p class="locale fade" data-d="3">Orange County, California</p>
-    <dl class="con-grid fade" data-d="4">
-      <div class="con-row"><dt>Email</dt><dd><a href="mailto:kvail@sorenmgt.com">kvail@sorenmgt.com</a></dd></div>
-      <div class="con-row"><dt>Phone</dt><dd><a href="tel:+19493085700">(949) 308 5700</a></dd></div>
-      <div class="con-row"><dt>Reply within</dt><dd><span>Two business days</span></dd></div>
-    </dl>
-    <a class="forward fade magnet" data-d="6" href="mailto:kvail@sorenmgt.com">Start yours <span class="arr">→</span></a>
+    <p class="contact-lead fade" data-d="3">Have a website with us. Call, or send a note — we reply within two business days.</p>
+    <a class="contact-phone fade" data-d="4" href="tel:+19493085700">(949) 308&nbsp;5700</a>
+    <form class="inquiry fade" data-d="5" id="inquiry" novalidate>
+      <div class="inq-row">
+        <div><label for="inq-name">Name</label><input id="inq-name" name="name" type="text" autocomplete="name" required></div>
+        <div><label for="inq-email">Email</label><input id="inq-email" name="email" type="email" autocomplete="email" required></div>
+      </div>
+      <div><label for="inq-msg">What do you have in mind?</label><textarea id="inq-msg" name="message" required></textarea></div>
+      <button class="inq-send" type="submit">Send inquiry <span class="arr">→</span></button>
+      <p class="inq-note" id="inqNote" aria-live="polite"></p>
+    </form>
   </div>
 </section>
 
 <footer>
-  Soren Management LLC · Orange County, CA · sorendesign.io
+  Soren Management LLC · sorendesign.io
 </footer>
 
 <script>
@@ -1272,6 +1301,30 @@
     document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
   } else {
     document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('revealed'); });
+  }
+
+  /* ---------- inquiry form ----------
+     No backend on this static host yet, so submitting composes an email
+     with the note prefilled and hands it to the visitor's mail client.
+     Swap this for a Formspree / Web3Forms endpoint to send silently. */
+  var inquiry = document.getElementById('inquiry');
+  if(inquiry){
+    var inqNote = document.getElementById('inqNote');
+    inquiry.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var name = (document.getElementById('inq-name').value || '').trim();
+      var email = (document.getElementById('inq-email').value || '').trim();
+      var msg = (document.getElementById('inq-msg').value || '').trim();
+      if(!name || !email || !msg){
+        if(inqNote) inqNote.textContent = 'Please fill in every field.';
+        return;
+      }
+      var subject = 'Website inquiry — ' + name;
+      var body = msg + '\n\n— ' + name + '\n' + email;
+      window.location.href = 'mailto:kvail@sorenmgt.com?subject=' +
+        encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+      if(inqNote) inqNote.textContent = 'Opening your email to send…';
+    });
   }
 
   /* ---------- rail ---------- */
