@@ -219,12 +219,14 @@
     position:sticky; top:0; z-index:85;
     display:flex; justify-content:space-between; align-items:center; gap:18px;
     padding:22px var(--pad-x);
-    background:var(--espresso);
+    background:transparent;               /* no bar on load — just the floating button */
     border-bottom:1px solid transparent;
     transition:opacity 800ms var(--ease), padding 280ms var(--ease),
-               border-color 280ms ease-out, box-shadow 280ms ease-out;
+               background-color 300ms ease-out, border-color 300ms ease-out, box-shadow 300ms ease-out;
   }
+  /* the bar forms once you scroll: cream fills in, the brand and actions appear */
   html.scrolled .topbar{ padding-top:14px; padding-bottom:14px;
+    background:var(--espresso);
     border-bottom-color:rgba(36,26,16,0.12);
     box-shadow:0 10px 30px -22px rgba(36,26,16,0.45); }
   /* the header itself arrives once the headline has landed */
@@ -242,7 +244,11 @@
   html.scrolled .head-docked a{ opacity:1; transform:none; pointer-events:auto; }
   html.scrolled .head-docked a:nth-child(2){ transition-delay:70ms; }
   @media (max-width:760px){ .head-docked{ display:none; } }
-  .brand{ display:flex; align-items:center; gap:14px; text-decoration:none; }
+  /* the brand rides in only when the bar forms on scroll */
+  .brand{ display:flex; align-items:center; gap:14px; text-decoration:none;
+    opacity:0; transform:translateY(-6px); pointer-events:none;
+    transition:opacity 320ms var(--ease), transform 320ms var(--ease); }
+  html.scrolled .brand{ opacity:1; transform:none; pointer-events:auto; }
   .brand .bmark{ width:30px; height:30px; display:block; }
   .brand .bmark circle, .brand .bmark line{ stroke:var(--gold); }
   html.anim .brand .bmark circle{ stroke-dasharray:176; stroke-dashoffset:176;
