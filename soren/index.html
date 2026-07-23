@@ -63,6 +63,8 @@
     --ease:cubic-bezier(0.22,1,0.36,1);
     --expo:cubic-bezier(0.16,1,0.3,1);
     --pad-x:clamp(22px,6vw,96px);
+    /* keep-out lane on the right so nothing runs under the progress rail */
+    --rail-lane:clamp(78px,7.5vw,132px);
     --intro:0.15s;
     /* z scale: rail 70 · grain 80 · wipe 90 · loader 100 · cursor 110 */
   }
@@ -146,13 +148,23 @@
   /* ================= sections ================= */
   section{ position:relative; scroll-margin-top:72px; }
   .s-dark{ background:radial-gradient(ellipse 130% 95% at 42% 34%, var(--umber) 0%, var(--espresso) 56%, var(--espresso-deep) 100%); color:var(--bone); }
-  .s-deep{ background:var(--espresso-deep); color:var(--bone); }
+  .s-deep{ background:var(--espresso-deep); color:var(--bone); position:relative; }
   .s-cream{
-    background:linear-gradient(180deg, var(--cream-hi) 0%, var(--cream) 8%, var(--cream) 92%, #1F150B 100%);
+    background:linear-gradient(180deg, var(--cream-hi) 0%, var(--cream) 26%, var(--cream) 74%, var(--cream-hi) 100%);
     color:var(--ink); position:relative; z-index:5;
-    box-shadow:0 -34px 70px -38px rgba(10,7,3,0.65), 0 34px 70px -38px rgba(10,7,3,0.65);
   }
-  .s-cream::before{ content:""; position:absolute; top:0; left:0; right:0; height:1px; background:rgba(255,255,255,0.65); }
+  /* Sections melt into each other instead of cutting. Each band fades from
+     the page cream at its edge into its own colour, so every boundary passes
+     through the same warm midtones rather than snapping light-to-dark. */
+  .s-cream::before, .s-cream::after,
+  .s-deep::before, .s-deep::after{
+    content:""; position:absolute; left:0; right:0; z-index:0; pointer-events:none; }
+  .s-cream::before, .s-cream::after{ height:clamp(44px,5.5vh,82px); }
+  .s-deep::before, .s-deep::after{ height:clamp(34px,4vh,62px); }
+  .s-cream::before, .s-deep::before{ top:0;
+    background:linear-gradient(180deg, #F7EFDD 0%, rgba(247,239,221,0) 100%); }
+  .s-cream::after, .s-deep::after{ bottom:0;
+    background:linear-gradient(0deg, #F7EFDD 0%, rgba(247,239,221,0) 100%); }
   .inner{ position:relative; z-index:2; max-width:1240px; margin:0 auto; padding:clamp(80px,11vh,136px) var(--pad-x); }
 
   /* ================= type ================= */
@@ -447,6 +459,14 @@
   .work-head{ display:flex; align-items:baseline; justify-content:space-between; gap:24px; flex-wrap:wrap; }
   .work-head p.body{ max-width:44ch; }
   .ride-intro{ padding-bottom:clamp(10px,2vh,24px); }
+  /* the work intro is its own beat: the statement sits centred in the brown
+     band with its tag right on top of it, not drifting above */
+  #work .inner{ min-height:clamp(360px,48vh,560px);
+    display:flex; flex-direction:column; justify-content:center;
+    padding-top:clamp(72px,9vh,112px); padding-bottom:clamp(72px,9vh,112px); }
+  #work .ride-intro{ padding-bottom:0; }
+  #work .sec-tag{ margin-bottom:15px; }
+  #work .statement{ font-size:clamp(40px,6.6vw,80px); }
   .ride-cue{ margin-top:clamp(22px,3.5vh,34px); font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
     text-transform:uppercase; color:var(--greige-d); }
   .ride-cue b{ color:var(--gold); font-weight:400; }
@@ -478,7 +498,10 @@
     .portal{ aspect-ratio:16/11; }
   }
 
-  .scene-bg{ position:absolute; inset:0; pointer-events:none; transition:filter 400ms ease-out;
+  /* each template's colour is only a whisper here — enough to give the scene
+     its own temperature without four different hues fighting the cream */
+  .scene-bg{ position:absolute; inset:0; pointer-events:none; opacity:0.42;
+    transition:filter 400ms ease-out;
     background:
       radial-gradient(ellipse 85% 75% at 76% 28%, var(--glow1) 0%, rgba(0,0,0,0) 62%),
       radial-gradient(ellipse 70% 60% at 10% 85%, var(--glow2) 0%, rgba(0,0,0,0) 58%);
@@ -506,9 +529,9 @@
   /* desktop ride: the website is the object — full-stage portal, placard floats fixed */
   @media (min-width:761px){
     html.anim .scene-grid, html.anim .scene--alt .scene-grid{ display:block; max-width:none;
-      padding:0 calc(var(--pad-x) * 0.7) 0 0; }
+      padding:0 var(--rail-lane) 0 0; }
     html.anim .scene-head{ display:none; }
-    html.anim .portal{ width:min(72vw,1150px); margin-left:auto; }
+    html.anim .portal{ width:min(68vw,1100px); margin-left:auto; }
     html.anim .scene-num, html.anim .scene--alt .scene-num{
       left:calc(var(--pad-x) * 0.5); right:auto; bottom:1vh;
       font-size:clamp(100px,14vw,200px); }
@@ -561,24 +584,18 @@
   .portal-scale{ position:absolute; inset:9px; overflow:hidden; background:var(--espresso); }
   .portal-scale iframe{ position:absolute; top:0; left:0; border:0; pointer-events:none;
     width:1440px; height:900px; transform-origin:top left; background:var(--espresso); }
-  /* the chips stay dark on the light page — they read as labels pinned to
-     the preview, and the bright per-template tints need a dark ground */
-  .portal-tag{ position:absolute; top:-12px; left:22px; z-index:3; background:rgba(36,26,16,0.92);
-    color:var(--tintB); font-family:var(--mono); font-size:9px; letter-spacing:0.3em; text-transform:uppercase;
-    padding:6px 12px; border:1px solid var(--tintH); }
-  .portal-cta{ position:absolute; right:18px; bottom:16px; z-index:3;
+  /* One quiet marker, sitting clear of the frame so nothing ever covers the
+     site itself. The dot is the only motion — enough to read as live at a
+     glance, and no more. */
+  .portal-tag{ position:absolute; left:0; bottom:calc(100% + 14px); z-index:3;
     display:inline-flex; align-items:center; gap:10px;
-    font-family:var(--mono); font-size:9px; letter-spacing:0.26em; text-transform:uppercase;
-    color:var(--tintB); background:rgba(20,14,7,0.82); border:1px solid var(--tintH);
-    padding:10px 14px; transition:background-color 250ms ease-out, color 250ms ease-out; }
-  .portal:hover .portal-cta{ background:var(--tintB); color:#241A10; }
-  .portal-live{ position:absolute; left:18px; bottom:16px; z-index:3; display:inline-flex; align-items:center; gap:8px;
-    font-family:var(--mono); font-size:8.5px; letter-spacing:0.26em; text-transform:uppercase;
-    color:rgba(234,227,211,0.75); background:rgba(20,14,7,0.82); border:1px solid rgba(234,227,211,0.2);
-    padding:9px 12px; }
-  .portal-live i{ width:5px; height:5px; border-radius:50%; background:var(--tintB); }
-  html.anim .portal-live i{ animation:liveBlink 2.4s ease-in-out infinite; }
-  @keyframes liveBlink{ 0%,100%{ opacity:1; } 50%{ opacity:0.25; } }
+    background:transparent; color:var(--bone);
+    font-family:var(--mono); font-size:9.5px; letter-spacing:0.26em; text-transform:uppercase;
+    padding:10px 15px; border:1px solid var(--hair-d); }
+  .portal-tag i{ width:6px; height:6px; border-radius:50%; flex:none;
+    background:var(--tintD,var(--tintB)); }
+  html.anim .portal-tag i{ animation:liveBlink 2.8s ease-in-out infinite; }
+  @keyframes liveBlink{ 0%,100%{ opacity:1; } 50%{ opacity:0.28; } }
 
   .scene-copy{ transition:opacity 350ms ease-out; }
   html.anim .scene-copy{ opacity:calc(min(var(--tp) * 4, 1)); }
@@ -831,10 +848,8 @@
               <a class="rh-cta portal-link fall" style="--fi:4" href="work/canyon-cafe.html" data-cur="Enter">Walk through <span class="arr">→</span></a>
             </div>
             <a class="portal portal-link" href="work/canyon-cafe.html" data-cur="Enter" aria-label="Open The Canyon Café template">
-              <span class="portal-tag">Live template</span>
+              <span class="portal-tag"><i></i>Live template</span>
               <span class="portal-scale"><iframe data-src="work/canyon-cafe.html" title="Live preview of The Canyon Café template" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></span>
-              <span class="portal-live" aria-hidden="true"><i></i>Running live</span>
-              <span class="portal-cta" aria-hidden="true">Walk through →</span>
             </a>
           </div>
         </div>
@@ -858,10 +873,8 @@
               <a class="rh-cta portal-link fall" style="--fi:4" href="work/gift-store.html" data-cur="Enter">Walk through <span class="arr">→</span></a>
             </div>
             <a class="portal portal-link" href="work/gift-store.html" data-cur="Enter" aria-label="Open the Quirky Gift Store template">
-              <span class="portal-tag">Live template</span>
+              <span class="portal-tag"><i></i>Live template</span>
               <span class="portal-scale"><iframe data-src="work/gift-store.html" title="Live preview of the Quirky Gift Store template" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></span>
-              <span class="portal-live" aria-hidden="true"><i></i>Running live</span>
-              <span class="portal-cta" aria-hidden="true">Walk through →</span>
             </a>
           </div>
         </div>
@@ -885,10 +898,8 @@
               <a class="rh-cta portal-link fall" style="--fi:4" href="work/appliance-repair.html" data-cur="Enter">Walk through <span class="arr">→</span></a>
             </div>
             <a class="portal portal-link" href="work/appliance-repair.html" data-cur="Enter" aria-label="Open the Appliance Repair Co. template">
-              <span class="portal-tag">Live template</span>
+              <span class="portal-tag"><i></i>Live template</span>
               <span class="portal-scale"><iframe data-src="work/appliance-repair.html" title="Live preview of the Appliance Repair Co. template" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></span>
-              <span class="portal-live" aria-hidden="true"><i></i>Running live</span>
-              <span class="portal-cta" aria-hidden="true">Walk through →</span>
             </a>
           </div>
         </div>
@@ -912,10 +923,8 @@
               <a class="rh-cta portal-link fall" style="--fi:4" href="work/donut-shop.html" data-cur="Enter">Walk through <span class="arr">→</span></a>
             </div>
             <a class="portal portal-link" href="work/donut-shop.html" data-cur="Enter" aria-label="Open the Local Donut Shop template">
-              <span class="portal-tag">Live template</span>
+              <span class="portal-tag"><i></i>Live template</span>
               <span class="portal-scale"><iframe data-src="work/donut-shop.html" title="Live preview of the Local Donut Shop template" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></span>
-              <span class="portal-live" aria-hidden="true"><i></i>Running live</span>
-              <span class="portal-cta" aria-hidden="true">Walk through →</span>
             </a>
           </div>
         </div>
