@@ -305,18 +305,19 @@
   /* On the blend route the travel must live on the VIDEO, never on the
      mount — a transform on the mount makes it a stacking context, which
      isolates the blend and brings the black square back. */
-  /* burns centre stage, then travels to its resting place on the right.
-     The scale barely moves on purpose: a transform shrinks the video by
-     resampling its texture, and past about 2x down the GPU's bilinear filter
-     starts skipping pixels, which shreds thin strokes into jagged edges. The
-     old 0.39 put the 1080px film into a 211px box — a 5x downsample — so the
-     mark looked chewed up until it reached full size and snapped clean.
-     0.92 keeps the sampling ratio the same as the resting state throughout. */
+  /* The mark burns small centre stage, grows, then travels to its place on
+     the right. The growth is baked into the film, NOT done here: the GPU
+     resamples a video texture with a bilinear filter, which skips source
+     pixels past about 2x down, so transform:scale(0.39) — a 1080px film in a
+     211px box, 4.66x — tore the thin strokes apart. Small inside a full-size
+     frame costs nothing, because ffmpeg did that scaling offline with a real
+     filter. The element stays 540px and the frame downsamples a constant
+     1.82x, the same ratio that already looks clean at rest. Only travel here. */
   @media (min-width:901px){
-    html.anim .fire-mount.free.alpha{ transform:translateX(-13vw) scale(0.92); }
+    html.anim .fire-mount.free.alpha{ transform:translateX(-13vw); }
     html.anim .fire-mount.free.alpha.placed{ transform:none;
       transition:transform 1200ms cubic-bezier(0.65,0,0.35,1); }
-    html.anim .fire-mount.free.blend video{ transform:translateX(-13vw) scale(0.92); }
+    html.anim .fire-mount.free.blend video{ transform:translateX(-13vw); }
     html.anim .fire-mount.free.blend.placed video{ transform:none;
       transition:opacity 300ms ease-out, transform 1200ms cubic-bezier(0.65,0,0.35,1); }
   }
@@ -342,10 +343,10 @@
       width:min(64vw,260px); margin:4px auto 20px; }
     /* burns on the screen's centre line, then settles down into the copy.
        --rise is measured at runtime so it is exact on any handset. */
-    html.anim .fire-mount.free.alpha{ transform:translateY(var(--rise,0px)) scale(0.92); }
+    html.anim .fire-mount.free.alpha{ transform:translateY(var(--rise,0px)); }
     html.anim .fire-mount.free.alpha.placed{ transform:none;
       transition:transform 1200ms cubic-bezier(0.65,0,0.35,1); }
-    html.anim .fire-mount.free.blend video{ transform:translateY(var(--rise,0px)) scale(0.92); }
+    html.anim .fire-mount.free.blend video{ transform:translateY(var(--rise,0px)); }
     html.anim .fire-mount.free.blend.placed video{ transform:none;
       transition:opacity 300ms ease-out, transform 1200ms cubic-bezier(0.65,0,0.35,1); }
     .brand-mark{ left:50%; top:46%; width:min(48vw,190px); }
@@ -770,8 +771,8 @@
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
   <div class="fire-mount" id="fireMount" aria-hidden="true">
     <video id="fireFilm" muted playsinline preload="auto"
-           data-film-alpha="assets/soren-mark.webm"
-           data-film-blend="assets/soren-mark-w.mp4"></video>
+           data-film-alpha="assets/soren-mark-z.webm"
+           data-film-blend="assets/soren-mark-wz.mp4"></video>
   </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" transform="rotate(-90 36 36)" stroke-width="0.9"/>
