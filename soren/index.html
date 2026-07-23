@@ -305,14 +305,14 @@
   /* On the blend route the travel must live on the VIDEO, never on the
      mount — a transform on the mount makes it a stacking context, which
      isolates the blend and brings the black square back. */
-  /* The mark burns small centre stage, grows, then travels to its place on
-     the right. The growth is baked into the film, NOT done here: the GPU
-     resamples a video texture with a bilinear filter, which skips source
-     pixels past about 2x down, so transform:scale(0.39) — a 1080px film in a
-     211px box, 4.66x — tore the thin strokes apart. Small inside a full-size
-     frame costs nothing, because ffmpeg did that scaling offline with a real
-     filter. The element stays 540px and the frame downsamples a constant
-     1.82x, the same ratio that already looks clean at rest. Only travel here. */
+  /* The mark burns at full size centre stage, then travels to its resting
+     place on the right. It never changes size — no scale here, and none baked
+     into the film either. That is deliberate: the GPU resamples a video
+     texture with a bilinear filter that skips source pixels past about 2x
+     down, so any shrink tore the thin strokes apart (the old scale(0.39) put
+     the 1080px film in a 211px box, 4.66x, and it looked chewed up until it
+     snapped clean at full size). At a constant 540px the frame downsamples a
+     steady 1.82x and the mark is sharp from the first frame. Travel only. */
   @media (min-width:901px){
     html.anim .fire-mount.free.alpha{ transform:translateX(-13vw); }
     html.anim .fire-mount.free.alpha.placed{ transform:none;
@@ -771,8 +771,8 @@
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
   <div class="fire-mount" id="fireMount" aria-hidden="true">
     <video id="fireFilm" muted playsinline preload="auto"
-           data-film-alpha="assets/soren-mark-z.webm"
-           data-film-blend="assets/soren-mark-wz.mp4"></video>
+           data-film-alpha="assets/soren-mark.webm"
+           data-film-blend="assets/soren-mark-w.mp4"></video>
   </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" transform="rotate(-90 36 36)" stroke-width="0.9"/>
