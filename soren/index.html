@@ -212,7 +212,7 @@
      (internal) resolution — width/height stretch the small render to fill */
   #veil{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:0;
     transition:opacity 1800ms ease-out; }
-  #veil.lit{ opacity:0.80; }
+  #veil.lit{ opacity:0.45; }
 
   /* sticky header — pinned for the whole page, compacts once you scroll */
   .topbar{
@@ -1426,10 +1426,10 @@
       '  vec2 p=uv*vec2(ratio,1.0);float t=u_time*0.2;',
       '  float n1=snoise(p*0.6+t);',
       '  float n2=snoise(p*1.05-t*0.5+n1);',
-      /* one field, contrast-stretched so the cloud is pronounced */
-      '  float m=smoothstep(0.10,0.92,0.5+0.5*n2);',
-      /* both colors are light and warm, so the page stays bright even as the
-         cloud moves — the two tones just drift caramel to cream */
+      /* a gentle field — soft drift, not hard clouds */
+      '  float m=smoothstep(0.2,0.8,0.5+0.5*n2);',
+      /* colour[0] is a muted cool light-brown; colour[1] is the page cream
+         itself, so the highlights vanish and only soft taupe shadows drift */
       '  vec3 col=mix(u_colors[0],u_colors[1],m);',
       '  float dist=length(uv-0.5);',
       '  float a=smoothstep(1.4,0.2,dist);',
@@ -1462,11 +1462,12 @@
     var locTime = gl.getUniformLocation(prog, 'u_time');
     var locColors = gl.getUniformLocation(prog, 'u_colors');
 
-    /* warm tan cloud-shadow · bright cream highlight · unused. Both light,
-       so a high canvas opacity still reads as a bright cream hero. */
+    /* muted cool light-brown cloud · the page cream itself · unused. Cooler
+       and far less saturated than before, so it reads as soft light-brown
+       drift rather than butter, and the mark stays clearly visible. */
     gl.uniform3fv(locColors, new Float32Array([
-      0.804, 0.690, 0.463,
-      0.984, 0.961, 0.902,
+      0.706, 0.678, 0.639,
+      0.969, 0.937, 0.867,
       0.0, 0.0, 0.0
     ]));
 
