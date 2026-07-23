@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soren · Welcome back</title>
+<meta name="description" content="Call us or send a note. We reply within two business days.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#F7EFDD">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Crect width='72' height='72' fill='%23241B10'/%3E%3Ccircle cx='36' cy='36' r='22' fill='none' stroke='%23C89D5F' stroke-width='3'/%3E%3Cline x1='20' y1='52' x2='52' y2='20' stroke='%23C89D5F' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..600,0..100,0..1;1,9..144,300..600,0..100,0..1&family=Montserrat:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    var d = document.documentElement;
+    if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){ d.classList.add('anim'); }
+  })();
+</script>
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --paper:#F7EFDD;
+    --paper-hi:#FDF8EC;
+    --ink:#241A10;
+    --choc:#2B1E12;
+    --gold:#7A5520;
+    --gold-lit:#C89D5F;
+    --muted:#6E6455;
+    --hair:rgba(36,26,16,0.22);
+    --serif:'Fraunces', Georgia, 'Times New Roman', serif;
+    --mono:'Space Mono', 'Courier New', monospace;
+    --sans:'Montserrat', -apple-system, 'Segoe UI', sans-serif;
+    --ease:cubic-bezier(0.22,1,0.36,1);
+    --pad-x:clamp(22px,6vw,96px);
+  }
+  html{ scroll-behavior:smooth; }
+  body{
+    min-height:100svh; display:flex; flex-direction:column;
+    background:radial-gradient(ellipse 130% 95% at 42% 30%, var(--paper-hi) 0%, var(--paper) 58%, #F2E8D2 100%);
+    color:var(--ink); font-family:var(--serif); font-optical-sizing:auto; font-weight:380; line-height:1.7;
+  }
+  ::selection{ background:var(--gold); color:var(--paper); }
+  a{ color:inherit; }
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--gold); outline-offset:3px; }
+
+  /* ---- header ---- */
+  .topbar{
+    display:flex; justify-content:space-between; align-items:center; gap:18px;
+    padding:20px var(--pad-x); border-bottom:1px solid rgba(36,26,16,0.12);
+  }
+  .brand{ display:flex; align-items:center; gap:14px; text-decoration:none; }
+  .brand svg{ width:30px; height:30px; display:block; }
+  .brand svg circle, .brand svg line{ stroke:var(--gold); }
+  .brand .bname{ font-family:var(--serif); font-weight:400; font-size:18px;
+    letter-spacing:0.3em; text-transform:uppercase; text-indent:0.3em; }
+  .back{
+    display:inline-flex; align-items:center; gap:9px; min-height:46px; padding:13px clamp(16px,1.9vw,22px);
+    font-family:var(--sans); font-weight:600; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--ink); text-decoration:none; border:2px solid rgba(36,26,16,0.30); background:transparent;
+    transition:border-color 200ms ease-out, background-color 200ms ease-out;
+  }
+  .back:hover{ border-color:var(--ink); background:rgba(36,26,16,0.06); }
+
+  /* ---- main ---- */
+  main{ flex:1; display:flex; align-items:center; justify-content:center;
+    padding:clamp(46px,8vh,90px) var(--pad-x) clamp(56px,9vh,100px); }
+  .wrap{ width:100%; max-width:1080px; display:grid; gap:clamp(34px,5vw,72px);
+    grid-template-columns:1fr 1fr; align-items:start; }
+  @media (max-width:880px){ .wrap{ grid-template-columns:1fr; gap:clamp(34px,6vh,54px); } }
+
+  .seal{ width:52px; height:52px; display:block; margin-bottom:22px; }
+  .seal circle, .seal line{ stroke:var(--gold); }
+  html.anim .seal circle{ stroke-dasharray:176; stroke-dashoffset:176; animation:draw 1.2s var(--ease) 0.15s forwards; }
+  html.anim .seal line{ stroke-dasharray:68; stroke-dashoffset:68; animation:draw 0.7s var(--ease) 0.95s forwards; }
+  @keyframes draw{ to{ stroke-dashoffset:0; } }
+
+  h1{ font-size:clamp(44px,6.4vw,84px); font-weight:420; line-height:1.02; letter-spacing:-0.015em;
+    font-variation-settings:'opsz' 120, 'SOFT' 40; }
+  h1 em{ font-style:italic; color:var(--gold); font-variation-settings:'opsz' 120, 'SOFT' 60, 'WONK' 1; }
+  .lead{ margin-top:20px; font-size:clamp(17px,2vw,20px); line-height:1.6; color:rgba(36,26,16,0.8); max-width:32ch; }
+
+  .call{ margin-top:clamp(28px,4.5vh,40px); }
+  .call .k{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.26em; text-transform:uppercase;
+    color:var(--gold); display:block; margin-bottom:10px; }
+  .phone{ display:inline-block; font-family:var(--serif); font-weight:400;
+    font-size:clamp(30px,4.6vw,48px); letter-spacing:0.01em; color:var(--ink); text-decoration:none;
+    border-bottom:2px solid transparent; padding-bottom:3px; transition:border-color 200ms ease-out; }
+  .phone:hover{ border-color:var(--gold); }
+  .hours{ margin-top:14px; font-family:var(--mono); font-size:10.5px; letter-spacing:0.14em;
+    text-transform:uppercase; color:var(--muted); }
+
+  /* ---- form ---- */
+  .card{ border:1px solid var(--hair); padding:clamp(24px,3vw,34px); background:rgba(255,255,255,0.28); }
+  .card h2{ font-family:var(--mono); font-size:10px; letter-spacing:0.26em; text-transform:uppercase;
+    color:var(--gold); font-weight:400; margin-bottom:20px; }
+  .inquiry{ display:grid; gap:16px; }
+  .row{ display:grid; gap:16px; grid-template-columns:1fr 1fr; }
+  @media (max-width:560px){ .row{ grid-template-columns:1fr; } }
+  label{ display:block; font-family:var(--mono); font-size:9px; letter-spacing:0.26em;
+    text-transform:uppercase; color:var(--gold); margin-bottom:9px; }
+  input, textarea{ width:100%; font-family:var(--mono); font-size:13px; color:var(--ink);
+    background:transparent; border:1px solid var(--hair); padding:14px 15px; letter-spacing:0.03em;
+    transition:border-color 200ms ease-out; }
+  input:focus, textarea:focus{ outline:none; border-color:var(--gold); }
+  textarea{ min-height:132px; resize:vertical; line-height:1.6; }
+  .send{ justify-self:start; margin-top:4px; display:inline-flex; align-items:center; gap:11px;
+    min-height:52px; padding:17px 30px;
+    font-family:var(--sans); font-weight:600; font-size:12.5px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--paper); background:var(--ink); border:2px solid var(--ink); cursor:pointer;
+    transition:background-color 200ms ease-out, border-color 200ms ease-out; }
+  .send:hover{ background:var(--gold); border-color:var(--gold); }
+  .note{ font-family:var(--mono); font-size:10px; letter-spacing:0.06em; color:var(--muted); min-height:14px; }
+
+  footer{ padding:24px var(--pad-x); border-top:1px solid rgba(36,26,16,0.12);
+    font-family:var(--sans); font-weight:300; font-size:9.5px; letter-spacing:0.3em;
+    text-transform:uppercase; color:var(--muted); text-align:center; }
+
+  html.anim .rise{ opacity:0; transform:translateY(18px);
+    animation:rise 780ms var(--ease) forwards; }
+  html.anim .rise:nth-child(2){ animation-delay:90ms; }
+  @keyframes rise{ to{ opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
+      <circle cx="36" cy="36" r="28" stroke-width="2.2"/>
+      <line x1="12" y1="60" x2="60" y2="12" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+    <span class="bname">Soren</span>
+  </a>
+  <a class="back" href="index.html">&larr; Back to the site</a>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="rise">
+      <svg class="seal" viewBox="0 0 72 72" fill="none" aria-hidden="true">
+        <circle cx="36" cy="36" r="28" stroke-width="1.4"/>
+        <line x1="12" y1="60" x2="60" y2="12" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <h1>Welcome <em>back!</em></h1>
+      <p class="lead">Call us, we are happy to help. Tell us what you need and we will get straight to it.</p>
+      <div class="call">
+        <span class="k">Phone</span>
+        <a class="phone" href="tel:+19493085700">(949) 308&nbsp;5700</a>
+        <p class="hours">We reply within two business days</p>
+      </div>
+    </div>
+
+    <div class="card rise">
+      <h2>Or send a note</h2>
+      <form class="inquiry" id="inquiry" novalidate>
+        <div class="row">
+          <div><label for="q-name">Name</label><input id="q-name" name="name" type="text" autocomplete="name" required></div>
+          <div><label for="q-email">Email</label><input id="q-email" name="email" type="email" autocomplete="email" required></div>
+        </div>
+        <div><label for="q-msg">What do you have in mind?</label><textarea id="q-msg" name="message" required></textarea></div>
+        <button class="send" type="submit">Send inquiry <span>&rarr;</span></button>
+        <p class="note" id="note" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer>Soren Management LLC &middot; sorendesign.io</footer>
+
+<script>
+(function(){
+  /* No backend on this static host yet, so submitting composes an email with
+     the note prefilled. Swap for a form endpoint to send silently. */
+  var form = document.getElementById('inquiry');
+  var note = document.getElementById('note');
+  if(!form) return;
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var name = (document.getElementById('q-name').value || '').trim();
+    var email = (document.getElementById('q-email').value || '').trim();
+    var msg = (document.getElementById('q-msg').value || '').trim();
+    if(!name || !email || !msg){ note.textContent = 'Please fill in every field.'; return; }
+    var subject = 'Website inquiry from ' + name;
+    var body = msg + '\n\nFrom: ' + name + '\n' + email;
+    window.location.href = 'mailto:kvail@sorenmgt.com?subject=' +
+      encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    note.textContent = 'Opening your email to send…';
+  });
+})();
+</script>
+
+</body>
+</html>

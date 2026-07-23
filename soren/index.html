@@ -450,6 +450,8 @@
   .ride-cue{ margin-top:clamp(22px,3.5vh,34px); font-family:var(--mono); font-size:10px; letter-spacing:0.3em;
     text-transform:uppercase; color:var(--greige-d); }
   .ride-cue b{ color:var(--gold); font-weight:400; }
+  .s-cream .ride-cue{ color:var(--greige-l); }
+  .s-cream .ride-cue b{ color:var(--gold-ink); }
 
   /* The gallery reads straight down — one template per screen, no sideways
      travel. Each scene's copy still waterfalls in, driven by that scene's
@@ -749,7 +751,7 @@
   <nav class="head-actions" aria-label="Actions">
     <a class="hb hb-secondary" href="#work">See the work</a>
     <a class="hb hb-secondary" href="#contact">Get in touch</a>
-    <a class="hb hb-primary" href="#contact">Have a website with us?</a>
+    <a class="hb hb-primary" href="contact.html">Have a website with us?</a>
   </nav>
 </header>
 
@@ -786,64 +788,8 @@
 
 </section>
 
-<!-- ============ 01 THE OFFER ============ -->
-<section class="s-cream" id="offer" data-tone="cream" data-num="01" data-name="The Offer">
-  <div class="inner reveal">
-    <div class="sec-tag"><span class="rule"></span><span>The Offer</span></div>
-    <div class="offer-head">
-      <h2 class="statement">
-        <span class="w"><span>Built</span></span>
-        <span class="w"><span>around</span></span>
-        <span class="w"><span>your</span></span>
-        <span class="w"><span>business,</span></span><br>
-        <span class="w"><span data-d="2"><em>made</em></span></span>
-        <span class="w"><span data-d="2"><em>to</em></span></span>
-        <span class="w"><span data-d="3"><em>grow</em></span></span>
-        <span class="w"><span data-d="3"><em>with</em></span></span>
-        <span class="w"><span data-d="3"><em>it.</em></span></span>
-      </h2>
-      <div class="side fade" data-d="4">
-        <p>Not a template with a logo dropped in. We start from your brand and build out from there.</p>
-        <p class="sig">Small by design</p>
-      </div>
-    </div>
-    <div class="spec">
-      <div class="spec-row fade" data-d="1">
-        <span class="n">/ 01</span><h3>Design &amp; build</h3>
-        <p>Layout, type, color, and code. All original, all mobile-first.</p>
-        <span class="chip">One time</span>
-      </div>
-      <div class="spec-row fade" data-d="2">
-        <span class="n">/ 02</span><h3>Words included</h3>
-        <p>We write every headline and sentence for you. Nothing ships until you approve it.</p>
-        <span class="chip">One time</span>
-      </div>
-      <div class="spec-row fade" data-d="3">
-        <span class="n">/ 03</span><h3>Custom motion</h3>
-        <p>Animations tailored to the brand, like the ones running on this page right now.</p>
-        <span class="chip">One time</span>
-      </div>
-      <div class="spec-row fade" data-d="4">
-        <span class="n">/ 04</span><h3>Hosting, covered</h3>
-        <p>We host it, keep it fast and secure, and handle renewals. You never touch a server.</p>
-        <span class="chip">Monthly</span>
-      </div>
-      <div class="spec-row fade" data-d="5">
-        <span class="n">/ 05</span><h3>Ongoing edits</h3>
-        <p>Copy, images, and sections, updated within two business days.</p>
-        <span class="chip">Monthly</span>
-      </div>
-      <div class="spec-row fade" data-d="6">
-        <span class="n">/ 06</span><h3>Yours, entirely</h3>
-        <p>The domain is registered in your name and the files are sent to you. No lock-in, ever.</p>
-        <span class="chip">Always</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 02 THE WORK — GALLERY RIDE ============ -->
-<section class="s-dark" id="work" data-tone="dark" data-num="02" data-name="The Work">
+<!-- ============ 01 THE WORK — INTRO ============ -->
+<section class="s-cream" id="work" data-tone="cream" data-num="01" data-name="The Work">
   <div class="inner ride-intro">
     <div class="work-head reveal">
       <div>
@@ -856,9 +802,12 @@
       </div>
       <p class="body fade" data-d="3">Four builds, four personalities. Each window is the live site. Click in whenever you like.</p>
     </div>
-    <p class="ride-cue reveal fade">Scroll to ride through the gallery <b>↓</b></p>
+    <p class="ride-cue reveal fade">Scroll through the four builds <b>↓</b></p>
   </div>
+</section>
 
+<!-- ============ 01 THE WORK — GALLERY ============ -->
+<section class="s-dark" id="gallery" data-tone="dark" data-num="01" data-name="The Work">
   <div class="ride" id="ride">
     <div class="stage">
       <div class="track" id="rideTrack">
@@ -977,8 +926,8 @@
 
 </section>
 
-<!-- ============ 03 THE PROCESS ============ -->
-<section class="s-cream" id="process" data-tone="cream" data-num="03" data-name="The Process">
+<!-- ============ 02 THE PROCESS ============ -->
+<section class="s-cream" id="process" data-tone="cream" data-num="02" data-name="The Process">
   <div class="inner reveal">
     <div class="sec-tag"><span class="rule"></span><span>The Process</span></div>
     <h2 class="statement">
@@ -1009,8 +958,8 @@
   </div>
 </section>
 
-<!-- ============ 04 OWNERSHIP ============ -->
-<section class="s-deep own" id="ownership" data-tone="dark" data-num="04" data-name="Ownership">
+<!-- ============ 03 OWNERSHIP ============ -->
+<section class="s-deep own" id="ownership" data-tone="dark" data-num="03" data-name="Ownership">
   <div class="inner reveal">
     <div>
       <div class="sec-tag"><span class="rule"></span><span>Ownership</span></div>
@@ -1028,6 +977,62 @@
       <div class="mrow"><span>Source files</span><b>Sent to you</b></div>
       <div class="mrow"><span>Hosting</span><b>Covered by Soren</b></div>
       <div class="mrow"><span>Lock-in</span><b>None</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 THE OFFER ============ -->
+<section class="s-cream" id="offer" data-tone="cream" data-num="04" data-name="The Offer">
+  <div class="inner reveal">
+    <div class="sec-tag"><span class="rule"></span><span>The Offer</span></div>
+    <div class="offer-head">
+      <h2 class="statement">
+        <span class="w"><span>Built</span></span>
+        <span class="w"><span>around</span></span>
+        <span class="w"><span>your</span></span>
+        <span class="w"><span>business,</span></span><br>
+        <span class="w"><span data-d="2"><em>made</em></span></span>
+        <span class="w"><span data-d="2"><em>to</em></span></span>
+        <span class="w"><span data-d="3"><em>grow</em></span></span>
+        <span class="w"><span data-d="3"><em>with</em></span></span>
+        <span class="w"><span data-d="3"><em>it.</em></span></span>
+      </h2>
+      <div class="side fade" data-d="4">
+        <p>Not a template with a logo dropped in. We start from your brand and build out from there.</p>
+        <p class="sig">Small by design</p>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-row fade" data-d="1">
+        <span class="n">/ 01</span><h3>Design &amp; build</h3>
+        <p>Layout, type, color, and code. All original, all mobile-first.</p>
+        <span class="chip">One time</span>
+      </div>
+      <div class="spec-row fade" data-d="2">
+        <span class="n">/ 02</span><h3>Words included</h3>
+        <p>We write every headline and sentence for you. Nothing ships until you approve it.</p>
+        <span class="chip">One time</span>
+      </div>
+      <div class="spec-row fade" data-d="3">
+        <span class="n">/ 03</span><h3>Custom motion</h3>
+        <p>Animations tailored to the brand, like the ones running on this page right now.</p>
+        <span class="chip">One time</span>
+      </div>
+      <div class="spec-row fade" data-d="4">
+        <span class="n">/ 04</span><h3>Hosting, covered</h3>
+        <p>We host it, keep it fast and secure, and handle renewals. You never touch a server.</p>
+        <span class="chip">Monthly</span>
+      </div>
+      <div class="spec-row fade" data-d="5">
+        <span class="n">/ 05</span><h3>Ongoing edits</h3>
+        <p>Copy, images, and sections, updated within two business days.</p>
+        <span class="chip">Monthly</span>
+      </div>
+      <div class="spec-row fade" data-d="6">
+        <span class="n">/ 06</span><h3>Yours, entirely</h3>
+        <p>The domain is registered in your name and the files are sent to you. No lock-in, ever.</p>
+        <span class="chip">Always</span>
+      </div>
     </div>
   </div>
 </section>
