@@ -214,63 +214,45 @@
     transition:opacity 1800ms ease-out; }
   #veil.lit{ opacity:0.45; }
 
-  /* sticky header — pinned for the whole page, compacts once you scroll */
+  /* fixed header — overlays the hero so the veil fills the whole first
+     screen; the bar surface forms once you scroll */
   .topbar{
-    position:sticky; top:0; z-index:85;
+    position:fixed; top:0; left:0; right:0; z-index:85;
     display:flex; justify-content:space-between; align-items:center; gap:18px;
-    padding:22px var(--pad-x);
-    background:transparent;               /* no bar on load — just the floating button */
+    padding:20px var(--pad-x);
+    background:transparent;
     border-bottom:1px solid transparent;
     transition:opacity 800ms var(--ease), padding 280ms var(--ease),
                background-color 300ms ease-out, border-color 300ms ease-out, box-shadow 300ms ease-out;
   }
-  /* the bar forms once you scroll: cream fills in, the brand and actions appear */
-  html.scrolled .topbar{ padding-top:14px; padding-bottom:14px;
+  html.scrolled .topbar{ padding-top:12px; padding-bottom:12px;
     background:var(--espresso);
     border-bottom-color:rgba(36,26,16,0.12);
     box-shadow:0 10px 30px -22px rgba(36,26,16,0.45); }
-  /* the header itself arrives once the headline has landed */
+  /* the header fades in once the headline has landed */
   html.anim .topbar{ opacity:0; }
   html.anim .topbar.on{ opacity:1; }
   @keyframes fadeIn{ to{ opacity:1; } }
-  .topbar-left{ display:flex; align-items:center; gap:clamp(18px,2.8vw,36px); }
-  /* the two hero actions, docked beside the logo once you have scrolled */
-  .head-docked{ display:flex; align-items:center; gap:20px; }
-  .head-docked a{ font-family:var(--mono); font-size:10px; letter-spacing:0.18em; text-transform:uppercase;
-    color:var(--bone); text-decoration:none; white-space:nowrap;
-    opacity:0; transform:translateY(9px); pointer-events:none;
-    transition:opacity 340ms var(--ease), transform 340ms var(--ease), color 200ms ease-out; }
-  .head-docked a:hover{ color:var(--gold); }
-  html.scrolled .head-docked a{ opacity:1; transform:none; pointer-events:auto; }
-  html.scrolled .head-docked a:nth-child(2){ transition-delay:70ms; }
-  @media (max-width:760px){ .head-docked{ display:none; } }
-  /* the brand rides in only when the bar forms on scroll */
-  .brand{ display:flex; align-items:center; gap:14px; text-decoration:none;
-    opacity:0; transform:translateY(-6px); pointer-events:none;
-    transition:opacity 320ms var(--ease), transform 320ms var(--ease); }
-  html.scrolled .brand{ opacity:1; transform:none; pointer-events:auto; }
+  .brand{ display:flex; align-items:center; gap:14px; text-decoration:none; }
   .brand .bmark{ width:30px; height:30px; display:block; }
   .brand .bmark circle, .brand .bmark line{ stroke:var(--gold); }
   html.anim .brand .bmark circle{ stroke-dasharray:176; stroke-dashoffset:176;
     animation:draw 1.2s var(--expo) forwards; animation-delay:calc(var(--intro) + 0.55s); }
   html.anim .brand .bmark line{ stroke-dasharray:68; stroke-dashoffset:68;
     animation:draw 0.65s var(--expo) forwards; animation-delay:calc(var(--intro) + 1.5s); }
-  .brand .bname{ font-family:var(--serif); font-weight:400; font-size:17px; letter-spacing:0.3em; text-transform:uppercase; text-indent:0.3em; }
-  .brand .bsub{ font-family:var(--mono); font-size:9px; letter-spacing:0.24em; text-transform:uppercase; color:var(--greige-d); }
-  @media (max-width:760px){ .brand .bsub{ display:none; } }
-  .topbar-right{ display:flex; align-items:center; gap:clamp(16px,2.6vw,32px); }
-  .nav{ display:flex; gap:clamp(12px,2.2vw,28px); }
-  .nav a{ font-family:var(--mono); font-size:10px; letter-spacing:0.22em; text-transform:uppercase;
-    color:var(--greige-d); text-decoration:none; padding:12px 2px; transition:color 200ms ease-out; }
-  .nav a:hover{ color:var(--bone); }
-  /* the one deliberate call to action, in the button language of the site */
-  .nav-cta{ display:inline-flex; align-items:center; min-height:44px; padding:13px clamp(16px,1.8vw,22px);
-    font-family:var(--sans); font-weight:600; font-size:11px; letter-spacing:0.12em; text-transform:uppercase;
-    color:#F7EFDD; background:var(--bone); border:2px solid var(--bone); text-decoration:none;
-    transition:background-color 200ms ease-out, border-color 200ms ease-out; }
-  .nav-cta:hover{ background:var(--gold); border-color:var(--gold); }
-  @media (max-width:640px){ .nav{ display:none; } }
-  @media (max-width:420px){ .nav-cta{ font-size:10px; letter-spacing:0.08em; padding:12px 14px; } }
+  .brand .bname{ font-family:var(--serif); font-weight:400; font-size:18px; letter-spacing:0.3em; text-transform:uppercase; text-indent:0.3em; }
+  /* header actions — uniform boxed buttons, visible from load */
+  .head-actions{ display:flex; align-items:center; gap:12px; }
+  .hb{ display:inline-flex; align-items:center; min-height:46px; padding:13px clamp(18px,1.9vw,24px);
+    font-family:var(--sans); font-weight:600; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--bone); text-decoration:none; white-space:nowrap;
+    border:2px solid rgba(36,26,16,0.30); background:transparent;
+    transition:border-color 200ms ease-out, background-color 200ms ease-out, color 200ms ease-out; }
+  .hb:hover{ border-color:var(--bone); background:rgba(36,26,16,0.06); }
+  .hb-primary{ color:#F7EFDD; background:var(--bone); border-color:var(--bone); }
+  .hb-primary:hover{ background:var(--gold); border-color:var(--gold); color:#F7EFDD; }
+  @media (max-width:860px){ .hb-secondary{ display:none; } }
+  @media (max-width:440px){ .hb-primary{ font-size:11px; letter-spacing:0.06em; padding:12px 15px; } }
 
   /* NO z-index here: it would create a stacking context, and on phones the
      mark lives inside this element — an isolated screen blend renders the
@@ -757,20 +739,18 @@
 
 <!-- sticky header: stays pinned; the two hero actions dock beside the logo on scroll -->
 <header class="topbar" id="topbar">
-  <div class="topbar-left">
-    <a class="brand" href="#top">
-      <svg class="bmark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
-        <circle cx="36" cy="36" r="28" stroke-width="2.2"/>
-        <line x1="12" y1="60" x2="60" y2="12" stroke-width="2.2" stroke-linecap="round"/>
-      </svg>
-      <span class="bname">Soren</span>
-    </a>
-    <div class="head-docked">
-      <a href="#work">See the work</a>
-      <a href="#contact">Get in touch</a>
-    </div>
-  </div>
-  <a class="nav-cta" href="#contact">Have a website with us?</a>
+  <a class="brand" href="#top">
+    <svg class="bmark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
+      <circle cx="36" cy="36" r="28" stroke-width="2.2"/>
+      <line x1="12" y1="60" x2="60" y2="12" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+    <span class="bname">Soren</span>
+  </a>
+  <nav class="head-actions" aria-label="Actions">
+    <a class="hb hb-secondary" href="#work">See the work</a>
+    <a class="hb hb-secondary" href="#contact">Get in touch</a>
+    <a class="hb hb-primary" href="#contact">Have a website with us?</a>
+  </nav>
 </header>
 
 <!-- ============ 00 COVER ============ -->
@@ -1466,7 +1446,7 @@
        and far less saturated than before, so it reads as soft light-brown
        drift rather than butter, and the mark stays clearly visible. */
     gl.uniform3fv(locColors, new Float32Array([
-      0.706, 0.678, 0.639,
+      0.729, 0.684, 0.620,
       0.969, 0.937, 0.867,
       0.0, 0.0, 0.0
     ]));
