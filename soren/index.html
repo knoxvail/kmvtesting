@@ -149,22 +149,12 @@
   section{ position:relative; scroll-margin-top:72px; }
   .s-dark{ background:radial-gradient(ellipse 130% 95% at 42% 34%, var(--umber) 0%, var(--espresso) 56%, var(--espresso-deep) 100%); color:var(--bone); }
   .s-deep{ background:var(--espresso-deep); color:var(--bone); position:relative; }
+  /* Clean edges. The band is very slightly lifted at top and bottom so it has
+     depth without a wash bleeding over the boundary. */
   .s-cream{
-    background:linear-gradient(180deg, var(--cream-hi) 0%, var(--cream) 26%, var(--cream) 74%, var(--cream-hi) 100%);
+    background:linear-gradient(180deg, var(--cream-hi) 0%, var(--cream) 22%, var(--cream) 78%, var(--cream-hi) 100%);
     color:var(--ink); position:relative; z-index:5;
   }
-  /* Sections melt into each other instead of cutting. Each band fades from
-     the page cream at its edge into its own colour, so every boundary passes
-     through the same warm midtones rather than snapping light-to-dark. */
-  .s-cream::before, .s-cream::after,
-  .s-deep::before, .s-deep::after{
-    content:""; position:absolute; left:0; right:0; z-index:0; pointer-events:none; }
-  .s-cream::before, .s-cream::after{ height:clamp(44px,5.5vh,82px); }
-  .s-deep::before, .s-deep::after{ height:clamp(34px,4vh,62px); }
-  .s-cream::before, .s-deep::before{ top:0;
-    background:linear-gradient(180deg, #F7EFDD 0%, rgba(247,239,221,0) 100%); }
-  .s-cream::after, .s-deep::after{ bottom:0;
-    background:linear-gradient(0deg, #F7EFDD 0%, rgba(247,239,221,0) 100%); }
   .inner{ position:relative; z-index:2; max-width:1240px; margin:0 auto; padding:clamp(80px,11vh,136px) var(--pad-x); }
 
   /* ================= type ================= */
