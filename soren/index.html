@@ -373,26 +373,27 @@
   .panel .deck{ margin-top:22px; font-size:18px; line-height:1.65; color:rgba(36,26,16,0.82); max-width:46ch; }
   .panel .deck b{ font-weight:500; color:var(--cream-hi); }
   .panel .cta-row{ display:flex; align-items:center; gap:26px; margin-top:clamp(26px,4vh,40px); flex-wrap:wrap; }
+  /* Buttons read as buttons: solid ground, real weight, a plain border.
+     Tight letterspacing and a straightforward hover — confident rather
+     than delicate. */
   .btn-ghost{
-    display:inline-flex; align-items:center; gap:12px;
-    font-family:var(--sans); font-weight:400; font-size:11.5px; letter-spacing:0.38em; text-transform:uppercase;
-    color:var(--bone); text-decoration:none; border:1px solid var(--hair-d); padding:18px 28px;
-    position:relative; overflow:hidden; z-index:1; min-height:44px;
-    transition:border-color 250ms ease-out, color 250ms ease-out;
+    display:inline-flex; align-items:center; gap:11px;
+    font-family:var(--sans); font-weight:600; font-size:12.5px; letter-spacing:0.14em; text-transform:uppercase;
+    color:#F7EFDD; background:var(--bone); text-decoration:none;
+    border:2px solid var(--bone); padding:19px 30px;
+    min-height:52px; transition:background-color 200ms ease-out, border-color 200ms ease-out;
   }
-  .btn-ghost::before{ content:""; position:absolute; inset:0; background:var(--gold);
-    transform:scaleY(0); transform-origin:bottom center; transition:transform 350ms var(--ease); z-index:-1; }
-  .btn-ghost:hover{ border-color:var(--gold); color:var(--espresso-deep); }
-  .btn-ghost:hover::before{ transform:scaleY(1); }
-  .btn-ghost .arr{ display:inline-block; transition:transform 250ms ease-out; }
-  .btn-ghost:hover .arr{ transform:translateX(8px); }
+  .btn-ghost:hover{ background:var(--gold); border-color:var(--gold); color:#F7EFDD; }
+  .btn-ghost .arr{ display:inline-block; transition:transform 220ms ease-out; }
+  .btn-ghost:hover .arr{ transform:translateX(6px); }
+  /* the quieter second action: outlined, same weight and footprint */
   .txt-link{
-    font-family:var(--mono); font-size:11.5px; letter-spacing:0.26em; text-transform:uppercase;
-    color:var(--gold); text-decoration:none; padding:12px 0; position:relative;
+    display:inline-flex; align-items:center; min-height:52px; padding:19px 26px;
+    font-family:var(--sans); font-weight:600; font-size:12.5px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--bone); text-decoration:none; border:2px solid rgba(36,26,16,0.28);
+    transition:border-color 200ms ease-out, background-color 200ms ease-out;
   }
-  .txt-link::after{ content:""; position:absolute; left:0; right:0; bottom:8px; height:1px; background:var(--gold);
-    transform:scaleX(0); transform-origin:left center; transition:transform 350ms var(--ease); }
-  .txt-link:hover::after{ transform:scaleX(1); }
+  .txt-link:hover{ border-color:var(--bone); background:rgba(36,26,16,0.05); }
 
   /* offer spec folded under the floating copy */
   .panel-spec{ margin-top:clamp(28px,4vh,42px); border-top:1px solid var(--hair-d); }
@@ -556,15 +557,12 @@
   .rh-desc{ margin-top:14px; font-size:15px; line-height:1.6; color:rgba(36,26,16,0.78); max-width:34ch; }
   .rh-feat{ margin-top:18px; font-family:var(--mono); font-size:9.5px; letter-spacing:0.22em;
     text-transform:uppercase; color:var(--tintD,var(--tintB)); line-height:2.1; }
-  .rh-cta{ display:inline-flex; align-items:center; gap:12px; margin-top:clamp(20px,3vh,30px);
-    font-family:var(--sans); font-weight:400; font-size:10.5px; letter-spacing:0.36em; text-transform:uppercase;
-    color:var(--bone); text-decoration:none; border:1px solid var(--tintH); padding:15px 24px;
-    position:relative; overflow:hidden; z-index:1; transition:color 250ms ease-out, border-color 250ms ease-out; }
-  .rh-cta::before{ content:""; position:absolute; inset:0; background:var(--tintB);
-    transform:scaleY(0); transform-origin:bottom center; transition:transform 320ms var(--ease); z-index:-1; }
-  /* the tints are bright, so the label goes dark when one fills in */
-  .rh-cta:hover{ color:#241A10; border-color:var(--tintB); }
-  .rh-cta:hover::before{ transform:scaleY(1); }
+  .rh-cta{ display:inline-flex; align-items:center; gap:11px; margin-top:clamp(20px,3vh,30px);
+    font-family:var(--sans); font-weight:600; font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--bone); text-decoration:none; border:2px solid var(--bone); padding:16px 26px;
+    min-height:50px; background:transparent;
+    transition:background-color 200ms ease-out, color 200ms ease-out; }
+  .rh-cta:hover{ background:var(--bone); color:#F7EFDD; }
   .rh-cta .arr{ transition:transform 250ms ease-out; }
   .rh-cta:hover .arr{ transform:translateX(8px); }
 
@@ -668,18 +666,15 @@
   .con-row dd a:hover{ color:var(--gold-bright); }
   @media (max-width:560px){ .con-row{ grid-template-columns:86px 1fr; } }
   .forward{
-    display:inline-flex; align-items:center; gap:14px; margin-top:clamp(32px,5vh,50px);
-    font-family:var(--sans); font-weight:400; font-size:11px; letter-spacing:0.42em; text-transform:uppercase;
-    color:var(--gold); text-decoration:none; border:1px solid var(--hair-d); padding:20px 34px;
-    min-height:44px; position:relative; z-index:2; overflow:hidden;
-    transition:border-color 250ms ease-out, color 250ms ease-out;
+    display:inline-flex; align-items:center; gap:12px; margin-top:clamp(32px,5vh,50px);
+    font-family:var(--sans); font-weight:600; font-size:13px; letter-spacing:0.14em; text-transform:uppercase;
+    color:#F7EFDD; background:var(--bone); text-decoration:none;
+    border:2px solid var(--bone); padding:21px 34px; min-height:56px; position:relative; z-index:2;
+    transition:background-color 200ms ease-out, border-color 200ms ease-out;
   }
-  .forward::before{ content:""; position:absolute; inset:0; background:var(--gold);
-    transform:scaleY(0); transform-origin:bottom center; transition:transform 350ms var(--ease); z-index:-1; }
-  .forward:hover{ border-color:var(--gold); color:var(--espresso-deep); }
-  .forward:hover::before{ transform:scaleY(1); }
-  .forward .arr{ display:inline-block; transition:transform 250ms ease-out; }
-  .forward:hover .arr{ transform:translateX(9px); }
+  .forward:hover{ background:var(--gold); border-color:var(--gold); color:#F7EFDD; }
+  .forward .arr{ display:inline-block; transition:transform 220ms ease-out; }
+  .forward:hover .arr{ transform:translateX(7px); }
 
   footer{
     background:var(--espresso-deep); text-align:center; padding:28px 20px;
@@ -1298,27 +1293,9 @@
     cur.remove();
   }
 
-  /* ---------- magnetic pull ---------- */
-  if(animOn && finePtr){
-    document.querySelectorAll('.magnet').forEach(function(el){
-      var raf = null;
-      el.addEventListener('mousemove', function(ev){
-        if(raf) return;
-        raf = requestAnimationFrame(function(){
-          raf = null;
-          var r = el.getBoundingClientRect();
-          var x = ev.clientX - (r.left + r.width/2);
-          var y = ev.clientY - (r.top + r.height/2);
-          el.style.transition = 'transform 150ms ease-out';
-          el.style.transform = 'translate(' + (x * 0.18).toFixed(1) + 'px,' + (y * 0.3).toFixed(1) + 'px)';
-        });
-      });
-      el.addEventListener('mouseleave', function(){
-        el.style.transition = 'transform 450ms cubic-bezier(0.22,1,0.36,1)';
-        el.style.transform = 'translate(0,0)';
-      });
-    });
-  }
+  /* The buttons used to drift toward the pointer on every mousemove. It
+     read as lag and it is exactly the kind of flourish this site does not
+     need — buttons should sit still and be pressed. */
 
   /* ---------- number scramble ---------- */
   function scramble(el){
