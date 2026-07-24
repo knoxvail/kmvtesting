@@ -65,6 +65,10 @@
     --pad-x:clamp(22px,6vw,96px);
     /* keep-out lane on the right so nothing runs under the progress rail */
     --rail-lane:clamp(78px,7.5vw,132px);
+    /* the fixed header, plus the lane the Live template marker sits in.
+       Scenes reserve this at the top so neither slides under the bar. */
+    --bar-h:76px;
+    --scene-inset:calc(var(--bar-h) + 58px);
     --intro:0.15s;
     /* z scale: rail 70 · grain 80 · wipe 90 · loader 100 · cursor 110 */
   }
@@ -474,8 +478,13 @@
   .ride{ position:relative; }
   .stage{ position:relative; }
   .track{ display:block; }
+  /* The header is fixed, so a scene centred on the raw viewport puts the top
+     of the template — and the Live template marker above it — underneath the
+     bar. Reserve that band plus the marker's lane so the window always sits
+     below the chrome, and centre what is left. */
   .scene{ position:relative; width:100%; min-height:100svh; overflow:hidden;
-    display:flex; align-items:center; --tp:1; }
+    display:flex; align-items:center; --tp:1;
+    padding-top:var(--scene-inset); }
   /* phones: each scene stacks its own copy above its portal instead of the
      floating placard, which needs desktop width to read. Tuned so a scene
      fits one screen without scrolling inside itself. */
@@ -526,7 +535,10 @@
     html.anim .scene-grid, html.anim .scene--alt .scene-grid{ display:block; max-width:none;
       padding:0 var(--rail-lane) 0 0; }
     html.anim .scene-head{ display:none; }
-    html.anim .portal{ width:min(68vw,1100px); margin-left:auto; }
+    /* the window has to fit the space left under the header, or its top edge
+       and marker disappear behind the bar */
+    html.anim .portal{ width:min(68vw,1100px); margin-left:auto;
+      max-height:calc(100svh - var(--scene-inset) - clamp(24px,4vh,52px)); }
     html.anim .scene-num, html.anim .scene--alt .scene-num{
       left:calc(var(--pad-x) * 0.5); right:auto; bottom:1vh;
       font-size:clamp(100px,14vw,200px); }
@@ -534,8 +546,15 @@
 
   /* the placard rides with its site: same position in every scene, text waterfalls in on scroll.
      No box — freeform type over the stage, held up by a feathered scrim. */
-  .scene-copy{ position:absolute; left:var(--pad-x); top:50%; transform:translateY(-50%); z-index:4;
-    width:min(360px,26vw); }
+  /* Centred on the WINDOW, not the scene — the scene now reserves a band at
+     the top for the header, so a plain 50% would float the placard above the
+     site it belongs to. The fixed min-height is what keeps all four plates
+     lined up: the block is centred, so without it a longer description or a
+     two-line title moves that plate's first line and they no longer agree. */
+  .scene-copy{ position:absolute; left:var(--pad-x); z-index:4;
+    top:calc(var(--scene-inset) + (100% - var(--scene-inset)) / 2);
+    transform:translateY(-50%);
+    width:min(360px,26vw); min-height:380px; }
   .scene-copy::before{ content:""; position:absolute; inset:-40px -56px -44px -48px; z-index:-1; pointer-events:none;
     background:radial-gradient(ellipse 105% 100% at 42% 50%, rgba(247,239,221,0.92) 0%, rgba(247,239,221,0.6) 58%, rgba(247,239,221,0) 80%); }
   .scene-copy .rh-title{ font-size:clamp(28px,3vw,44px); text-shadow:0 2px 22px rgba(247,239,221,0.9); }
