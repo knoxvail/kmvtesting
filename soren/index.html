@@ -311,13 +311,13 @@
     opacity:0; transition:opacity 260ms ease-out; }
   .fire-mount.lit .mark-film{ opacity:1; }
   .fire-mount .mark-film circle, .fire-mount .mark-film line{ stroke:var(--gold); }
-  /* two strokes draw on in sequence: the ring from twelve o'clock, then the
-     slash from the top-right down — the same hand the seal uses elsewhere */
+  /* exactly the logo's own draw — the shared @keyframes draw and --expo easing
+     the loader mark, the header mark and the seal all use, just at hero size:
+     ring from twelve o'clock, then the slash from the top-right down */
   html.anim .fire-mount .mark-film circle{ stroke-dasharray:176; stroke-dashoffset:176;
-    animation:markDraw 1.15s var(--ease) 0.15s forwards; }
+    animation:draw 1.15s var(--expo) 0.15s forwards; }
   html.anim .fire-mount .mark-film line{ stroke-dasharray:68; stroke-dashoffset:68;
-    animation:markDraw 0.6s var(--ease) 0.95s forwards; }
-  @keyframes markDraw{ to{ stroke-dashoffset:0; } }
+    animation:draw 0.6s var(--expo) 0.95s forwards; }
   html:not(.anim) .fire-mount, .fire-mount.dead{ display:none; }
 
   /* vector fallback — reduced motion, or if the film ever fails to play */
