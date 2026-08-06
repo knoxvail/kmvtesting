@@ -297,37 +297,27 @@
     margin-left:calc(clamp(320px,34vw,540px) / -2);
     margin-top:calc(clamp(320px,34vw,540px) / -2);
     pointer-events:none; }
-  /* the mark draws itself dead centre, then slides to its resting place on
-     the right once the burn is done (13% of the hero == 63% - 50%) */
-  /* Safari can't do WebM alpha, so it gets the black-backed cut with a
-     screen blend — black drops out, giving the same clean transparency.
-     Either way the mark is see-through, so it is free to travel (.free). */
-  /* multiply, not screen: on paper the fallback cut is a dark mark on white
-     and multiply drops the white. (Screen was the dark-theme equivalent —
-     it would render this cut invisible here.) */
-  .fire-mount.blend video{ mix-blend-mode:multiply; }
-  /* On the blend route the travel must live on the VIDEO, never on the
-     mount — a transform on the mount makes it a stacking context, which
-     isolates the blend and brings the black square back. */
-  /* The mark burns at full size centre stage, then travels to its resting
-     place on the right. It never changes size — no scale here, and none baked
-     into the film either. That is deliberate: the GPU resamples a video
-     texture with a bilinear filter that skips source pixels past about 2x
-     down, so any shrink tore the thin strokes apart (the old scale(0.39) put
-     the 1080px film in a 211px box, 4.66x, and it looked chewed up until it
-     snapped clean at full size). At a constant 540px the frame downsamples a
-     steady 1.82x and the mark is sharp from the first frame. Travel only. */
+  /* The mark draws itself dead centre, then slides to its resting place on the
+     right once the draw is done (13% of the hero == 63% - 50%). It is a plain
+     vector Ø that strokes itself on — no video, so there is nothing to decode
+     or resample and nothing to go soft. The mount is transparent, so it is
+     free to travel (.free). */
   @media (min-width:901px){
-    html.anim .fire-mount.free.alpha{ transform:translateX(-13vw); }
-    html.anim .fire-mount.free.alpha.placed{ transform:none;
+    html.anim .fire-mount.free{ transform:translateX(-13vw); }
+    html.anim .fire-mount.free.placed{ transform:none;
       transition:transform 1200ms cubic-bezier(0.65,0,0.35,1); }
-    html.anim .fire-mount.free.blend video{ transform:translateX(-13vw); }
-    html.anim .fire-mount.free.blend.placed video{ transform:none;
-      transition:opacity 300ms ease-out, transform 1200ms cubic-bezier(0.65,0,0.35,1); }
   }
-  .fire-mount video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-    opacity:0; transition:opacity 300ms ease-out; }
-  .fire-mount.lit video{ opacity:1; }
+  .fire-mount .mark-film{ position:absolute; inset:0; width:100%; height:100%;
+    opacity:0; transition:opacity 260ms ease-out; }
+  .fire-mount.lit .mark-film{ opacity:1; }
+  .fire-mount .mark-film circle, .fire-mount .mark-film line{ stroke:var(--gold); }
+  /* two strokes draw on in sequence: the ring from twelve o'clock, then the
+     slash from the top-right down — the same hand the seal uses elsewhere */
+  html.anim .fire-mount .mark-film circle{ stroke-dasharray:176; stroke-dashoffset:176;
+    animation:markDraw 1.15s var(--ease) 0.15s forwards; }
+  html.anim .fire-mount .mark-film line{ stroke-dasharray:68; stroke-dashoffset:68;
+    animation:markDraw 0.6s var(--ease) 0.95s forwards; }
+  @keyframes markDraw{ to{ stroke-dashoffset:0; } }
   html:not(.anim) .fire-mount, .fire-mount.dead{ display:none; }
 
   /* vector fallback — reduced motion, or if the film ever fails to play */
@@ -340,19 +330,16 @@
      the pitch. It sits in the flow (moved into the panel by script), so
      nothing can overlap at any screen height. */
   @media (max-width:900px){
-    /* relative, not static — the video inside is absolutely positioned and
+    /* relative, not static — the mark inside is absolutely positioned and
        needs this element as its containing block, or it stretches to fill
        the whole panel */
     .fire-mount{ position:relative; left:auto; top:auto;
       width:min(64vw,260px); margin:4px auto 20px; }
-    /* burns on the screen's centre line, then settles down into the copy.
+    /* draws on the screen's centre line, then settles down into the copy.
        --rise is measured at runtime so it is exact on any handset. */
-    html.anim .fire-mount.free.alpha{ transform:translateY(var(--rise,0px)); }
-    html.anim .fire-mount.free.alpha.placed{ transform:none;
+    html.anim .fire-mount.free{ transform:translateY(var(--rise,0px)); }
+    html.anim .fire-mount.free.placed{ transform:none;
       transition:transform 1200ms cubic-bezier(0.65,0,0.35,1); }
-    html.anim .fire-mount.free.blend video{ transform:translateY(var(--rise,0px)); }
-    html.anim .fire-mount.free.blend.placed video{ transform:none;
-      transition:opacity 300ms ease-out, transform 1200ms cubic-bezier(0.65,0,0.35,1); }
     .brand-mark{ left:50%; top:46%; width:min(48vw,190px); }
   }
 
@@ -372,9 +359,13 @@
   html.instant{ scroll-behavior:auto; }
   html.instant .panel > *, html.instant .topbar, html.instant .scroll-cue,
   html.instant .rail,
-  html.instant .fire-mount, html.instant .fire-mount video, html.instant #veil{
+  html.instant .fire-mount, html.instant .fire-mount .mark-film, html.instant #veil{
     opacity:1 !important; transform:none !important; transition:none !important;
     animation:none !important; }
+  /* animation:none would leave the strokes at their undrawn offset; force the
+     finished mark on a return trip */
+  html.instant .fire-mount .mark-film circle,
+  html.instant .fire-mount .mark-film line{ stroke-dashoffset:0 !important; }
   html.instant .scene .fall{ opacity:1 !important; transform:none !important;
     transition:none !important; }
 
@@ -789,9 +780,10 @@
 <!-- ============ 00 COVER ============ -->
 <section class="s-dark hero" id="top" data-tone="dark" data-num="00" data-name="Cover">
   <div class="fire-mount" id="fireMount" aria-hidden="true">
-    <video id="fireFilm" muted playsinline preload="auto"
-           data-film-alpha="assets/soren-mark.webm"
-           data-film-blend="assets/soren-mark-w.mp4"></video>
+    <svg class="mark-film" viewBox="0 0 72 72" fill="none" aria-hidden="true">
+      <circle cx="36" cy="36" r="28" transform="rotate(-90 36 36)" stroke-width="1.2"/>
+      <line x1="60" y1="12" x2="12" y2="60" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
   </div>
   <svg class="brand-mark" viewBox="0 0 72 72" fill="none" aria-hidden="true">
     <circle cx="36" cy="36" r="28" transform="rotate(-90 36 36)" stroke-width="0.9"/>
@@ -1179,37 +1171,18 @@
     }
   }
 
-  /* ---------- fire mark ---------- */
-  /* First thing on the page and nothing else competing: the source is set
-     inline (a blob prefetch means downloading the WHOLE file before a
-     single frame can show — that was the multi-second wait), playback
-     starts the instant enough is buffered, and a refused play() is normal
-     — Chrome pauses muted video it thinks isn't visible, so re-poke on
-     visibility, intersection and first input. Only a decode error falls
-     back to the vector Ø. */
+  /* ---------- brand mark ---------- */
+  /* A plain vector Ø that strokes itself on: the ring draws from twelve
+     o'clock, then the slash from the top-right down — the same hand the seal
+     uses. Nothing to decode or resample, so it stays smooth on any machine.
+     The draw runs from CSS; when it lands the stage clears and the rest of the
+     intro cascades in. */
   var fireMount = document.getElementById('fireMount');
-  var fireFilm = document.getElementById('fireFilm');
-  if(fireMount && fireFilm && animOn){
+  if(fireMount && animOn){
     var smallScreen = window.matchMedia && window.matchMedia('(max-width:900px)').matches;
-    /* First choice: the WebM, which carries a real alpha channel — the mark
-       is genuinely transparent, so there is no box to match at any window
-       size. Safari plays VP9 but ignores alpha in WebM (it would render the
-       black), so it falls back to the MP4 cuts that have the page
-       background baked in per breakpoint. */
-    var isSafari = /^((?!chrome|chromium|android|crios|fxios).)*safari/i.test(navigator.userAgent);
-    var canAlpha = !isSafari && fireFilm.canPlayType &&
-                   fireFilm.canPlayType('video/webm; codecs="vp9"') !== '';
-    var filmSrc;
-    if(canAlpha && fireFilm.getAttribute('data-film-alpha')){
-      filmSrc = fireFilm.getAttribute('data-film-alpha');   /* real alpha */
-      fireMount.classList.add('alpha');
-    } else {
-      filmSrc = fireFilm.getAttribute('data-film-blend');   /* black + screen */
-      fireMount.classList.add('blend');
-    }
-    /* both routes are see-through, so the mark may travel */
-    fireMount.classList.add('free');
-    /* lift it to the middle of the screen for the burn — the slide back down
+    /* transparent, so it is free to travel; lit just fades it in */
+    fireMount.classList.add('free', 'lit');
+    /* lift it to the middle of the screen for the draw — the slide back down
        is what .placed undoes. Measured synchronously: rAF never fires in a
        background tab, which would leave the lift unset. */
     var setRise = function(){
@@ -1254,47 +1227,19 @@
       setRise();
       window.addEventListener('load', setRise);   /* again once fonts settle */
     }
-    fireFilm.src = filmSrc;
 
-    var fireDead = function(){ fireMount.classList.add('dead'); };
-    var firePoke = function(){
-      if(fireFilm.ended || !fireFilm.paused) return;
-      var p = fireFilm.play();
-      if(p && p.catch) p.catch(function(){});
-    };
-    var fireArm = firePoke;
-
-    fireFilm.addEventListener('playing', function(){ fireMount.classList.add('lit'); }, { once:true });
-    fireFilm.addEventListener('ended', clearStage, { once:true });
-    fireFilm.addEventListener('error', function(){ fireDead(); clearStage(); });
-    document.addEventListener('visibilitychange', firePoke);
-    ['pointerdown','keydown','wheel','touchstart'].forEach(function(evt){
-      window.addEventListener(evt, firePoke, { passive:true });
-    });
-    if('IntersectionObserver' in window){
-      new IntersectionObserver(function(entries){
-        if(entries[0] && entries[0].isIntersecting) firePoke();
-      }, { threshold:0.05 }).observe(fireMount);
-    }
-
-    /* on a return trip the mark is already "finished": hold its last frame */
     if(returning){
-      fireFilm.addEventListener('loadeddata', function(){
-        try{ fireFilm.currentTime = Math.max(0, (fireFilm.duration || 4) - 0.05); }catch(e){}
-      }, { once:true });
-    }
-    /* go the moment any of these say "ready" — whichever lands first wins */
-    else if(fireFilm.error){ fireDead(); }
-    else{
-      ['loadeddata','canplay','canplaythrough'].forEach(function(evt){
-        fireFilm.addEventListener(evt, fireArm, { once:true });
-      });
-      firePoke();                                  /* try straight away */
-      setTimeout(fireArm, 1200);                   /* and again shortly after */
+      /* already home and fully drawn — html.instant kills the animation and
+         holds the strokes closed */
+      fireMount.classList.add('placed');
+    } else {
+      /* the slash lands ~1.55s in; clear the stage as the last stroke settles
+         so the slide to the right and the copy cascade begin together */
+      setTimeout(clearStage, 1650);
     }
   } else {
     if(fireMount) fireMount.classList.add('dead');
-    clearStage();          /* no film to wait on */
+    clearStage();          /* nothing to wait on */
   }
 
 
