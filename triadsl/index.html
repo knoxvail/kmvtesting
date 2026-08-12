@@ -84,8 +84,10 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .band-photo figcaption{margin-top:14px;font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.76)}
 .band .statement em{font-style:normal}
 
-.photo-band{margin:0}
-.photo-band img{display:block;width:100%;height:clamp(300px,52vh,540px);object-fit:cover}
+.gallery{margin-top:clamp(56px,8vh,90px);display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,2.5vw,36px)}
+.gallery figure{margin:0}
+.gallery img{display:block;width:100%;height:auto}
+.gallery figcaption{margin-top:12px;font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
 .contact-band{padding:clamp(110px,15vh,190px) 0}
 .contact-band .lede{max-width:34em;margin-bottom:52px;font-size:1.0625rem}
 .email{display:inline-block;font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(2rem,6.4vw,5.6rem);letter-spacing:-0.02em;text-decoration:none;line-height:1.1;transition:color .25s ease}
@@ -113,6 +115,7 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
 .pin:focus-visible circle{stroke:var(--blue);stroke-width:1.5}
 @media (max-width:700px){
   .map-head{margin:48px 0 0;width:100%;padding-right:0}
+  .gallery{grid-template-columns:1fr;gap:40px;margin-top:44px}
   .map-wrap{margin-left:-14px;margin-right:-14px;margin-top:22px}
   .pin text{font-size:22px;letter-spacing:.03em;stroke-width:6px}
   .band .statement + .statement{margin-top:48px;padding-top:48px}
@@ -283,12 +286,18 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
         <h3>South Carolina</h3><p>Columbia</p>
         <h3>Texas</h3><p>Dallas, Fort Worth, Houston, San Antonio</p>
       </div>
+      <div class="gallery">
+        <figure class="reveal">
+          <img src="images/waterford-pond.jpg" alt="Waterford senior living community beside its pond" width="2400" height="1018" loading="lazy">
+          <figcaption>The Waterford</figcaption>
+        </figure>
+        <figure class="reveal d1">
+          <img src="images/waterford-springfield.jpg" alt="Aerial view of The Waterford in Springfield, Missouri" width="1600" height="678" loading="lazy">
+          <figcaption>The Waterford, Springfield, Missouri</figcaption>
+        </figure>
+      </div>
     </div>
   </section>
-
-  <figure class="photo-band reveal">
-    <img src="images/waterford-pond.jpg" alt="Waterford senior living community" width="2400" height="1018" loading="lazy">
-  </figure>
 
   <section class="contact-band" id="contact">
     <div class="wrap">
