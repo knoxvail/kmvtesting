@@ -78,16 +78,16 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .band .section-head .section-title{color:#fff}
 .band .statement{font-family:"Source Serif 4",Georgia,serif;font-weight:400;font-size:clamp(1.7rem,3.4vw,2.9rem);line-height:1.35;letter-spacing:-0.01em;max-width:26ch}
 .band .statement + .statement{margin-top:88px;padding-top:88px;border-top:1px solid var(--hair-dark)}
-.band-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(260px,29vw,400px);gap:clamp(48px,6vw,100px);align-items:center}
+.band-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,38vw,540px);gap:clamp(48px,6vw,100px);align-items:center}
 .band-photo{margin:0}
 .band-photo img{display:block;width:100%;height:auto}
-.band-photo figcaption{margin-top:14px;font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.76)}
 .band .statement em{font-style:normal}
 
-.gallery{margin-top:clamp(56px,8vh,90px);display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,2.5vw,36px)}
-.gallery figure{margin:0}
-.gallery img{display:block;width:100%;height:auto}
-.gallery figcaption{margin-top:12px;font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+.exp-lead{margin:0 0 clamp(56px,8vh,90px)}
+.exp-lead img{display:block;width:100%;height:auto}
+.exp-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(380px,42vw,620px);gap:clamp(48px,6vw,100px);align-items:center}
+.exp-photo{margin:0}
+.exp-photo img{display:block;width:100%;height:auto}
 .contact-band{padding:clamp(110px,15vh,190px) 0}
 .contact-band .lede{max-width:34em;margin-bottom:52px;font-size:1.0625rem}
 .email{display:inline-block;font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(2rem,6.4vw,5.6rem);letter-spacing:-0.02em;text-decoration:none;line-height:1.1;transition:color .25s ease}
@@ -115,12 +115,13 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
 .pin:focus-visible circle{stroke:var(--blue);stroke-width:1.5}
 @media (max-width:700px){
   .map-head{margin:48px 0 0;width:100%;padding-right:0}
-  .gallery{grid-template-columns:1fr;gap:40px;margin-top:44px}
+  .exp-grid{grid-template-columns:1fr;gap:44px}
+  .exp-lead{margin-bottom:44px}
   .map-wrap{margin-left:-14px;margin-right:-14px;margin-top:22px}
   .pin text{font-size:22px;letter-spacing:.03em;stroke-width:6px}
   .band .statement + .statement{margin-top:48px;padding-top:48px}
   .band-grid{grid-template-columns:1fr;gap:56px}
-  .band-photo{max-width:400px}
+  .band-photo{max-width:460px}
   .hero-inner{padding-top:112px}
 }
 @media (max-width:640px){
@@ -256,7 +257,6 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
         </div>
         <figure class="band-photo reveal d1">
           <img src="images/imperial-club.jpg" alt="Imperial Club senior living tower" width="983" height="1400" loading="lazy">
-          <figcaption>Imperial Club</figcaption>
         </figure>
       </div>
     </div>
@@ -265,7 +265,11 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
   <section class="section" id="experience">
     <div class="wrap">
       <div class="section-head reveal"><span class="section-title">Experience</span><h2 class="sr-only">Senior housing experience across eleven states</h2></div>
-      <p class="ops-statement reveal">We are experienced in operating a broad range of senior housing options including independent living cottages and apartments, assisted living, skilled nursing and long term care.</p>
+      <figure class="exp-lead reveal"><img src="images/waterford-pond.jpg" alt="Waterford senior living community beside its pond" width="2400" height="1018" loading="lazy"></figure>
+      <div class="exp-grid">
+        <p class="ops-statement reveal">We are experienced in operating a broad range of senior housing options including independent living cottages and apartments, assisted living, skilled nursing and long term care.</p>
+        <figure class="exp-photo reveal d1"><img src="images/waterford-springfield.jpg" alt="Aerial view of The Waterford in Springfield, Missouri" width="1600" height="678" loading="lazy"></figure>
+      </div>
       <div class="map-head reveal">
         <p class="map-title">Developed, Owned or Managed Communities</p>
         <p class="map-sub">Across eleven states since 1990</p>
@@ -285,16 +289,6 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
         <h3>Oklahoma</h3><p>Oklahoma City, Tulsa</p>
         <h3>South Carolina</h3><p>Columbia</p>
         <h3>Texas</h3><p>Dallas, Fort Worth, Houston, San Antonio</p>
-      </div>
-      <div class="gallery">
-        <figure class="reveal">
-          <img src="images/waterford-pond.jpg" alt="Waterford senior living community beside its pond" width="2400" height="1018" loading="lazy">
-          <figcaption>The Waterford</figcaption>
-        </figure>
-        <figure class="reveal d1">
-          <img src="images/waterford-springfield.jpg" alt="Aerial view of The Waterford in Springfield, Missouri" width="1600" height="678" loading="lazy">
-          <figcaption>The Waterford, Springfield, Missouri</figcaption>
-        </figure>
       </div>
     </div>
   </section>
