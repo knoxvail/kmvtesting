@@ -89,8 +89,7 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 
 .exp-feature{position:relative;margin:0}
 .exp-feature img{display:block;width:100%;height:auto}
-.exp-feature::after{content:"";position:absolute;inset:0;background:linear-gradient(52deg,rgba(0,0,0,.42) 0%,rgba(0,0,0,.16) 28%,rgba(0,0,0,0) 52%)}
-.exp-overlay{position:absolute;z-index:2;left:clamp(24px,6vw,88px);bottom:clamp(26px,5vh,60px);color:#fff;font-family:"Source Serif 4",Georgia,serif;font-weight:400;font-size:clamp(1.05rem,1.7vw,1.5rem);line-height:1.55;letter-spacing:-0.005em;max-width:40ch}
+.exp-panel{left:auto;right:clamp(24px,6vw,88px);top:clamp(28px,5vh,64px);bottom:auto}
 .contact-band{padding:clamp(110px,15vh,190px) 0}
 .contact-band .lede{max-width:36em;margin-bottom:48px;font-size:1rem}
 .email{display:inline-block;font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.8rem,5.2vw,4.6rem);letter-spacing:-0.02em;text-decoration:none;line-height:1.1;transition:color .25s ease}
@@ -125,7 +124,6 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
   .split-grid{grid-template-columns:1fr;gap:56px}
   .split-photo{max-width:420px}
   .exp-feature img{height:52vh;object-fit:cover}
-  .exp-overlay{font-size:1rem;max-width:calc(100% - 48px)}
   .hero-inner{padding-top:112px}
 }
 @media (max-width:640px){
@@ -243,7 +241,7 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
       </div>
       <aside class="hero-rail">
         <p class="rail-label reveal d2">Developed, owned or managed to date</p>
-        <div class="hs reveal d3"><div class="num">35</div><div class="lbl">Years</div></div>
+        <div class="hs reveal d3"><div class="num">36</div><div class="lbl">Years</div></div>
         <div class="hs reveal d4"><div class="num">2,500+</div><div class="lbl">Units developed</div></div>
         <div class="hs reveal d5"><div class="num">11</div><div class="lbl">States</div></div>
         <div class="hs reveal d6"><div class="num">$250M</div><div class="lbl">Combined market value</div></div>
@@ -271,12 +269,12 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
   </section>
 
   <section class="section" id="experience">
-    <div class="wrap">
-      <div class="section-head reveal"><span class="section-title">Experience</span><h2 class="sr-only">Senior housing experience across eleven states</h2></div>
-    </div>
     <figure class="exp-feature reveal">
       <img src="images/waterford-springfield.jpg" alt="Aerial view of The Waterford in Springfield, Missouri" width="1600" height="678" loading="lazy">
-      <p class="exp-overlay">We are experienced in operating a broad range of senior housing options including independent living cottages and apartments, assisted living, skilled nursing and long term care.</p>
+      <div class="feature-panel exp-panel">
+        <div class="section-head"><span class="section-title">Experience</span><h2 class="sr-only">Senior housing experience across eleven states</h2></div>
+        <p class="feature-statement">We are experienced in operating a broad range of senior housing options including independent living cottages and apartments, assisted living, skilled nursing and long term care.</p>
+      </div>
     </figure>
     <div class="wrap">
       <div class="map-head reveal">
