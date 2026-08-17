@@ -6,11 +6,11 @@
 <title>Triad Senior Living | Experienced, Proactive Senior Living Management</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="preload" as="image" href="images/waterford-pond.jpg">
-<meta name="description" content="Since 1990, Triad Senior Living entities have developed over 2,500 senior living units in eleven states with a combined market value in excess of $250 million.">
+<meta name="description" content="Since 1990, Triad Senior Living entities have developed, owned, or managed senior living communities across the country. Management, consulting, and project turn-around.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Triad Senior Living">
 <meta property="og:title" content="Triad Senior Living | Experienced, Proactive Senior Living Management">
-<meta property="og:description" content="Senior living management, consulting, marketing and project turn-around. 2,500+ units developed across eleven states since 1990.">
+<meta property="og:description" content="Senior living management, consulting, and project turn-around. 3,300+ units across eleven states since 1990.">
 <meta name="twitter:card" content="summary">
 <link rel="canonical" href="https://triadsl.com/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,6 +79,26 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .feature-panel{position:absolute;left:clamp(24px,6vw,88px);bottom:clamp(28px,5vh,64px);background:var(--bg);padding:clamp(26px,2.8vw,42px);width:min(470px,calc(100% - 48px))}
 .feature-panel::before{content:"";position:absolute;inset:10px;border:1px solid rgba(65,96,127,.32);pointer-events:none}
 .feature-panel .section-head{margin-bottom:22px}
+.ph-name{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.15rem,1.7vw,1.55rem);letter-spacing:-0.008em}
+.ph-meta{margin-top:7px;font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}
+.about-sec{padding:clamp(90px,12vh,150px) 0 clamp(64px,8vh,100px)}
+.about-statement{font-family:"Source Serif 4",Georgia,serif;font-weight:400;font-size:clamp(1.2rem,2vw,1.7rem);line-height:1.55;letter-spacing:-0.008em;max-width:46ch}
+.svc{border-top:1px solid var(--hair);padding:clamp(40px,5vh,64px) 0;display:grid;grid-template-columns:clamp(180px,22vw,300px) minmax(0,1fr);gap:clamp(28px,4vw,72px)}
+.svc:last-of-type{border-bottom:1px solid var(--hair)}
+.svc h3{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.25rem,1.9vw,1.6rem);letter-spacing:-0.008em}
+.svc-body > p{max-width:62ch;font-size:.9688rem}
+.case{margin-top:30px;border-left:1px solid rgba(65,96,127,.4);padding-left:clamp(18px,2vw,28px)}
+.case-label{font-size:10px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--blue)}
+.case-title{margin-top:7px;font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:1.0625rem}
+.case-body{margin-top:10px;font-size:.9063rem;max-width:64ch}
+.comms{list-style:none}
+.comms li{border-top:1px solid var(--hair)}
+.comms li:last-child{border-bottom:1px solid var(--hair)}
+.comm-row{display:flex;justify-content:space-between;align-items:baseline;gap:28px;padding:32px 0}
+.comm-name{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-0.008em}
+.comm-meta{margin-top:7px;font-size:.875rem}
+.comm-link{font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--blue);border-bottom:1px solid var(--blue);padding-bottom:2px;white-space:nowrap;transition:opacity .2s ease}
+.comm-link:hover{opacity:.65}
 .feature-statement{font-family:"Source Serif 4",Georgia,serif;font-weight:400;font-size:clamp(1.05rem,1.35vw,1.3rem);line-height:1.55;letter-spacing:-0.005em}
 .split-band{background:var(--blue);color:#fff;padding:clamp(80px,11vh,140px) 0}
 .split-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(400px,42vw,600px);gap:clamp(56px,7vw,120px);align-items:center}
@@ -86,7 +106,8 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .split-photo img{display:block;width:100%;height:auto}
 .split-photo::after{content:"";position:absolute;inset:-14px;border:1px solid rgba(255,255,255,.28);pointer-events:none}
 .split-text{display:flex;align-items:center}
-.split-text .statement{font-family:"Source Serif 4",Georgia,serif;font-weight:400;font-size:clamp(1.4rem,2.4vw,2.15rem);line-height:1.4;letter-spacing:-0.01em;max-width:26ch}
+.split-text .ph-name{font-size:clamp(1.7rem,2.8vw,2.5rem);color:#fff}
+.split-text .ph-meta{color:rgba(255,255,255,.8)}
 
 .exp-feature{position:relative;margin:0}
 .exp-feature img{display:block;width:100%;height:auto}
@@ -120,15 +141,17 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
 .pin:focus-visible circle{stroke:var(--blue);stroke-width:1.5}
 @media (max-width:700px){
   .map-head{margin:56px auto 0;width:100%}
+  .svc{grid-template-columns:1fr;gap:14px}
+  .comm-row{flex-direction:column;align-items:flex-start;gap:12px}
   .map-wrap{margin-left:-14px;margin-right:-14px;margin-top:22px}
   .pin text{font-size:22px;letter-spacing:.03em;stroke-width:6px}
   .hero-inner{padding-top:112px}
 }
 @media (max-width:640px){
   .brand-word{display:none}
-  .nav-links{gap:14px}
-  .nav-links a{font-size:10.5px;letter-spacing:.12em}
-  .nav-links a.cta{padding:9px 14px}
+  .nav-links{gap:11px}
+  .nav-links a{font-size:10px;letter-spacing:.07em}
+  .nav-links a.cta{padding:8px 11px}
   .nav{padding:16px 0}
 }
 
@@ -219,8 +242,9 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
     <nav class="nav" aria-label="Primary">
       <a class="brand" href="index.html"><img src="images/triad-senior-living-logo.png" alt=""><span class="brand-word">Triad Senior Living</span></a>
       <div class="nav-links">
-        <a href="#about">About Us</a>
-        <a href="#experience">Experience</a>
+        <a href="#about">About</a>
+        <a href="#services">Services</a>
+        <a href="#communities">Communities</a>
         <a class="cta" href="#contact">Contact</a>
       </div>
     </nav>
@@ -240,24 +264,70 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
       <p class="logo-word">Triad Senior Living</p>
       </div>
       <h1 class="reveal d1">Experienced, Proactive<br><span class="nw">Senior Living Management</span></h1>
-      <p class="hero-sub reveal d2">Since 1990, Triad Senior Living entities have developed over 2,500 senior living units in eleven states with a combined market value in excess of $250 million.</p>
+      <p class="hero-sub reveal d2">Since 1990, Triad Senior Living entities have developed, owned, or managed senior living communities across the country.</p>
       </div>
       <aside class="hero-rail">
         <p class="rail-label reveal d2">Developed, owned or managed to date</p>
         <div class="hs reveal d3"><div class="num">36</div><div class="lbl">Years</div></div>
-        <div class="hs reveal d4"><div class="num">2,500+</div><div class="lbl">Units developed</div></div>
+        <div class="hs reveal d4"><div class="num">3,300+</div><div class="lbl">Units</div></div>
         <div class="hs reveal d5"><div class="num">11</div><div class="lbl">States</div></div>
-        <div class="hs reveal d6"><div class="num">$250M</div><div class="lbl">Combined market value</div></div>
+        <div class="hs reveal d6"><div class="num">$500M</div><div class="lbl">Market value</div></div>
       </aside>
     </div>
   </section>
 
-  <section class="feature" id="about">
+  <section class="about-sec" id="about">
+    <div class="wrap">
+      <div class="section-head reveal"><span class="section-title">About Us</span><h2 class="sr-only">Senior living management, consulting, and project turn-around since 1990</h2></div>
+      <p class="about-statement reveal">Senior living management, consulting, and project turn-around since 1990. Our group is large enough to have a deep bench of experienced professionals but small enough to react quickly and effectively to meet any management challenge related to senior living.</p>
+    </div>
+  </section>
+
+  <section class="feature">
     <div class="feature-media reveal">
       <img src="images/waterford-pond.jpg" alt="Waterford senior living community beside its pond" width="2400" height="1018">
       <div class="feature-panel">
-        <div class="section-head"><span class="section-title">About Us</span><h2 class="sr-only">Senior living management, consulting, marketing and project turn-around since 1990</h2></div>
-        <p class="feature-statement">Our group is large enough to have a deep bench of experienced professionals but small enough to react quickly and effectively to meet any management challenge related to senior living.</p>
+        <p class="ph-name">The Waterford</p>
+        <p class="ph-meta">Senior living community</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="services">
+    <div class="wrap">
+      <div class="section-head reveal"><span class="section-title">Services</span><h2 class="sr-only">Senior living management, consulting, and project turn-around services</h2></div>
+      <div class="svc reveal">
+        <h3>Management</h3>
+        <div class="svc-body">
+          <p>Full-service management across independent living, assisted living, skilled nursing, and long-term care. We staff our communities with capable, experienced on-site leadership and give them the autonomy and flexibility to meet resident needs quickly and effectively.</p>
+        </div>
+      </div>
+      <div class="svc reveal">
+        <h3>Consulting</h3>
+        <div class="svc-body">
+          <p>Operational assessments, financial restructuring support, and interim or receivership management for ownership groups, lenders, and courts navigating complex or financially distressed senior living assets.</p>
+          <div class="case">
+            <p class="case-label">Engagement summary</p>
+            <p class="case-title">Court-appointed receivership &middot; North Dallas, TX</p>
+            <p class="case-body">A Triad entity was appointed by the court as receiver for a 100-unit assisted living and memory care community. Over a 14-month engagement, Triad stabilized occupancy and staffing and managed all day-to-day operations, working with the lender and court toward an orderly transition to the long-term owner.</p>
+          </div>
+          <div class="case">
+            <p class="case-label">Engagement summary</p>
+            <p class="case-title">Lender-engaged operational review &middot; Southwest Florida</p>
+            <p class="case-body">Triad was engaged by a national mutual fund company that had financed a 134-unit independent living community. Triad's on-site review, including a competitive market study and resident council review, informed the lender and was instrumental in the asset's ultimate sale to a new owner.</p>
+          </div>
+        </div>
+      </div>
+      <div class="svc reveal">
+        <h3>Project turn-around</h3>
+        <div class="svc-body">
+          <p>Repositioning underperforming senior living communities: addressing occupancy challenges, operational inefficiencies, and market positioning, with marketing and sales strategy as a core part of the process.</p>
+          <div class="case">
+            <p class="case-label">Engagement summary</p>
+            <p class="case-title">Community turn-around &middot; Houston, TX</p>
+            <p class="case-body">Triad was engaged by a lender group on an asset in default of its mortgage obligations amid an acrimonious lender-owner relationship. Over 10 months, Triad managed on-site operations and worked with both parties to a sale that retained community staff, avoided foreclosure, and achieved a smooth transition without additional litigation.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -265,18 +335,24 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
   <section class="split-band">
     <div class="wrap split-grid">
       <div class="split-text reveal">
-        <p class="statement">We provide expertise in senior living management, consulting, marketing and project turn-around.</p>
+        <div>
+          <p class="ph-name split-name">Imperial Club</p>
+          <p class="ph-meta split-meta">Aventura, Florida</p>
+        </div>
       </div>
       <figure class="split-photo reveal d1"><img src="images/imperial-club.jpg" alt="Imperial Club senior living tower" width="983" height="1400" loading="lazy"></figure>
     </div>
   </section>
 
   <section class="section" id="experience">
+    <div class="wrap">
+      <div class="section-head reveal"><span class="section-title">Experience</span><h2 class="sr-only">Senior housing experience across eleven states</h2></div>
+    </div>
     <figure class="exp-feature reveal">
       <img src="images/waterford-springfield.jpg" alt="Aerial view of The Waterford in Springfield, Missouri" width="1600" height="678" loading="lazy">
       <div class="feature-panel exp-panel">
-        <div class="section-head"><span class="section-title">Experience</span><h2 class="sr-only">Senior housing experience across eleven states</h2></div>
-        <p class="feature-statement">We are experienced in operating a broad range of senior housing options including independent living cottages and apartments, assisted living, skilled nursing and long term care.</p>
+        <p class="ph-name">The Waterford</p>
+        <p class="ph-meta">Springfield, Missouri</p>
       </div>
     </figure>
     <div class="wrap">
@@ -300,6 +376,32 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
         <h3>South Carolina</h3><p>Columbia</p>
         <h3>Texas</h3><p>Dallas, Fort Worth, Houston, San Antonio</p>
       </div>
+    </div>
+  </section>
+
+  <section class="section" id="communities">
+    <div class="wrap">
+      <div class="section-head reveal"><span class="section-title">Representative Communities</span><h2 class="sr-only">Representative senior living communities</h2></div>
+      <ul class="comms">
+        <li class="reveal">
+          <div class="comm-row">
+            <div>
+              <p class="comm-name">University Village</p>
+              <p class="comm-meta">Tulsa, OK &middot; Independent living, assisted living, and skilled nursing/rehab</p>
+            </div>
+            <a class="comm-link" href="https://uvrc.com" target="_blank" rel="noopener">uvrc.com</a>
+          </div>
+        </li>
+        <li class="reveal d1">
+          <div class="comm-row">
+            <div>
+              <p class="comm-name">Tealridge Senior Living</p>
+              <p class="comm-meta">Edmond, OK &middot; Independent living, assisted living, and memory care</p>
+            </div>
+            <a class="comm-link" href="https://tealridge.com" target="_blank" rel="noopener">tealridge.com</a>
+          </div>
+        </li>
+      </ul>
     </div>
   </section>
 
