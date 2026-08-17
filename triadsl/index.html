@@ -90,11 +90,12 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .about-statement{font-family:"Source Serif 4",Georgia,serif;font-weight:400;font-size:clamp(1.2rem,2vw,1.7rem);line-height:1.55;letter-spacing:-0.008em}
 .svc{border-top:1px solid var(--hair);padding:clamp(40px,5vh,64px) 0;display:grid;grid-template-columns:clamp(180px,22vw,300px) minmax(0,1fr);gap:clamp(28px,4vw,72px)}
 .svc:last-of-type{border-bottom:1px solid var(--hair)}
-.svc h3{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.25rem,1.9vw,1.6rem);letter-spacing:-0.008em}
-.svc-body > p{max-width:62ch;font-size:.9688rem}
+.svc h3{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.45rem,2.2vw,1.9rem);letter-spacing:-0.01em}
+.svc-body > p{max-width:60ch;font-size:1.0625rem;line-height:1.7}
 .case-label{font-size:10px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--blue)}
 .case-title{margin-top:7px;font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:1.0625rem}
-.case-body{margin-top:10px;font-size:.9063rem;max-width:64ch}
+.case{margin-top:32px;border-left:1px solid rgba(65,96,127,.4);padding-left:clamp(18px,2vw,28px)}
+.case-body{margin-top:9px;font-size:.9375rem;max-width:62ch;line-height:1.65}
 .comms{list-style:none}
 .comms li{border-top:1px solid var(--hair)}
 .comms li:last-child{border-bottom:1px solid var(--hair)}
@@ -114,11 +115,8 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .ph-sub{margin-top:8px;font-size:.875rem;line-height:1.5}
 .ph-meta{margin-top:7px;font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}
 .split-text .ph-name{font-size:clamp(1.7rem,2.8vw,2.5rem);color:#fff}
+.split-text .ph-sub{color:rgba(255,255,255,.88)}
 .split-text .ph-meta{color:rgba(255,255,255,.8)}
-.case-below{margin-top:clamp(40px,6vh,64px);max-width:660px}
-.case-below.on-blue{margin-top:clamp(44px,6vh,72px)}
-.split-band .case-below .case-label{color:rgba(255,255,255,.72)}
-.split-band .case-below .case-body{color:rgba(255,255,255,.92)}
 
 .exp-feature{position:relative;margin:0}
 .exp-feature img{display:block;width:100%;height:auto}
@@ -310,12 +308,6 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
         <p class="ph-meta">Hazel Crest, IL</p>
       </div>
     </div>
-    <div class="wrap">
-      <div class="case-below reveal">
-        <p class="case-label">North Dallas, TX</p>
-        <p class="case-body">A Triad entity was appointed by the court as receiver for a 100-unit assisted living and memory care community. Over a 14-month engagement, Triad stabilized occupancy and staffing and managed all day-to-day operations, working with the lender and court toward an orderly transition to the long-term owner.</p>
-      </div>
-    </div>
   </section>
 
   <section class="section" id="services">
@@ -331,12 +323,24 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
         <h3>Consulting</h3>
         <div class="svc-body">
           <p>Operational assessments, financial restructuring support, and interim or receivership management for ownership groups, lenders, and courts navigating complex or financially distressed senior living assets.</p>
+          <div class="case reveal">
+            <p class="case-label">North Dallas, TX</p>
+            <p class="case-body">A Triad entity was appointed by the court as receiver for a 100-unit assisted living and memory care community. Over a 14-month engagement, Triad stabilized occupancy and staffing and managed all day-to-day operations, working with the lender and court toward an orderly transition to the long-term owner.</p>
+          </div>
+          <div class="case reveal d1">
+            <p class="case-label">Southwest Florida</p>
+            <p class="case-body">Triad was engaged by a national mutual fund company that had financed a 134-unit independent living community. Triad's on-site review, including a competitive market study and resident council review, informed the lender and was instrumental in the asset's ultimate sale to a new owner.</p>
+          </div>
         </div>
       </div>
       <div class="svc reveal">
         <h3>Project turn-around</h3>
         <div class="svc-body">
           <p>Repositioning underperforming senior living communities: addressing occupancy challenges, operational inefficiencies, and market positioning, with marketing and sales strategy as a core part of the process.</p>
+          <div class="case reveal">
+            <p class="case-label">Houston, TX</p>
+            <p class="case-body">Triad was engaged by a lender group on an asset in default of its mortgage obligations amid an acrimonious lender-owner relationship. Over 10 months, Triad managed on-site operations and worked with both parties to a sale that retained community staff, avoided foreclosure, and achieved a smooth transition without additional litigation.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -347,16 +351,11 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
       <div class="split-text reveal">
         <div>
           <p class="ph-name">Imperial Club</p>
+          <p class="ph-sub">High-rise independent living</p>
           <p class="ph-meta">Aventura, Florida</p>
         </div>
       </div>
       <figure class="split-photo reveal d1"><img src="images/imperial-club.jpg" alt="Imperial Club senior living tower" width="983" height="1400" loading="lazy"></figure>
-    </div>
-    <div class="wrap">
-      <div class="case-below on-blue reveal">
-        <p class="case-label">Southwest Florida</p>
-        <p class="case-body">Triad was engaged by a national mutual fund company that had financed a 134-unit independent living community. Triad's on-site review, including a competitive market study and resident council review, informed the lender and was instrumental in the asset's ultimate sale to a new owner.</p>
-      </div>
     </div>
   </section>
 
@@ -368,14 +367,11 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
       <img src="images/waterford-springfield.jpg" alt="Aerial view of The Waterford in Springfield, Missouri" width="1600" height="678" loading="lazy">
       <div class="feature-panel exp-panel">
         <p class="ph-name">The Waterford</p>
+        <p class="ph-sub">Senior living alongside the Ironbridge golf course</p>
         <p class="ph-meta">Springfield, Missouri</p>
       </div>
     </figure>
     <div class="wrap">
-      <div class="case-below reveal">
-        <p class="case-label">Houston, TX</p>
-        <p class="case-body">Triad was engaged by a lender group on an asset in default of its mortgage obligations amid an acrimonious lender-owner relationship. Over 10 months, Triad managed on-site operations and worked with both parties to a sale that retained community staff, avoided foreclosure, and achieved a smooth transition without additional litigation.</p>
-      </div>
       <div class="map-wrap reveal d1" id="map" style="scroll-margin-top:90px">
         <div class="map-head">
           <p class="map-title">Developed, Owned or Managed Communities</p>
