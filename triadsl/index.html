@@ -101,7 +101,10 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .comms{list-style:none}
 .comms li{border-top:1px solid var(--hair)}
 .comms li:last-child{border-bottom:1px solid var(--hair)}
-.comm-row{display:flex;justify-content:space-between;align-items:baseline;gap:28px;padding:32px 0}
+.comm-row{display:flex;align-items:center;gap:clamp(20px,2.5vw,32px);padding:26px 0}
+.comm-logo{width:clamp(58px,6vw,84px);height:auto;flex:0 0 auto}
+.comm-text{flex:1}
+.comm-row .comm-link{margin-left:auto}
 .comm-name{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.25rem,2vw,1.7rem);letter-spacing:-0.008em}
 .comm-meta{margin-top:7px;font-size:.9375rem}
 .comm-link{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--blue);border-bottom:1px solid var(--blue);padding-bottom:2px;white-space:nowrap;transition:color .2s ease,border-color .2s ease}
@@ -408,7 +411,8 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
       <ul class="comms">
         <li class="reveal">
           <div class="comm-row">
-            <div>
+            <img class="comm-logo" src="images/logo-university-village.png" alt="" width="640" height="634" loading="lazy">
+            <div class="comm-text">
               <p class="comm-name">University Village</p>
               <p class="comm-meta">Tulsa, OK &middot; Independent living, assisted living, and skilled nursing/rehab</p>
             </div>
