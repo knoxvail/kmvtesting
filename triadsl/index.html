@@ -85,11 +85,15 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .svc:last-of-type{border-bottom:1px solid var(--hair)}
 #services{padding-top:clamp(28px,4.5vh,48px)}
 .svc h3{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.45rem,2.2vw,1.9rem);letter-spacing:-0.01em;margin-bottom:16px}
-.svc-body > p{max-width:68ch;font-size:1.0625rem;line-height:1.7}
+.svc-body > p{font-size:1.0625rem;line-height:1.7}
 .case-label{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}
 .case-title{margin-top:7px;font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:1.0625rem}
-.case{margin-top:32px;border-left:1px solid rgba(65,96,127,.4);padding-left:clamp(18px,2vw,28px)}
-.case-body{margin-top:9px;font-size:.9375rem;max-width:70ch;line-height:1.65}
+.case-body{margin-top:9px;font-size:.9375rem;line-height:1.65}
+.eng-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,2.2vw,32px);align-items:stretch}
+.eng-card{position:relative;background:#fff;border:1px solid var(--hair);padding:clamp(24px,2.6vw,40px)}
+.eng-card::before{content:"";position:absolute;inset:9px;border:1px solid rgba(65,96,127,.28);pointer-events:none}
+.eng-card .case-label::after{content:"";display:block;width:30px;height:1px;background:var(--blue);margin-top:10px}
+.eng-card .case-body{margin-top:14px}
 .comms{list-style:none}
 .comms li{border-top:1px solid var(--hair)}
 .comms li:last-child{border-bottom:1px solid var(--hair)}
@@ -149,6 +153,7 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
 @media (max-width:700px){
   .map-head{margin:4px auto 18px;width:100%}
   .hero-photo img{height:44vh;object-fit:cover}
+  .eng-grid{grid-template-columns:1fr}
   .comm-row{flex-direction:column;align-items:flex-start;gap:12px}
   .map-wrap{margin-left:-14px;margin-right:-14px;margin-top:22px}
   .pin text{font-size:26px;letter-spacing:.03em;stroke-width:7px}
@@ -331,24 +336,32 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
         <h3>Consulting</h3>
         <div class="svc-body">
           <p>Operational assessments, financial restructuring support, and interim or receivership management for ownership groups, lenders, and courts navigating complex or financially distressed senior living assets.</p>
-          <div class="case reveal">
-            <p class="case-label">North Dallas, TX</p>
-            <p class="case-body">A Triad entity was appointed by the court as receiver for a 100-unit assisted living and memory care community. Over a 14-month engagement, Triad stabilized occupancy and staffing and managed all day-to-day operations, working with the lender and court toward an orderly transition to the long-term owner.</p>
-          </div>
-          <div class="case reveal d1">
-            <p class="case-label">Southwest Florida</p>
-            <p class="case-body">Triad was engaged by a national mutual fund company that had financed a 134-unit independent living community. Triad's on-site review, including a competitive market study and resident council review, informed the lender and was instrumental in the asset's ultimate sale to a new owner.</p>
-          </div>
         </div>
       </div>
       <div class="svc reveal">
         <h3>Project turn-around</h3>
         <div class="svc-body">
           <p>Repositioning underperforming senior living communities: addressing occupancy challenges, operational inefficiencies, and market positioning, with marketing and sales strategy as a core part of the process.</p>
-          <div class="case reveal">
-            <p class="case-label">Houston, TX</p>
-            <p class="case-body">Triad was engaged by a lender group on an asset in default of its mortgage obligations amid an acrimonious lender-owner relationship. Over 10 months, Triad managed on-site operations and worked with both parties to a sale that retained community staff, avoided foreclosure, and achieved a smooth transition without additional litigation.</p>
-          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="engagements">
+    <div class="wrap">
+      <div class="section-head reveal"><span class="section-title">Engagement Summaries</span><h2 class="sr-only">Engagement summaries: receivership, lender advisory, and community turn-around work</h2></div>
+      <div class="eng-grid">
+        <div class="eng-card reveal">
+          <p class="case-label">North Dallas, TX</p>
+          <p class="case-body">A Triad entity was appointed by the court as receiver for a 100-unit assisted living and memory care community. Over a 14-month engagement, Triad stabilized occupancy and staffing and managed all day-to-day operations, working with the lender and court toward an orderly transition to the long-term owner.</p>
+        </div>
+        <div class="eng-card reveal d1">
+          <p class="case-label">Southwest Florida</p>
+          <p class="case-body">Triad was engaged by a national mutual fund company that had financed a 134-unit independent living community. Triad's on-site review, including a competitive market study and resident council review, informed the lender and was instrumental in the asset's ultimate sale to a new owner.</p>
+        </div>
+        <div class="eng-card reveal d2">
+          <p class="case-label">Houston, TX</p>
+          <p class="case-body">Triad was engaged by a lender group on an asset in default of its mortgage obligations amid an acrimonious lender-owner relationship. Over 10 months, Triad managed on-site operations and worked with both parties to a sale that retained community staff, avoided foreclosure, and achieved a smooth transition without additional litigation.</p>
         </div>
       </div>
     </div>
