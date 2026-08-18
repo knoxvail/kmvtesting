@@ -77,14 +77,14 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 
 .feature{margin:0}
 .feature-media{position:relative}
-.feature-media img{display:block;width:100%;height:auto}
+.feature-media > img{display:block;width:100%;height:auto}
 .feature-panel{position:absolute;left:calc(max((100% - 1280px)/2, 0px) + clamp(24px,6vw,88px));bottom:clamp(28px,5vh,64px);background:var(--bg);padding:clamp(26px,2.8vw,42px);max-width:min(560px,calc(100% - 48px))}
 .feature-panel::before{content:"";position:absolute;inset:10px;border:1px solid rgba(65,96,127,.32);pointer-events:none}
 .feature-panel .section-head{margin-bottom:22px}
-.svc{border-top:1px solid var(--hair);padding:clamp(40px,5vh,64px) 0;display:grid;grid-template-columns:clamp(180px,22vw,300px) minmax(0,1fr);gap:clamp(28px,4vw,72px)}
+.svc{border-top:1px solid var(--hair);padding:clamp(40px,5vh,64px) 0}
 .svc:last-of-type{border-bottom:1px solid var(--hair)}
 #services{padding-top:clamp(48px,7vh,84px)}
-.svc h3{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.45rem,2.2vw,1.9rem);letter-spacing:-0.01em}
+.svc h3{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.45rem,2.2vw,1.9rem);letter-spacing:-0.01em;margin-bottom:16px}
 .svc-body > p{max-width:60ch;font-size:1.0625rem;line-height:1.7}
 .case-label{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}
 .case-title{margin-top:7px;font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:1.0625rem}
@@ -99,21 +99,23 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .comm-link{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--blue);border-bottom:1px solid var(--blue);padding-bottom:2px;white-space:nowrap;transition:color .2s ease,border-color .2s ease}
 .comm-link:hover{color:var(--ink);border-color:var(--ink)}
 .feature-statement{font-family:"Source Serif 4",Georgia,serif;font-weight:400;font-size:clamp(1.05rem,1.35vw,1.3rem);line-height:1.55;letter-spacing:-0.005em}
-.split-band{background:var(--blue);color:#fff;padding:clamp(80px,11vh,140px) 0}
+.split-band{background:var(--bg);padding:clamp(72px,10vh,130px) 0}
 .split-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(400px,42vw,600px);gap:clamp(56px,7vw,120px);align-items:center}
 .split-photo{margin:0;position:relative}
-.split-photo img{display:block;width:100%;height:auto}
-.split-photo::after{content:"";position:absolute;inset:-14px;border:1px solid rgba(255,255,255,.28);pointer-events:none}
+.split-photo > img{display:block;width:100%;height:auto}
+.split-photo::after{content:"";position:absolute;inset:-14px;border:1px solid rgba(65,96,127,.32);pointer-events:none}
 .split-text{display:flex;align-items:center}
 .ph-name{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.15rem,1.7vw,1.55rem);letter-spacing:-0.008em}
 .ph-sub{margin-top:8px;font-size:.9375rem;line-height:1.5}
 .ph-meta{margin-top:7px;font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}
-.split-text .ph-name{font-size:clamp(1.7rem,2.8vw,2.5rem);color:#fff}
-.split-text .ph-sub{color:rgba(255,255,255,.88)}
-.split-text .ph-meta{color:rgba(255,255,255,.8)}
+.ic-panel{left:18px;right:auto;top:auto;bottom:18px;width:auto;max-width:min(300px,calc(100% - 36px));padding:clamp(16px,1.7vw,26px)}
+.panel-logo{display:block;height:auto}
+.panel-logo-ic{width:clamp(110px,10vw,150px)}
+.panel-logo-we{width:min(320px,100%)}
+.split-band .svc{border:0;padding:0}
 
 .exp-feature{position:relative;margin:0}
-.exp-feature img{display:block;width:100%;height:auto}
+.exp-feature > img{display:block;width:100%;height:auto}
 .exp-panel{left:auto;right:calc(max((100% - 1280px)/2, 0px) + clamp(24px,6vw,88px));top:clamp(28px,5vh,64px);bottom:auto}
 .contact-band{border-top:1px solid var(--hair);padding:clamp(100px,13vh,170px) 0}
 .contact-band .lede{max-width:36em;margin-bottom:48px;font-size:1rem}
@@ -145,7 +147,6 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
 @media (max-width:700px){
   .map-head{margin:4px auto 18px;width:100%}
   .hero-photo img{height:44vh;object-fit:cover}
-  .svc{grid-template-columns:1fr;gap:14px}
   .comm-row{flex-direction:column;align-items:flex-start;gap:12px}
   .map-wrap{margin-left:-14px;margin-right:-14px;margin-top:22px}
   .pin text{font-size:26px;letter-spacing:.03em;stroke-width:7px}
@@ -162,11 +163,11 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
   .hero-inner{grid-template-columns:1fr;gap:56px}
   .statbar-row{row-gap:14px}
   .rail-label{width:100%}
-  .feature-media img{height:min(52vh,420px);object-fit:cover}
+  .feature-media > img{height:min(52vh,420px);object-fit:cover}
   .feature-panel{position:relative;width:100%;padding:44px clamp(24px,6vw,88px) 52px;top:auto;right:auto;bottom:auto;left:auto}
   .split-grid{grid-template-columns:1fr;gap:52px}
   .split-photo{max-width:460px;margin:0 auto}
-  .exp-feature img{height:min(56vh,440px);object-fit:cover}
+  .exp-feature > img{height:min(56vh,440px);object-fit:cover}
 }
 @media (max-width:560px){
   .foot-meta{flex-direction:column}
@@ -285,7 +286,7 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
     <div class="feature-media reveal">
       <img src="images/waterford-pond.jpg" alt="Waterford Estates senior living community in Hazel Crest, Illinois" width="2400" height="1018" loading="lazy">
       <div class="feature-panel">
-        <p class="ph-name">Waterford Estates</p>
+        <img class="panel-logo panel-logo-we" src="images/logo-waterford-estates.png" alt="Waterford Estates" width="900" height="257">
         <p class="ph-sub">254 units of independent living, assisted living, and memory care</p>
         <p class="ph-meta">Hazel Crest, IL</p>
       </div>
@@ -295,25 +296,27 @@ footer{background:var(--blue);color:#fff;padding:clamp(70px,9vh,110px) 0 44px}
   <section class="split-band">
     <div class="wrap split-grid">
       <div class="split-text reveal">
-        <div>
-          <p class="ph-name">Imperial Club</p>
+        <div class="svc">
+          <h3>Management</h3>
+          <div class="svc-body">
+            <p>Full-service management across independent living, assisted living, skilled nursing, and long-term care. We staff our communities with capable, experienced on-site leadership and give them the autonomy and flexibility to meet resident needs quickly and effectively.</p>
+          </div>
+        </div>
+      </div>
+      <figure class="split-photo reveal d1">
+        <img src="images/imperial-club.jpg" alt="Imperial Club senior living tower" width="983" height="1400" loading="lazy">
+        <div class="feature-panel ic-panel">
+          <img class="panel-logo panel-logo-ic" src="images/logo-imperial-club.png" alt="Imperial Club" width="640" height="592">
           <p class="ph-sub">High-rise independent living</p>
           <p class="ph-meta">Aventura, Florida</p>
         </div>
-      </div>
-      <figure class="split-photo reveal d1"><img src="images/imperial-club.jpg" alt="Imperial Club senior living tower" width="983" height="1400" loading="lazy"></figure>
+      </figure>
     </div>
   </section>
 
   <section class="section" id="services">
     <div class="wrap">
       <h2 class="sr-only">Senior living management, consulting, and project turn-around services</h2>
-      <div class="svc reveal">
-        <h3>Management</h3>
-        <div class="svc-body">
-          <p>Full-service management across independent living, assisted living, skilled nursing, and long-term care. We staff our communities with capable, experienced on-site leadership and give them the autonomy and flexibility to meet resident needs quickly and effectively.</p>
-        </div>
-      </div>
       <div class="svc reveal">
         <h3>Consulting</h3>
         <div class="svc-body">
