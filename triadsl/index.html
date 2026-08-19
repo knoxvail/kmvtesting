@@ -32,7 +32,8 @@ body{font-family:"Inter",system-ui,-apple-system,sans-serif;background:var(--bg)
 .wrap{max-width:1280px;margin:0 auto;padding-left:clamp(24px,6vw,88px);padding-right:clamp(24px,6vw,88px)}
 a{color:inherit}
 
-header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(252,252,251,.9);border-bottom:1px solid var(--hair)}
+header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(252,252,251,.9);border-bottom:1px solid var(--hair);transition:background .3s ease}
+header.solid{background:var(--bg)}
 .nav{display:flex;justify-content:space-between;align-items:center;padding:13px 0}
 .brand{display:flex;align-items:center;text-decoration:none}
 .brand .logo-block{flex-direction:row;align-items:center;gap:12px}
@@ -499,6 +500,19 @@ footer{background:var(--bg);color:var(--ink);padding:clamp(20px,3vh,36px) 0 44px
   });
 })();
 
+
+// ---- Bar is glass over the hero photo, solid everywhere else ----
+(function () {
+  var header = document.querySelector('header');
+  var photo = document.querySelector('.hero-photo');
+  if (!header || !photo) return;
+  function set() {
+    header.classList.toggle('solid', window.scrollY > photo.offsetHeight - 64);
+  }
+  window.addEventListener('scroll', set, { passive: true });
+  window.addEventListener('resize', set, { passive: true });
+  set();
+})();
 </script>
 
 </body>
