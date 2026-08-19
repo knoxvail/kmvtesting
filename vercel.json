@@ -1,0 +1,12 @@
+{
+  "headers": [
+    {
+      "source": "/triadsl/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+    },
+    {
+      "source": "/triadsl",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+    }
+  ]
+}
