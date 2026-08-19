@@ -135,8 +135,21 @@ h1{font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.
 .exp-panel{left:auto;right:clamp(20px,2.5vw,36px);top:clamp(20px,2.5vw,36px);bottom:auto}
 .contact-band{border-top:1px solid var(--hair);padding:clamp(44px,6vh,76px) 0}
 .contact-band .lede{max-width:36em;margin-bottom:48px;font-size:1rem}
-.email{display:inline-block;font-family:"Source Serif 4",Georgia,serif;font-weight:500;font-size:clamp(1.6rem,3vw,3.2rem);letter-spacing:-0.02em;text-decoration:none;line-height:1.1;transition:color .25s ease}
-.email:hover{color:var(--blue)}
+.inquiry{position:relative;background:#fff;border:1px solid var(--hair);padding:clamp(28px,3vw,48px);max-width:760px}
+.inquiry::before{content:"";position:absolute;inset:10px;border:1px solid rgba(65,96,127,.28);pointer-events:none}
+.inquiry > *{position:relative}
+.iq-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.iq-field{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.iq-field label{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}
+.iq-field input,.iq-field textarea{font-family:"Inter",system-ui,sans-serif;font-size:1rem;color:var(--ink);background:var(--bg);border:1px solid var(--hair);border-radius:0;padding:12px 14px;width:100%}
+.iq-field input:focus,.iq-field textarea:focus{outline:none;border-color:var(--blue)}
+.iq-field textarea{resize:vertical;min-height:120px}
+.iq-actions{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:6px}
+.btn-submit{font-family:"Inter",system-ui,sans-serif;font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:0;padding:14px 32px;cursor:pointer;transition:background .25s ease,color .25s ease,border-color .25s ease}
+.btn-submit:hover{background:var(--blue);border-color:var(--blue);color:#fff}
+.iq-alt{font-size:13px}
+.iq-alt a{color:var(--blue);text-decoration:none;border-bottom:1px solid var(--blue);padding-bottom:1px}
+.iq-alt a:hover{color:var(--ink);border-color:var(--ink)}
 
 footer{background:var(--bg);color:var(--ink);padding:clamp(20px,3vh,36px) 0 44px}
 .foot-mark{display:flex;align-items:center;gap:22px;margin-bottom:36px}
@@ -162,6 +175,7 @@ footer{background:var(--bg);color:var(--ink);padding:clamp(20px,3vh,36px) 0 44px
 .pin:focus-visible circle{stroke:var(--blue);stroke-width:1.5}
 @media (max-width:700px){
   .map-head{margin:4px auto 18px;width:100%}
+  .iq-row{grid-template-columns:1fr;gap:0}
   .statbar-row{justify-content:space-between;row-gap:12px}
   .statbar .hs{flex-direction:column;align-items:flex-start;gap:3px}
   .comm-row .comm-link{margin-left:0}
@@ -454,8 +468,31 @@ footer{background:var(--bg);color:var(--ink);padding:clamp(20px,3vh,36px) 0 44px
   <section class="contact-band" id="contact">
     <div class="wrap">
       <h2 class="sr-only">Contact Triad Senior Living</h2>
-      <p class="lede reveal">For more information regarding Triad Senior Living, please email us.</p>
-      <a class="email reveal d1" href="mailto:info@triadsl.com">info@triadsl.com</a>
+      <p class="lede reveal">For more information regarding Triad Senior Living, please send us an inquiry.</p>
+      <form class="inquiry reveal d1" id="inquiry-form">
+        <div class="iq-row">
+          <div class="iq-field">
+            <label for="iq-name">Name</label>
+            <input id="iq-name" name="name" type="text" required autocomplete="name">
+          </div>
+          <div class="iq-field">
+            <label for="iq-company">Company</label>
+            <input id="iq-company" name="company" type="text" autocomplete="organization">
+          </div>
+        </div>
+        <div class="iq-field">
+          <label for="iq-email">Email</label>
+          <input id="iq-email" name="email" type="email" required autocomplete="email">
+        </div>
+        <div class="iq-field">
+          <label for="iq-message">Message</label>
+          <textarea id="iq-message" name="message" rows="5" required></textarea>
+        </div>
+        <div class="iq-actions">
+          <button class="btn-submit" type="submit">Send inquiry</button>
+          <span class="iq-alt">or email <a href="mailto:info@triadsl.com">info@triadsl.com</a></span>
+        </div>
+      </form>
     </div>
   </section>
 </main>
@@ -511,6 +548,18 @@ footer{background:var(--bg);color:var(--ink);padding:clamp(20px,3vh,36px) 0 44px
   });
 })();
 
+
+// ---- Inquiry form: composes an email to info@triadsl.com ----
+(function () {
+  var form = document.getElementById('inquiry-form');
+  if (!form) return;
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    function v(id) { return document.getElementById(id).value.trim(); }
+    var body = 'Name: ' + v('iq-name') + '\nCompany: ' + (v('iq-company') || '-') + '\nEmail: ' + v('iq-email') + '\n\n' + v('iq-message');
+    window.location.href = 'mailto:info@triadsl.com?subject=' + encodeURIComponent('Inquiry from ' + v('iq-name')) + '&body=' + encodeURIComponent(body);
+  });
+})();
 
 // ---- Bar is glass over the hero photo, solid everywhere else ----
 (function () {
