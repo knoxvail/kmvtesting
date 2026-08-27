@@ -1,7 +1,9 @@
-// Vercel serverless function: reads a market's notes from its Notion
-// page and returns them as HTML the site can drop into the Notes panel.
-// Needs NOTION_TOKEN set in Vercel env (internal integration secret),
-// and the Market Screen Notes database shared with that integration.
+// Vercel serverless function: two-way notes sync with Notion.
+// GET  /api/notes?m=slc  -> { text } plain-text version of the city's Notion page
+// POST /api/notes        -> { m, text, key } replaces the page content
+// Needs NOTION_TOKEN (integration secret, with read + update + insert
+// content capabilities) and EDIT_KEY (passphrase that gates writes)
+// set in Vercel env. The database must be connected to the integration.
 
 const PAGES = {
   phx: '3c9c40abce3981428547fb6475a808a1',
@@ -20,101 +22,154 @@ const PAGES = {
   sun: '3c9c40abce3981ee8df6e8df529a6dc0',
 };
 
-function esc(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+function nfetch(path, method, body, token) {
+  return fetch('https://api.notion.com/v1' + path, {
+    method: method || 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Notion-Version': '2022-06-28',
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
 }
 
-function richText(rt) {
-  return (rt || []).map(function (t) {
-    var text = esc(t.plain_text);
-    if (t.annotations) {
-      if (t.annotations.code) text = '<code>' + text + '</code>';
-      if (t.annotations.bold) text = '<strong>' + text + '</strong>';
-      if (t.annotations.italic) text = '<em>' + text + '</em>';
-      if (t.annotations.strikethrough) text = '<s>' + text + '</s>';
-    }
-    if (t.href) text = '<a href="' + esc(t.href) + '" target="_blank" rel="noopener">' + text + '</a>';
-    return text;
-  }).join('');
+async function listChildren(id, token) {
+  var blocks = [];
+  var cursor = null;
+  do {
+    var r = await nfetch('/blocks/' + id + '/children?page_size=100' +
+      (cursor ? '&start_cursor=' + cursor : ''), 'GET', null, token);
+    if (!r.ok) return { ok: false, status: r.status };
+    var body = await r.json();
+    blocks = blocks.concat(body.results || []);
+    cursor = body.has_more ? body.next_cursor : null;
+  } while (cursor);
+  return { ok: true, blocks: blocks };
 }
 
-function blockToHtml(b) {
+// ---------- Notion blocks -> plain text ----------
+function plainOf(d) {
+  return (d.rich_text || []).map(function (t) { return t.plain_text; }).join('');
+}
+
+function blockToText(b) {
   var t = b.type;
   var d = b[t] || {};
   switch (t) {
-    case 'paragraph': {
-      var p = richText(d.rich_text);
-      return p ? '<p>' + p + '</p>' : '<p class="gap"></p>';
-    }
-    case 'heading_1': return '<h5>' + richText(d.rich_text) + '</h5>';
-    case 'heading_2': return '<h5>' + richText(d.rich_text) + '</h5>';
-    case 'heading_3': return '<h6>' + richText(d.rich_text) + '</h6>';
-    case 'bulleted_list_item': return '<li>' + richText(d.rich_text) + '</li>';
-    case 'numbered_list_item': return '<li class="nli">' + richText(d.rich_text) + '</li>';
-    case 'to_do':
-      return '<div class="todo' + (d.checked ? ' done' : '') + '">' +
-        (d.checked ? '&#9746;' : '&#9744;') + ' ' + richText(d.rich_text) + '</div>';
-    case 'quote': return '<blockquote>' + richText(d.rich_text) + '</blockquote>';
-    case 'callout': return '<blockquote>' + richText(d.rich_text) + '</blockquote>';
-    case 'divider': return '<hr>';
-    case 'code': return '<pre>' + richText(d.rich_text) + '</pre>';
-    case 'toggle': return '<p>' + richText(d.rich_text) + '</p>';
-    default: return '';
+    case 'paragraph': return plainOf(d);
+    case 'heading_1':
+    case 'heading_2':
+    case 'heading_3': return '# ' + plainOf(d);
+    case 'bulleted_list_item':
+    case 'numbered_list_item': return '- ' + plainOf(d);
+    case 'to_do': return (d.checked ? '[x] ' : '[ ] ') + plainOf(d);
+    case 'quote':
+    case 'callout': return '> ' + plainOf(d);
+    case 'divider': return '---';
+    case 'code':
+    case 'toggle': return plainOf(d);
+    default: return null;
   }
 }
 
-// wrap consecutive <li> runs in <ul>
-function assemble(parts) {
-  var out = [];
-  var inList = false;
-  parts.forEach(function (p) {
-    if (!p) return;
-    var isLi = p.indexOf('<li') === 0;
-    if (isLi && !inList) { out.push('<ul>'); inList = true; }
-    if (!isLi && inList) { out.push('</ul>'); inList = false; }
-    out.push(p);
+// ---------- plain text -> Notion blocks ----------
+function rich(content) {
+  if (!content) return [];
+  var parts = content.match(/[\s\S]{1,2000}/g) || [];
+  return parts.map(function (p) { return { type: 'text', text: { content: p } }; });
+}
+
+function blk(type, data) {
+  var b = { object: 'block', type: type };
+  b[type] = data;
+  return b;
+}
+
+function lineToBlock(line) {
+  if (line.trim() === '---') return blk('divider', {});
+  var m;
+  if ((m = line.match(/^#{1,3}\s+(.*)$/))) return blk('heading_2', { rich_text: rich(m[1]) });
+  if ((m = line.match(/^\[( |x|X)?\]\s+(.*)$/))) return blk('to_do', { rich_text: rich(m[2]), checked: /x/i.test(m[1] || '') });
+  if ((m = line.match(/^[-*]\s+(.*)$/))) return blk('bulleted_list_item', { rich_text: rich(m[1]) });
+  if ((m = line.match(/^>\s+(.*)$/))) return blk('quote', { rich_text: rich(m[1]) });
+  return blk('paragraph', { rich_text: rich(line) });
+}
+
+function textToBlocks(text) {
+  var lines = String(text || '').replace(/\r/g, '').split('\n');
+  var blocks = [];
+  var prevBlank = false;
+  lines.forEach(function (raw) {
+    var line = raw.replace(/\s+$/, '');
+    if (line === '') {
+      if (!prevBlank && blocks.length) blocks.push(blk('paragraph', { rich_text: [] }));
+      prevBlank = true;
+      return;
+    }
+    prevBlank = false;
+    blocks.push(lineToBlock(line));
   });
-  if (inList) out.push('</ul>');
-  return out.join('\n');
+  while (blocks.length && blocks[blocks.length - 1].type === 'paragraph' &&
+    !blocks[blocks.length - 1].paragraph.rich_text.length) blocks.pop();
+  return blocks;
+}
+
+// ---------- handlers ----------
+async function handleGet(req, res, token) {
+  var id = PAGES[String(req.query.m || '')];
+  if (!id) { res.status(400).json({ error: 'unknown market' }); return; }
+
+  var got = await listChildren(id, token);
+  if (!got.ok) { res.status(502).json({ error: 'notion_' + got.status }); return; }
+
+  var text = got.blocks
+    .map(blockToText)
+    .filter(function (t) { return t !== null; })
+    .join('\n');
+  res.setHeader('Cache-Control', 's-maxage=30');
+  res.status(200).json({ text: text });
+}
+
+async function handleSave(req, res, token) {
+  var body = req.body;
+  if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+  body = body || {};
+
+  if (!process.env.EDIT_KEY) { res.status(403).json({ error: 'edit_disabled' }); return; }
+  var key = req.headers['x-edit-key'] || body.key;
+  if (key !== process.env.EDIT_KEY) { res.status(401).json({ error: 'bad_key' }); return; }
+
+  var id = PAGES[String(body.m || '')];
+  if (!id) { res.status(400).json({ error: 'unknown market' }); return; }
+
+  var got = await listChildren(id, token);
+  if (!got.ok) { res.status(502).json({ error: 'notion_' + got.status }); return; }
+
+  for (var i = 0; i < got.blocks.length; i++) {
+    var del = await nfetch('/blocks/' + got.blocks[i].id, 'DELETE', null, token);
+    if (!del.ok) { res.status(502).json({ error: 'notion_' + del.status }); return; }
+  }
+
+  var blocks = textToBlocks(body.text);
+  for (var j = 0; j < blocks.length; j += 90) {
+    var add = await nfetch('/blocks/' + id + '/children', 'PATCH',
+      { children: blocks.slice(j, j + 90) }, token);
+    if (!add.ok) { res.status(502).json({ error: 'notion_' + add.status }); return; }
+  }
+
+  res.status(200).json({ ok: true });
 }
 
 module.exports = async function handler(req, res) {
-  var token = process.env.NOTION_TOKEN;
-  var id = PAGES[String(req.query.m || '')];
-
-  // errors must not stick in the edge cache
   res.setHeader('Cache-Control', 'no-store');
 
-  if (!id) { res.status(400).json({ error: 'unknown market' }); return; }
+  var token = process.env.NOTION_TOKEN;
   if (!token) { res.status(503).json({ error: 'not_connected' }); return; }
 
   try {
-    var blocks = [];
-    var cursor = null;
-    do {
-      var url = 'https://api.notion.com/v1/blocks/' + id + '/children?page_size=100' +
-        (cursor ? '&start_cursor=' + cursor : '');
-      var r = await fetch(url, {
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Notion-Version': '2022-06-28',
-        },
-      });
-      if (!r.ok) {
-        var status = r.status === 404 || r.status === 403 ? 502 : 502;
-        res.status(status).json({ error: 'notion_' + r.status });
-        return;
-      }
-      var body = await r.json();
-      blocks = blocks.concat(body.results || []);
-      cursor = body.has_more ? body.next_cursor : null;
-    } while (cursor);
-
-    var html = assemble(blocks.map(blockToHtml));
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
-    res.status(200).json({ html: html });
+    if (req.method === 'POST') { await handleSave(req, res, token); return; }
+    await handleGet(req, res, token);
   } catch (e) {
     res.status(502).json({ error: 'fetch_failed' });
   }

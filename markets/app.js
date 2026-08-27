@@ -232,8 +232,11 @@
       '<div class="workspace">' +
         '<div class="stack">' +
           (m.note ? '<p class="context-note">' + esc(m.note) + '</p>' : '') +
-          '<div class="panel"><h4>Notes <a class="edit-link" href="' + esc(m.notion) + '" target="_blank" rel="noopener">Edit in Notion &#8599;</a></h4>' +
-            '<div class="notion-view" id="notion-view"><p class="empty">Loading notes&hellip;</p></div>' +
+          '<div class="panel"><h4>Notes <span class="note-status" id="note-status"></span>' +
+            '<a class="edit-link" href="' + esc(m.notion) + '" target="_blank" rel="noopener">Notion &#8599;</a></h4>' +
+            '<textarea class="notes-live" id="notes-live" placeholder="Loading notes&hellip;" disabled ' +
+              'aria-label="Notes for ' + esc(m.name) + '"></textarea>' +
+            '<p class="micro">Type, then click anywhere else. It saves straight to Notion.</p>' +
           '</div>' +
           '<div class="panel"><h4>Airport access</h4>' +
             '<div class="table-scroll"><table>' +
@@ -284,29 +287,88 @@
       form.elements[def.fields[0].k].focus();
     });
 
-    // Notes live in Notion. Pull them through /api/notes, and refresh
-    // whenever the tab regains focus so edits show up on return.
+    // Notes are two-way with Notion: GET fills the textarea, clicking
+    // out POSTs the text back. A passphrase (EDIT_KEY in Vercel) gates
+    // writes; it is asked for once and kept in localStorage.
+    var ta = document.getElementById('notes-live');
+    var statusEl = document.getElementById('note-status');
+    var noteBase = null; // last text synced with Notion; null = not loaded
+
+    function setStatus(text, tone) {
+      statusEl.textContent = text;
+      statusEl.className = 'note-status' + (tone ? ' ' + tone : '');
+    }
+
+    function getKey(interactive) {
+      var k = null;
+      try { k = localStorage.getItem('lihtc-edit-key'); } catch (e) {}
+      if (!k && interactive) {
+        k = window.prompt('Edit key (the EDIT_KEY value set in Vercel):');
+        if (k) { try { localStorage.setItem('lihtc-edit-key', k); } catch (e) {} }
+      }
+      return k;
+    }
+
     function loadNotes() {
-      var view = document.getElementById('notion-view');
-      fetch('/api/notes?m=' + m.id)
+      if (document.activeElement === ta) return;
+      if (noteBase !== null && ta.value !== noteBase) return; // unsaved edits win
+      fetch('/api/notes?m=' + m.id + '&t=' + Date.now())
         .then(function (r) {
           if (!r.ok) throw new Error('http ' + r.status);
           return r.json();
         })
         .then(function (d) {
-          view.innerHTML = d.html && d.html.trim()
-            ? d.html
-            : '<p class="empty">Nothing written yet. Use Edit in Notion.</p>';
+          noteBase = d.text || '';
+          ta.value = noteBase;
+          ta.disabled = false;
+          ta.placeholder = 'Notes for ' + m.name + '. Click out and it saves.';
+          setStatus('synced', 'ok');
         })
         .catch(function () {
-          view.innerHTML = '<p class="empty">Notes sync is not connected yet. ' +
-            'Edit in Notion works now; notes will show here once the Vercel token is set.</p>';
+          setStatus('offline here — works on the live site', 'err');
         });
     }
-    loadNotes();
+
+    function saveNotes() {
+      if (noteBase === null || ta.value === noteBase) return;
+      var key = getKey(true);
+      if (!key) { setStatus('not saved — no edit key', 'err'); return; }
+      setStatus('saving…');
+      fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ m: m.id, text: ta.value, key: key }),
+      })
+        .then(function (r) {
+          if (r.status === 401) {
+            try { localStorage.removeItem('lihtc-edit-key'); } catch (e) {}
+            setStatus('wrong edit key — click out to retry', 'err');
+            return;
+          }
+          if (r.status === 403) { setStatus('editing disabled — set EDIT_KEY in Vercel', 'err'); return; }
+          if (!r.ok) { setStatus('save failed — click out to retry', 'err'); return; }
+          noteBase = ta.value;
+          setStatus('saved', 'ok');
+        })
+        .catch(function () { setStatus('save failed — click out to retry', 'err'); });
+    }
+
+    ta.addEventListener('blur', saveNotes);
+    ta.addEventListener('input', function () {
+      if (noteBase !== null && ta.value !== noteBase) setStatus('unsaved');
+    });
+    window.addEventListener('pagehide', function () {
+      var key = getKey(false);
+      if (noteBase === null || ta.value === noteBase || !key) return;
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/notes',
+          new Blob([JSON.stringify({ m: m.id, text: ta.value, key: key })], { type: 'application/json' }));
+      }
+    });
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) loadNotes();
     });
+    loadNotes();
   }
 
   // ---------- boot ----------
