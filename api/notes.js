@@ -84,7 +84,8 @@ module.exports = async function handler(req, res) {
   var token = process.env.NOTION_TOKEN;
   var id = PAGES[String(req.query.m || '')];
 
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+  // errors must not stick in the edge cache
+  res.setHeader('Cache-Control', 'no-store');
 
   if (!id) { res.status(400).json({ error: 'unknown market' }); return; }
   if (!token) { res.status(503).json({ error: 'not_connected' }); return; }
@@ -112,6 +113,7 @@ module.exports = async function handler(req, res) {
     } while (cursor);
 
     var html = assemble(blocks.map(blockToHtml));
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({ html: html });
   } catch (e) {
     res.status(502).json({ error: 'fetch_failed' });
