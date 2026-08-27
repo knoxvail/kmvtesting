@@ -7,6 +7,17 @@
 // ---------------------------------------------------------------
 const MARKETS = [
   {
+    id: 'phx',
+    name: 'Phoenix', state: 'AZ',
+    airports: [
+      { code: 'PHX', name: 'Phoenix Sky Harbor', service: 'American (hub) + Southwest, many daily', weekly: '56+', verify: false },
+    ],
+    airportNote: 'Both preferred carriers, all-day schedule. Access on par with Dallas.',
+    note: 'Was the top-ranked market on the original screen before the final cut. Back on the board.',
+    notion: 'https://app.notion.com/p/3c9c40abce3981428547fb6475a808a1',
+    brokers: [], deals: [], il: [],
+  },
+  {
     id: 'slc',
     name: 'Salt Lake City', state: 'UT',
     airports: [

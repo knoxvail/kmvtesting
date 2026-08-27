@@ -4,6 +4,7 @@
 // and the Market Screen Notes database shared with that integration.
 
 const PAGES = {
+  phx: '3c9c40abce3981428547fb6475a808a1',
   slc: '3c9c40abce398102bea2c1e40ee26968',
   provo: '3c9c40abce3981039cf8c270dfd29a01',
   ogden: '3c9c40abce39814a9e71c866a7504738',
