@@ -1,29 +1,67 @@
 // ---------------------------------------------------------------
-// Market data. Edit here, commit, push.
+// Market data. Edit here, commit, push. One city per entry.
 // Lists start empty on purpose: brokers, LIHTC deals, and IL comps
 // get baked in as the CoStar pulls come back. Rows added in the
 // browser live in localStorage until they get baked in here.
+// Notes live in Notion; the site reads them through /api/notes.
 // ---------------------------------------------------------------
 const MARKETS = [
   {
     id: 'slc',
-    name: 'Salt Lake City / Provo / Ogden', state: 'UT',
+    name: 'Salt Lake City', state: 'UT',
     airports: [
       { code: 'SLC', name: 'Salt Lake City Intl', service: 'Delta (hub), multiple daily', weekly: '21+', verify: false },
     ],
-    airportNote: 'Provo is about 45 min south of SLC, Ogden about 40 min north. One flight covers three submarkets.',
+    airportNote: 'Best-served airport on the list after Dallas.',
     note: 'Utah scores 98/100 on the 2026 landlord regulatory index, the best in the country.',
+    notion: 'https://app.notion.com/p/3c9c40abce398102bea2c1e40ee26968',
+    brokers: [], deals: [], il: [],
+  },
+  {
+    id: 'provo',
+    name: 'Provo', state: 'UT',
+    airports: [
+      { code: 'SLC', name: 'Salt Lake City Intl', service: 'Fly SLC, drive ~45 min south', weekly: '21+', verify: false },
+      { code: 'PVU', name: 'Provo Municipal', service: 'No SNA service', weekly: '0', verify: false },
+    ],
+    airportNote: 'Covered off the SLC flight.',
+    note: 'Same Utah regulatory picture as Salt Lake, one notch further from the airport.',
+    notion: 'https://app.notion.com/p/3c9c40abce3981039cf8c270dfd29a01',
+    brokers: [], deals: [], il: [],
+  },
+  {
+    id: 'ogden',
+    name: 'Ogden', state: 'UT',
+    airports: [
+      { code: 'SLC', name: 'Salt Lake City Intl', service: 'Fly SLC, drive ~40 min north', weekly: '21+', verify: false },
+      { code: 'OGD', name: 'Ogden-Hinckley', service: 'No scheduled service that matters', weekly: '0', verify: false },
+    ],
+    airportNote: 'Covered off the SLC flight.',
+    note: 'Same Utah regulatory picture. The Tulsa-type profile of the three Wasatch Front cities.',
+    notion: 'https://app.notion.com/p/3c9c40abce39814a9e71c866a7504738',
     brokers: [], deals: [], il: [],
   },
   {
     id: 'dfw',
-    name: 'Dallas / Fort Worth', state: 'TX',
+    name: 'Dallas', state: 'TX',
     airports: [
       { code: 'DFW', name: 'Dallas Fort Worth Intl', service: 'American (hub), many daily', weekly: '56+', verify: false },
       { code: 'DAL', name: 'Dallas Love Field', service: 'Southwest, daily', weekly: '14+', verify: false },
     ],
     airportNote: 'Two airports, both preferred carriers. Best access on the whole list.',
     note: 'Friendly statute, but 1.90% effective property tax with no appraisal cap on rentals. Underwrite taxes hard. The drive-radius cities are the low-basis play.',
+    notion: 'https://app.notion.com/p/3c9c40abce3981f59604cdac2241f68e',
+    brokers: [], deals: [], il: [],
+  },
+  {
+    id: 'ftw',
+    name: 'Fort Worth', state: 'TX',
+    airports: [
+      { code: 'DFW', name: 'Dallas Fort Worth Intl', service: 'American (hub), many daily', weekly: '56+', verify: false },
+    ],
+    airportNote: 'DFW sits between the two cities, about 25 min to downtown Fort Worth.',
+    note: 'Same Texas tax caveat as Dallas. Cheaper basis than the Dallas side of the metro.',
+    notion: 'https://app.notion.com/p/3c9c40abce39818c8fd4c27edeced9ec',
     brokers: [], deals: [], il: [],
   },
   {
@@ -34,6 +72,7 @@ const MARKETS = [
     ],
     airportNote: 'Nonstop made the screen. Confirm current carrier and days flown before booking a trip.',
     note: 'Idaho is 96/100 on the landlord index, second only to Utah. Low basis, thin institutional competition.',
+    notion: 'https://app.notion.com/p/3c9c40abce39813d9cc6cb907bc56551',
     brokers: [], deals: [], il: [],
   },
   {
@@ -44,6 +83,7 @@ const MARKETS = [
     ],
     airportNote: 'Confirm current schedule before booking a trip.',
     note: 'Same Texas tax caveat as Dallas: good statute, 1.90% effective rate, no rental appraisal cap.',
+    notion: 'https://app.notion.com/p/3c9c40abce3981da9fbddb5e648ca559',
     brokers: [], deals: [], il: [],
   },
   {
@@ -54,17 +94,29 @@ const MARKETS = [
     ],
     airportNote: 'Confirm current schedule before booking a trip.',
     note: 'Split out from Austin on the final sheet. Same Texas tax caveat, cheaper basis of the two.',
+    notion: 'https://app.notion.com/p/3c9c40abce3981919d4cf071b9adf3ff',
     brokers: [], deals: [], il: [],
   },
   {
     id: 'den',
-    name: 'Denver / Colorado Springs', state: 'CO',
+    name: 'Denver', state: 'CO',
     airports: [
       { code: 'DEN', name: 'Denver Intl', service: 'Southwest + United, multiple daily', weekly: '40+', verify: false },
+    ],
+    airportNote: 'No access problem here.',
+    note: 'Denver has the access. The basis and the competition are the question.',
+    notion: 'https://app.notion.com/p/3c9c40abce3981229f82e97c2a5f5949',
+    brokers: [], deals: [], il: [],
+  },
+  {
+    id: 'cos',
+    name: 'Colorado Springs', state: 'CO',
+    airports: [
       { code: 'COS', name: 'Colorado Springs', service: 'Nonstop, 2x weekly only', weekly: '2', verify: false },
     ],
-    airportNote: 'Denver has the flights. The Springs nonstop runs twice a week, which is why booking sites show connections most days.',
-    note: 'Denver has the access, Colorado Springs has the profile, and neither has both.',
+    airportNote: 'The nonstop runs twice a week, which is why booking sites show connections most days. DEN is a ~70 min drive.',
+    note: 'Has the profile, not the flights. Workable as a Denver drive-down.',
+    notion: 'https://app.notion.com/p/3c9c40abce398161a42bed1da63ced7c',
     brokers: [], deals: [], il: [],
   },
   {
@@ -75,6 +127,7 @@ const MARKETS = [
     ],
     airportNote: 'American hub, easy access.',
     note: 'NC House Bill 1042 would close the affordable housing property tax exemption for acquisitions of existing affordable properties. That is our exact structure. Track the bill.',
+    notion: 'https://app.notion.com/p/3c9c40abce39819ea016eb9853e3404f',
     brokers: [], deals: [], il: [],
   },
   {
@@ -86,6 +139,7 @@ const MARKETS = [
     ],
     airportNote: 'Access was never the issue here.',
     note: 'On the sheet for reference so the reasoning stays visible.',
+    notion: 'https://app.notion.com/p/3c9c40abce39811e8ba7e19ba9d7abc3',
     brokers: [], deals: [], il: [],
   },
   {
@@ -96,6 +150,7 @@ const MARKETS = [
     ],
     airportNote: 'Connect through SLC, or drive about 2.5 hours from Boise.',
     note: 'Rides along with Boise trips rather than standing on its own.',
+    notion: 'https://app.notion.com/p/3c9c40abce3981ee8df6e8df529a6dc0',
     brokers: [], deals: [], il: [],
   },
 ];

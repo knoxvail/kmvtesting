@@ -232,9 +232,8 @@
       '<div class="workspace">' +
         '<div class="stack">' +
           (m.note ? '<p class="context-note">' + esc(m.note) + '</p>' : '') +
-          '<div class="panel"><h4>Notes <span class="save-state" id="saved-note">saved</span></h4>' +
-            '<textarea class="notes notes-big" id="scratch" placeholder="Working notes for ' + esc(m.name) + '. Saves as you type." ' +
-              'aria-label="Notes for ' + esc(m.name) + '">' + esc(store.notes[m.id] || '') + '</textarea>' +
+          '<div class="panel"><h4>Notes <a class="edit-link" href="' + esc(m.notion) + '" target="_blank" rel="noopener">Edit in Notion &#8599;</a></h4>' +
+            '<div class="notion-view" id="notion-view"><p class="empty">Loading notes&hellip;</p></div>' +
           '</div>' +
           '<div class="panel"><h4>Airport access</h4>' +
             '<div class="table-scroll"><table>' +
@@ -285,16 +284,28 @@
       form.elements[def.fields[0].k].focus();
     });
 
-    var scratchTimer = null;
-    document.getElementById('scratch').addEventListener('input', function (e) {
-      clearTimeout(scratchTimer);
-      scratchTimer = setTimeout(function () {
-        store.notes[m.id] = e.target.value;
-        saveJSON(LS_KEY, store);
-        var badge = document.getElementById('saved-note');
-        badge.classList.add('show');
-        setTimeout(function () { badge.classList.remove('show'); }, 1400);
-      }, 400);
+    // Notes live in Notion. Pull them through /api/notes, and refresh
+    // whenever the tab regains focus so edits show up on return.
+    function loadNotes() {
+      var view = document.getElementById('notion-view');
+      fetch('/api/notes?m=' + m.id)
+        .then(function (r) {
+          if (!r.ok) throw new Error('http ' + r.status);
+          return r.json();
+        })
+        .then(function (d) {
+          view.innerHTML = d.html && d.html.trim()
+            ? d.html
+            : '<p class="empty">Nothing written yet. Use Edit in Notion.</p>';
+        })
+        .catch(function () {
+          view.innerHTML = '<p class="empty">Notes sync is not connected yet. ' +
+            'Edit in Notion works now; notes will show here once the Vercel token is set.</p>';
+        });
+    }
+    loadNotes();
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) loadNotes();
     });
   }
 

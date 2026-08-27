@@ -406,22 +406,67 @@ tr:last-child td { border-bottom: none; }
 .empty { color: var(--muted); font-size: 0.86rem; padding: 0.25rem 0; }
 .micro { color: var(--muted); font-size: 0.75rem; margin-top: 0.4rem; }
 
-/* ---------- notes ---------- */
-textarea.notes {
-  width: 100%;
-  min-height: 100px;
-  resize: vertical;
-  font: inherit;
-  font-size: 0.89rem;
-  color: var(--ink);
+/* ---------- notes (live Notion view) ---------- */
+.panel h4 .edit-link {
+  margin-left: auto;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--copper);
+  text-decoration: none;
+}
+.panel h4 .edit-link:hover { text-decoration: underline; }
+.notion-view {
+  min-height: 320px;
+  max-height: 520px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.6;
   background: #FBFAF7;
   border: 1px solid var(--line);
   border-radius: var(--r);
-  padding: 0.6rem 0.7rem;
+  padding: 0.7rem 0.85rem;
 }
-textarea.notes::placeholder { color: #9AA0A6; }
-textarea.notes.notes-big { min-height: 320px; font-size: 0.92rem; line-height: 1.6; }
-textarea.notes:focus { border-color: var(--copper); }
+.notion-view p { margin: 0 0 0.5rem; }
+.notion-view p.gap { margin: 0 0 0.9rem; }
+.notion-view h5 {
+  font-family: var(--cond);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0.8rem 0 0.35rem;
+}
+.notion-view h6 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin: 0.7rem 0 0.3rem;
+}
+.notion-view ul { margin: 0 0 0.5rem 1.2rem; }
+.notion-view li { margin-bottom: 0.2rem; }
+.notion-view .todo { margin-bottom: 0.25rem; }
+.notion-view .todo.done { color: var(--muted); text-decoration: line-through; }
+.notion-view blockquote {
+  border-left: 3px solid var(--copper);
+  padding: 0.2rem 0 0.2rem 0.7rem;
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+}
+.notion-view hr { border: none; border-top: 1px solid var(--line); margin: 0.7rem 0; }
+.notion-view pre {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  background: #EFEDE6;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--r);
+  overflow-x: auto;
+  margin: 0 0 0.5rem;
+}
+.notion-view code { font-family: var(--mono); font-size: 0.84em; background: #EFEDE6; padding: 0 0.25em; }
 
 /* ---------- add-row forms ---------- */
 form.add-row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.6rem; }
