@@ -167,8 +167,30 @@ const MARKETS = [
 ];
 
 const LISTS = {
+  deals: {
+    title: 'LIHTC',
+    unitField: 'units',
+    fields: [
+      { k: 'property', label: 'Property' },
+      { k: 'city', label: 'City / submarket' },
+      { k: 'units', label: 'Units' },
+      { k: 'note', label: 'Note' },
+    ],
+    empty: 'None logged. LIHTC properties in the city and surrounding MSA.',
+  },
+  il: {
+    title: 'Standard SL',
+    unitField: 'units',
+    fields: [
+      { k: 'property', label: 'Property' },
+      { k: 'city', label: 'City' },
+      { k: 'units', label: 'Units' },
+      { k: 'note', label: 'Note' },
+    ],
+    empty: 'None logged. Standard senior living, 150 units and up, no LIHTC.',
+  },
   brokers: {
-    title: 'Brokers & owners',
+    title: 'Brokers',
     unitField: null,
     fields: [
       { k: 'name', label: 'Name' },
@@ -177,27 +199,5 @@ const LISTS = {
       { k: 'note', label: 'Note' },
     ],
     empty: 'None logged. Feeds from the CoStar broker and owner pulls.',
-  },
-  deals: {
-    title: 'LIHTC deals in the MSA',
-    unitField: 'units',
-    fields: [
-      { k: 'property', label: 'Property' },
-      { k: 'city', label: 'City / submarket' },
-      { k: 'units', label: 'Units' },
-      { k: 'note', label: 'Note' },
-    ],
-    empty: 'None logged. City plus surrounding suburbs, MSA level.',
-  },
-  il: {
-    title: 'Non-LIHTC IL, 150+ units',
-    unitField: 'units',
-    fields: [
-      { k: 'property', label: 'Property' },
-      { k: 'city', label: 'City' },
-      { k: 'units', label: 'Units' },
-      { k: 'note', label: 'Note' },
-    ],
-    empty: 'None logged. Independent living only, 150 units and up.',
   },
 };

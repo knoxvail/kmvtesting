@@ -58,28 +58,35 @@
   function fmt(n) { return n.toLocaleString('en-US'); }
 
   // ---------- shared renderers ----------
-  function listTable(m, listKey) {
+  function entryCards(m, listKey) {
     var def = LISTS[listKey];
     var baked = m[listKey] || [];
     var local = localRows(m.id, listKey);
     if (!baked.length && !local.length) {
       return '<p class="empty">' + esc(def.empty) + '</p>';
     }
-    var head = def.fields.map(function (f) { return '<th>' + esc(f.label) + '</th>'; }).join('') + '<th></th>';
-    var rows = '';
-    baked.forEach(function (r) {
-      rows += '<tr>' + def.fields.map(function (f) {
-        return '<td>' + esc(r[f.k]) + '</td>';
-      }).join('') + '<td></td></tr>';
-    });
+    function card(r, delBtn) {
+      var primary = r[def.fields[0].k] || '(unnamed)';
+      var subParts = [];
+      def.fields.forEach(function (f, i) {
+        if (i === 0 || f.k === 'note' || f.k === def.unitField) return;
+        if (r[f.k]) subParts.push(r[f.k]);
+      });
+      return '<div class="entry">' +
+        '<div class="entry-top"><span class="entry-name">' + esc(primary) + '</span>' +
+        (def.unitField && r[def.unitField] ? '<span class="entry-units">' + esc(r[def.unitField]) + ' u</span>' : '') +
+        '</div>' +
+        (subParts.length ? '<div class="entry-sub">' + esc(subParts.join(' · ')) + '</div>' : '') +
+        (r.note ? '<div class="entry-note">' + esc(r.note) + '</div>' : '') +
+        delBtn +
+        '</div>';
+    }
+    var html = baked.map(function (r) { return card(r, ''); }).join('');
     local.forEach(function (r, i) {
-      rows += '<tr>' + def.fields.map(function (f) {
-        return '<td>' + esc(r[f.k]) + '</td>';
-      }).join('') +
-      '<td><button type="button" class="del" data-market="' + m.id + '" data-list="' + listKey +
-      '" data-index="' + i + '" aria-label="Delete row">remove</button></td></tr>';
+      html += card(r, '<button type="button" class="del" data-market="' + m.id + '" data-list="' + listKey +
+        '" data-index="' + i + '" aria-label="Delete entry">&times;</button>');
     });
-    return '<div class="table-scroll"><table><thead><tr>' + head + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return '<div class="entries">' + html + '</div>';
   }
 
   function listCount(m, listKey) {
@@ -100,7 +107,7 @@
     }).join('');
     return '<div class="panel">' +
       '<h4>' + esc(def.title) + '<span class="count" id="count-' + listKey + '">' + esc(listCount(m, listKey)) + '</span></h4>' +
-      '<div class="list-holder" id="list-' + listKey + '">' + listTable(m, listKey) + '</div>' +
+      '<div class="list-holder" id="list-' + listKey + '">' + entryCards(m, listKey) + '</div>' +
       '<form class="add-row" data-market="' + m.id + '" data-list="' + listKey + '">' + inputs +
       '<button type="submit">Add</button></form>' +
       '</div>';
@@ -135,8 +142,8 @@
         '<h3>' + esc(m.name) + '</h3>' +
         '<div class="meta"><span>' + esc(m.state) + '</span><span class="codes">' + esc(codesOf(m)) + '</span></div>' +
         '<div class="units">' +
-          '<span class="u"><span class="n">' + fmt(lihtc) + '</span><span class="l">LIHTC units</span></span>' +
-          '<span class="u"><span class="n">' + fmt(il) + '</span><span class="l">IL units</span></span>' +
+          '<span class="u"><span class="n">' + fmt(lihtc) + '</span><span class="l">LIHTC</span></span>' +
+          '<span class="u"><span class="n">' + fmt(il) + '</span><span class="l">Standard SL</span></span>' +
           '<span class="u"><span class="n">' + fmt(brokers) + '</span><span class="l">Brokers</span></span>' +
         '</div></a>';
     }
@@ -201,14 +208,14 @@
     recent.unshift(m.id);
     saveJSON(RECENT_KEY, recent.slice(0, 6));
 
-    var airportRows = m.airports.map(function (a) {
-      return '<tr>' +
-        '<td class="codes">' + esc(a.code) + '</td>' +
-        '<td>' + esc(a.name) + '</td>' +
-        '<td>' + esc(a.service) + (a.verify ? ' <span class="chip verify">confirm</span>' : '') + '</td>' +
-        '<td class="num">' + esc(a.weekly) + '</td>' +
-        '</tr>';
+    var airportBar = m.airports.map(function (a) {
+      var week = (a.weekly && a.weekly !== 'confirm')
+        ? ' <span class="ap-week">' + esc(a.weekly) + '/wk</span>' : '';
+      return '<span class="ap"><span class="ap-code">' + esc(a.code) + '</span> ' +
+        esc(a.service) + week +
+        (a.verify ? ' <span class="chip verify">confirm</span>' : '') + '</span>';
     }).join('');
+    if (m.airportNote) airportBar += '<span class="ap-note">' + esc(m.airportNote) + '</span>';
 
     var dealProps = combinedRows(m, 'deals').length;
     var ilProps = combinedRows(m, 'il').length;
@@ -223,35 +230,28 @@
           '<div class="stat"><span class="n" id="stat-deals">' + fmt(unitTotal(m, 'deals')) + '</span>' +
             '<span class="l">LIHTC units</span><p class="sub" id="stat-deals-sub">across ' + dealProps + ' logged</p></div>' +
           '<div class="stat"><span class="n" id="stat-il">' + fmt(unitTotal(m, 'il')) + '</span>' +
-            '<span class="l">IL units, 150+</span><p class="sub" id="stat-il-sub">across ' + ilProps + ' logged</p></div>' +
+            '<span class="l">Standard SL units</span><p class="sub" id="stat-il-sub">across ' + ilProps + ' logged</p></div>' +
           '<div class="stat"><span class="n" id="stat-brokers">' + fmt(combinedRows(m, 'brokers').length) + '</span>' +
             '<span class="l">Brokers &amp; owners</span><p class="sub">on the call list</p></div>' +
         '</div>' +
       '</div>' +
       (m.flag ? '<p class="flag">' + esc(m.flag) + '</p>' : '') +
+      (m.note ? '<p class="context-note">' + esc(m.note) + '</p>' : '') +
+      '<div class="airport-bar">' + airportBar + '</div>' +
       '<div class="workspace">' +
-        '<div class="stack">' +
-          (m.note ? '<p class="context-note">' + esc(m.note) + '</p>' : '') +
-          '<div class="panel"><h4>Notes <span class="note-status" id="note-status"></span>' +
-            '<a class="edit-link" href="' + esc(m.notion) + '" target="_blank" rel="noopener">Notion &#8599;</a></h4>' +
-            '<textarea class="notes-live" id="notes-live" placeholder="Loading notes&hellip;" disabled ' +
-              'aria-label="Notes for ' + esc(m.name) + '"></textarea>' +
-            '<p class="micro">Type, then click anywhere else. It saves straight to Notion.</p>' +
-          '</div>' +
-          '<div class="panel"><h4>Airport access</h4>' +
-            '<div class="table-scroll"><table>' +
-            '<thead><tr><th>Code</th><th>Airport</th><th>SNA service</th><th>Weekly</th></tr></thead>' +
-            '<tbody>' + airportRows + '</tbody></table></div>' +
-            (m.airportNote ? '<p class="micro">' + esc(m.airportNote) + '</p>' : '') +
-          '</div>' +
-          listPanel(m, 'brokers') +
+        listPanel(m, 'deals') +
+        listPanel(m, 'il') +
+        listPanel(m, 'brokers') +
+        '<div class="panel notes-panel"><h4>Notes <span class="note-status" id="note-status"></span>' +
+          '<a class="edit-link" href="' + esc(m.notion) + '" target="_blank" rel="noopener">Notion &#8599;</a></h4>' +
+          '<textarea class="notes-live" id="notes-live" placeholder="Loading notes&hellip;" disabled ' +
+            'aria-label="Notes for ' + esc(m.name) + '"></textarea>' +
+          '<p class="micro">Type, then click anywhere else. It saves straight to Notion.</p>' +
         '</div>' +
-        '<div class="stack">' + listPanel(m, 'deals') + '</div>' +
-        '<div class="stack">' + listPanel(m, 'il') + '</div>' +
       '</div>';
 
     function refresh(listKey) {
-      document.getElementById('list-' + listKey).innerHTML = listTable(m, listKey);
+      document.getElementById('list-' + listKey).innerHTML = entryCards(m, listKey);
       document.getElementById('count-' + listKey).textContent = listCount(m, listKey);
       document.getElementById('stat-deals').textContent = fmt(unitTotal(m, 'deals'));
       document.getElementById('stat-il').textContent = fmt(unitTotal(m, 'il'));
