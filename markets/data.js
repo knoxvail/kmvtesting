@@ -55,8 +55,8 @@ const MARKETS = [
         note: 'PIS 2006, 9%, nonprofit sponsor, Y15 2021. From HUD LIHTC db, CoStar workup pending.',
       },
       {
-        property: 'Paradise Palms Senior Housing',
-        city: '304 W Southern Ave, Phoenix',
+        property: 'Paradise Palms I',
+        city: '304 W Southern Ave, Phoenix 85041',
         units: '104',
         note: 'Ranked #1 (A-/B+). PIS 1999, Y15 2014, a decade past compliance. Sister property Paradise Palms Multi (110u, 2001, nonprofit) next door makes it a 214u package with a real rehab story. Kill question: nonprofit purchase option on the Multi side.',
       },
