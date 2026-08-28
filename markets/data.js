@@ -40,13 +40,13 @@ const MARKETS = [
         property: 'Westward Ho',
         city: '618 N Central Ave, Phoenix',
         units: '290',
-        note: 'PIS 2004, 4% credit, Y15 2019. Historic downtown senior tower, HUD-assisted. From HUD LIHTC db, CoStar workup pending.',
+        note: 'Ranked #3. B- as a deal, A as a relationship. PIS 2004, 4%, Y15 2019. Historic 1928 tower, expensive envelope rehab, layered stack, mission-minded owner and city attention. Whoever advises it knows every senior LIHTC owner downtown.',
       },
       {
         property: 'Deer Valley Gardens',
         city: 'Sun City West',
         units: '164',
-        note: 'PIS 2005, Y15 2020. Not elderly-flagged in HUD data but it sits in Sun City West. From HUD LIHTC db, CoStar workup pending.',
+        note: 'Ranked #2 (B+). PIS 2005, Y15 2020. Not elderly-flagged in HUD data but it sits in Sun City West, so everyone else’s screen misses it. Lighter rehab basis, leans on acquisition + FHFA equity. Kill question: who owns it and whether 2020 already triggered a recap.',
       },
       {
         property: 'Memorial Towers',
@@ -58,7 +58,7 @@ const MARKETS = [
         property: 'Paradise Palms Senior Housing',
         city: '304 W Southern Ave, Phoenix',
         units: '104',
-        note: 'PIS 1999, Y15 2014, a decade past compliance. Sister property Paradise Palms Multi (110u, 2001, nonprofit) is next door at 250 W Southern. From HUD LIHTC db.',
+        note: 'Ranked #1 (A-/B+). PIS 1999, Y15 2014, a decade past compliance. Sister property Paradise Palms Multi (110u, 2001, nonprofit) next door makes it a 214u package with a real rehab story. Kill question: nonprofit purchase option on the Multi side.',
       },
       {
         property: 'Senior Cottage Apts of Apache Junction',
@@ -70,7 +70,7 @@ const MARKETS = [
         property: 'Rosa Linda Senior Apts',
         city: '10245 N 87th Ave, Peoria',
         units: '84',
-        note: 'PIS 2007, 4% credit, Y15 2022. From HUD LIHTC db, CoStar workup pending.',
+        note: 'Ranked #4, sleeper. PIS 2007, 4% credit, Y15 2022. Under the size bar at 84u, but this partnership already runs 4% deals and knows what comes next. If the owner holds more, this is the door to the portfolio.',
       },
       {
         property: 'Roeser Senior Village',
