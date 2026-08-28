@@ -34,6 +34,18 @@
     return store.hidden[id][listKey];
   }
 
+  // starred entries, keyed by their primary field
+  function starKeys(id, listKey) {
+    store.stars = store.stars || {};
+    store.stars[id] = store.stars[id] || {};
+    store.stars[id][listKey] = store.stars[id][listKey] || [];
+    return store.stars[id][listKey];
+  }
+
+  var STAR_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<polygon fill="none" points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+
   function bakedRows(m, listKey) {
     var keyField = LISTS[listKey].fields[0].k;
     var hidden = hiddenKeys(m.id, listKey);
@@ -72,9 +84,17 @@
     if (!baked.length && !local.length) {
       return '<p class="empty">' + esc(def.empty) + '</p>';
     }
+    function isStarred(primary) {
+      return starKeys(m.id, listKey).indexOf(primary) !== -1;
+    }
     function card(r, kind, ref) {
       var primary = r[def.fields[0].k] || '(unnamed)';
       var info = entryInfo(m, listKey, r);
+      var starred = isStarred(primary);
+      var star = def.unitField
+        ? '<button type="button" class="star' + (starred ? ' on' : '') + '" data-list="' + listKey +
+          '" data-key="' + esc(primary) + '" aria-pressed="' + starred + '" aria-label="Star">' + STAR_SVG + '</button>'
+        : '';
       var del = '<button type="button" class="del" data-market="' + m.id + '" data-list="' + listKey +
         '" data-kind="' + kind + '" data-ref="' + esc(String(ref)) + '" aria-label="Delete entry">&times;</button>';
       var sub = info.subText ? '<div class="entry-sub">' + esc(info.subText) + '</div>' : '';
@@ -82,17 +102,21 @@
         '" data-ref="' + esc(String(ref)) + '" title="Open">' +
         (r.photo ? '<img class="entry-photo" src="' + esc(r.photo) + '" alt="' + esc(primary) + '" loading="lazy">' : '') +
         '<div class="entry-top"><span class="entry-name">' + esc(primary) + '</span>' +
-        (info.unitsText ? '<span class="entry-units">' + esc(info.unitsText) + '</span>' : '') + del +
+        (info.unitsText ? '<span class="entry-units">' + esc(info.unitsText) + '</span>' : '') + star + del +
         '</div>' +
         sub +
         (r.note ? '<div class="entry-note">' + esc(r.note) + '</div>' : '') +
         '</div>';
     }
-    var html = baked.map(function (r) { return card(r, 'baked', r[def.fields[0].k]); }).join('');
-    local.forEach(function (r, i) {
-      html += card(r, 'local', i);
+    // starred entries float to the top, baked before local within each group
+    var items = baked.map(function (r) { return { r: r, kind: 'baked', ref: r[def.fields[0].k] }; });
+    local.forEach(function (r, i) { items.push({ r: r, kind: 'local', ref: i }); });
+    items.sort(function (a, b) {
+      return isStarred(b.r[def.fields[0].k] || '') - isStarred(a.r[def.fields[0].k] || '');
     });
-    return '<div class="entries">' + html + '</div>';
+    return '<div class="entries">' + items.map(function (it) {
+      return card(it.r, it.kind, it.ref);
+    }).join('') + '</div>';
   }
 
   // shared row facts: sub line, units label, pasteable address
@@ -283,6 +307,12 @@
       if (!row) return;
       var info = entryInfo(m, listKey, row);
       var actions = '';
+      if (def.unitField) {
+        var starred = starKeys(m.id, listKey).indexOf(info.primary) !== -1;
+        actions += '<button type="button" class="star' + (starred ? ' on' : '') + '" data-list="' + listKey +
+          '" data-key="' + esc(info.primary) + '" aria-pressed="' + starred + '" aria-label="Star">' +
+          STAR_SVG + ' <span class="star-word">' + (starred ? 'Starred' : 'Star') + '</span></button>';
+      }
       if (info.addr) {
         actions =
           '<button type="button" class="mini-act" data-act="maps" data-addr="' + esc(info.addr) + '">Google Maps &#8599;</button>' +
@@ -372,6 +402,21 @@
     root.addEventListener('click', function (e) {
       if (e.target.closest('.modal-close') || e.target.classList.contains('modal-backdrop')) {
         closeModal();
+        return;
+      }
+
+      var star = e.target.closest('button.star');
+      if (star) {
+        var keys = starKeys(m.id, star.dataset.list);
+        var at = keys.indexOf(star.dataset.key);
+        var nowOn = at === -1;
+        if (nowOn) keys.push(star.dataset.key); else keys.splice(at, 1);
+        saveJSON(LS_KEY, store);
+        refresh(star.dataset.list);
+        star.classList.toggle('on', nowOn);
+        star.setAttribute('aria-pressed', String(nowOn));
+        var word = star.querySelector('.star-word');
+        if (word) word.textContent = nowOn ? 'Starred' : 'Star';
         return;
       }
 

@@ -34,7 +34,7 @@ const MARKETS = [
         property: 'Paradise Palms I',
         city: '304 W Southern Ave, Phoenix 85041',
         units: '104',
-        note: 'Ranked #1 (A-/B+). PIS 1999, Y15 2014, a decade past compliance. Sister property Paradise Palms Multi (110u, 2001, nonprofit) next door makes it a 214u package with a real rehab story. Kill question: nonprofit purchase option on the Multi side.',
+        note: 'Ranked #1 (A-/B+). PIS 1999, Y15 2014, a decade past compliance. Owner: Paradise Palms Senior Housing LP, the original 1999 partnership, per Maricopa assessor 8/28/26; county rental contact Mark Breen; Celtic Property Management runs it. Sister property Paradise Palms II (110u, 2001, nonprofit) next door makes it a 214u package. Kill question: nonprofit purchase option on the Multi side.',
       },
       {
         property: 'Deer Valley Gardens',

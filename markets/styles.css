@@ -519,6 +519,35 @@ form.add-row button {
 }
 form.add-row button:hover { background: var(--navy); }
 
+button.star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 0.1rem 0.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 150ms ease, transform 150ms ease;
+}
+button.star:hover { color: var(--copper); transform: scale(1.12); }
+button.star.on { color: var(--copper); }
+button.star.on svg polygon { fill: currentColor; }
+.entry:not(:hover) button.star:not(.on) { opacity: 0.35; }
+.modal-actions button.star {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 0.4rem 0.7rem;
+  min-height: 38px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.modal-actions button.star:hover { transform: none; border-color: var(--copper); }
+
 button.del {
   font: inherit;
   font-size: 0.75rem;
