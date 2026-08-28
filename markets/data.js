@@ -15,7 +15,23 @@ const MARKETS = [
     airportNote: 'Both preferred carriers, all-day schedule. Access on par with Dallas.',
     note: 'Was the top-ranked market on the original screen before the final cut. Back on the board.',
     notion: 'https://app.notion.com/p/3c9c40abce3981428547fb6475a808a1',
-    brokers: [], deals: [], il: [],
+    brokers: [
+      {
+        name: 'Marshall Urban Development',
+        firm: 'Owner / developer, Encore on First',
+        contact: '(480) 966-3008',
+        note: 'In since 2016, CREA syndicated. The call is whether they sell at Y15 or resyndicate themselves.',
+      },
+    ],
+    deals: [
+      {
+        property: '25 W 1st Ave - Encore on First',
+        city: 'Mesa · Downtown Mesa',
+        units: '81',
+        note: 'Built 2013, Y15 lands ~2028. 4-star, 55+ segment, rent restricted. PacifiCap manages. 1.2% vacancy vs 11.6% submarket. Taxes $15.54/unit on the affordable valuation. Light rail 0.3 mi.',
+      },
+    ],
+    il: [],
   },
   {
     id: 'slc',

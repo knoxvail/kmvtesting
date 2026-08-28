@@ -360,6 +360,14 @@ main { padding: 1.5rem var(--gutter) 3rem; }
   border-radius: var(--r);
   padding: 0.5rem 0.65rem 0.55rem;
 }
+.entry-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: var(--r);
+  margin-bottom: 0.45rem;
+}
 .entry-top {
   display: flex;
   justify-content: space-between;

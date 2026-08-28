@@ -73,6 +73,7 @@
         if (r[f.k]) subParts.push(r[f.k]);
       });
       return '<div class="entry">' +
+        (r.photo ? '<img class="entry-photo" src="' + esc(r.photo) + '" alt="' + esc(primary) + '" loading="lazy">' : '') +
         '<div class="entry-top"><span class="entry-name">' + esc(primary) + '</span>' +
         (def.unitField && r[def.unitField] ? '<span class="entry-units">' + esc(r[def.unitField]) + ' u</span>' : '') +
         '</div>' +
