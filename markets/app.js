@@ -87,12 +87,30 @@
       var unitsHtml = uv
         ? '<span class="entry-units">' + esc(/[a-z]/i.test(uv) ? uv : uv + ' units') + '</span>'
         : '';
-      return '<div class="entry">' +
+      var sub = '';
+      var mapsAttr = '';
+      if (subParts.length) {
+        var subText = subParts.join(' · ');
+        if (def.unitField) {
+          // property lists: whole card opens Maps; copy and CoStar actions inline
+          var addr = /\d/.test(subText) ? subText : (primary + ', ' + subText + ', ' + m.state);
+          mapsAttr = ' data-maps="https://www.google.com/maps/search/?api=1&amp;query=' +
+            encodeURIComponent(addr) + '" title="Open in Google Maps"';
+          sub = '<div class="entry-sub">' +
+            '<span class="addr-text">' + esc(subText) + '</span>' +
+            '<button type="button" class="mini-act" data-act="copy" data-addr="' + esc(addr) + '">copy</button>' +
+            '<button type="button" class="mini-act" data-act="costar" data-addr="' + esc(addr) + '">CoStar &#8599;</button>' +
+            '</div>';
+        } else {
+          sub = '<div class="entry-sub">' + esc(subText) + '</div>';
+        }
+      }
+      return '<div class="entry"' + mapsAttr + '>' +
         (r.photo ? '<img class="entry-photo" src="' + esc(r.photo) + '" alt="' + esc(primary) + '" loading="lazy">' : '') +
         '<div class="entry-top"><span class="entry-name">' + esc(primary) + '</span>' +
         unitsHtml + delBtn +
         '</div>' +
-        (subParts.length ? '<div class="entry-sub">' + esc(subParts.join(' · ')) + '</div>' : '') +
+        sub +
         (r.note ? '<div class="entry-note">' + esc(r.note) + '</div>' : '') +
         '</div>';
     }
@@ -256,8 +274,38 @@
     }
 
     root.addEventListener('click', function (e) {
+      var act = e.target.closest('button.mini-act');
+      if (act) {
+        var addr = act.dataset.addr;
+        var isCostar = act.dataset.act === 'costar';
+        var orig = act.innerHTML;
+        function flash(t) {
+          act.textContent = t;
+          setTimeout(function () { act.innerHTML = orig; }, 1500);
+        }
+        function goCostar() {
+          if (isCostar) window.open('https://product.costar.com/', '_blank', 'noopener');
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(addr).then(
+            function () { flash('copied'); goCostar(); },
+            function () { flash('copy failed'); goCostar(); }
+          );
+        } else {
+          flash('no clipboard');
+          goCostar();
+        }
+        return;
+      }
+
       var del = e.target.closest('button.del');
-      if (!del) return;
+      if (!del) {
+        var entry = e.target.closest('.entry[data-maps]');
+        if (entry && !e.target.closest('button, a')) {
+          window.open(entry.dataset.maps, '_blank', 'noopener');
+        }
+        return;
+      }
       if (del.dataset.kind === 'baked') {
         hiddenKeys(m.id, del.dataset.list).push(del.dataset.ref);
       } else {
