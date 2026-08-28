@@ -271,7 +271,9 @@
     var modalEl = document.getElementById('entry-modal');
     var modalCard = document.getElementById('modal-card');
 
-    function openModal(listKey, kind, ref) {
+    var originRect = null; // card the modal grew out of, for the collapse
+
+    function openModal(listKey, kind, ref, fromRect) {
       var def = LISTS[listKey];
       var row = kind === 'baked'
         ? bakedRows(m, listKey).filter(function (r) {
@@ -300,18 +302,62 @@
           '<button type="button" class="del" data-market="' + m.id + '" data-list="' + listKey +
             '" data-kind="' + kind + '" data-ref="' + esc(String(ref)) + '">Delete</button>' +
         '</div>';
-      modalEl.hidden = false;
-      // force a style pass so the transition runs from the closed state
-      void modalCard.offsetWidth;
-      setTimeout(function () { modalEl.classList.add('open'); }, 20);
+      originRect = fromRect || null;
+
+      // lock scroll without the layout jumping when the scrollbar goes
+      var sw = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = 'hidden';
+      if (sw > 0) document.body.style.paddingRight = sw + 'px';
+
+      // grow out of the clicked card: start at its rect, land centered
+      modalEl.hidden = false;
+      modalCard.style.transition = 'none';
+      modalCard.style.transform = 'none';
+      modalCard.style.opacity = '0';
+      var start = flipTransform();
+      modalCard.style.transform = start;
+      modalCard.style.opacity = originRect ? '0.35' : '0';
+      void modalCard.offsetWidth;
+      modalCard.style.transition =
+        'transform 300ms cubic-bezier(0.2, 0.85, 0.25, 1), opacity 220ms ease';
+      modalCard.style.transform = 'none';
+      modalCard.style.opacity = '1';
+      modalEl.classList.add('open');
+    }
+
+    function flipTransform() {
+      if (!originRect) return 'scale(0.8)';
+      // measure the untransformed layout rect, mid-animation included
+      var prevTransform = modalCard.style.transform;
+      var prevTransition = modalCard.style.transition;
+      modalCard.style.transition = 'none';
+      modalCard.style.transform = 'none';
+      var t = modalCard.getBoundingClientRect();
+      modalCard.style.transform = prevTransform;
+      modalCard.style.transition = prevTransition;
+      void modalCard.offsetWidth;
+      var dx = (originRect.left + originRect.width / 2) - (t.left + t.width / 2);
+      var dy = (originRect.top + originRect.height / 2) - (t.top + t.height / 2);
+      var sx = Math.max(originRect.width / t.width, 0.05);
+      var sy = Math.max(originRect.height / t.height, 0.05);
+      return 'translate(' + dx + 'px, ' + dy + 'px) scale(' + sx + ', ' + sy + ')';
     }
 
     function closeModal() {
       if (modalEl.hidden) return;
+      // collapse back into the card it came from
+      modalCard.style.transition =
+        'transform 240ms cubic-bezier(0.5, 0, 0.75, 0.4), opacity 200ms ease';
+      modalCard.style.transform = flipTransform();
+      modalCard.style.opacity = '0';
       modalEl.classList.remove('open');
       document.body.style.overflow = '';
-      setTimeout(function () { modalEl.hidden = true; }, 200);
+      document.body.style.paddingRight = '';
+      setTimeout(function () {
+        modalEl.hidden = true;
+        modalCard.style.transition = 'none';
+        modalCard.style.transform = 'none';
+      }, 250);
     }
 
     document.addEventListener('keydown', function (e) {
@@ -362,7 +408,8 @@
       if (!del) {
         var entry = e.target.closest('.entry[data-list]');
         if (entry && !e.target.closest('button, a')) {
-          openModal(entry.dataset.list, entry.dataset.kind, entry.dataset.ref);
+          openModal(entry.dataset.list, entry.dataset.kind, entry.dataset.ref,
+            entry.getBoundingClientRect());
         }
         return;
       }

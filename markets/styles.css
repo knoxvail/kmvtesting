@@ -562,11 +562,10 @@ button.del:hover { color: var(--red); background: var(--red-bg); }
   padding: 1.5rem 1.6rem 1.4rem;
   box-shadow: 0 18px 50px rgba(25, 28, 31, 0.28);
   opacity: 0;
-  transform: scale(0.92) translateY(10px);
-  transition: opacity 200ms ease, transform 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  transform-origin: center;
+  will-change: transform, opacity;
 }
 .modal.open .modal-backdrop { opacity: 1; }
-.modal.open .modal-card { opacity: 1; transform: scale(1) translateY(0); }
 .modal-close {
   position: absolute;
   top: 0.5rem;
