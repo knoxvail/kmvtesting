@@ -87,13 +87,14 @@ function blk(type, data) {
 }
 
 function lineToBlock(line) {
-  if (line.trim() === '---') return blk('divider', {});
+  var body = line.replace(/^\s+/, ''); // indentation flattens on save
+  if (body === '---') return blk('divider', {});
   var m;
-  if ((m = line.match(/^#{1,3}\s+(.*)$/))) return blk('heading_2', { rich_text: rich(m[1]) });
-  if ((m = line.match(/^\[( |x|X)?\]\s+(.*)$/))) return blk('to_do', { rich_text: rich(m[2]), checked: /x/i.test(m[1] || '') });
-  if ((m = line.match(/^[-*]\s+(.*)$/))) return blk('bulleted_list_item', { rich_text: rich(m[1]) });
-  if ((m = line.match(/^>\s+(.*)$/))) return blk('quote', { rich_text: rich(m[1]) });
-  return blk('paragraph', { rich_text: rich(line) });
+  if ((m = body.match(/^#{1,3}\s+(.*)$/))) return blk('heading_2', { rich_text: rich(m[1]) });
+  if ((m = body.match(/^\[( |x|X)?\]\s+(.*)$/))) return blk('to_do', { rich_text: rich(m[2]), checked: /x/i.test(m[1] || '') });
+  if ((m = body.match(/^[-*]\s+(.*)$/))) return blk('bulleted_list_item', { rich_text: rich(m[1]) });
+  if ((m = body.match(/^>\s+(.*)$/))) return blk('quote', { rich_text: rich(m[1]) });
+  return blk('paragraph', { rich_text: rich(body) });
 }
 
 function textToBlocks(text) {
@@ -116,19 +117,36 @@ function textToBlocks(text) {
 }
 
 // ---------- handlers ----------
+// walks nested blocks (Notion indents lists as children) and flattens
+// them into indented plain-text lines
+async function textLines(id, token, depth) {
+  var got = await listChildren(id, token);
+  if (!got.ok) { var e = new Error('notion'); e.notionStatus = got.status; throw e; }
+  var lines = [];
+  for (var i = 0; i < got.blocks.length; i++) {
+    var b = got.blocks[i];
+    var t = blockToText(b);
+    if (t !== null) lines.push((depth ? '  '.repeat(depth) : '') + t);
+    if (b.has_children && depth < 3) {
+      lines = lines.concat(await textLines(b.id, token, depth + 1));
+    }
+  }
+  return lines;
+}
+
 async function handleGet(req, res, token) {
   var id = PAGES[String(req.query.m || '')];
   if (!id) { res.status(400).json({ error: 'unknown market' }); return; }
 
-  var got = await listChildren(id, token);
-  if (!got.ok) { res.status(502).json({ error: 'notion_' + got.status }); return; }
-
-  var text = got.blocks
-    .map(blockToText)
-    .filter(function (t) { return t !== null; })
-    .join('\n');
+  var lines;
+  try {
+    lines = await textLines(id, token, 0);
+  } catch (e) {
+    res.status(502).json({ error: 'notion_' + (e.notionStatus || 'fetch') });
+    return;
+  }
   res.setHeader('Cache-Control', 's-maxage=30');
-  res.status(200).json({ text: text });
+  res.status(200).json({ text: lines.join('\n') });
 }
 
 async function handleSave(req, res, token) {
