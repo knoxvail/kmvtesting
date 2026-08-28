@@ -17,6 +17,12 @@ const MARKETS = [
     notion: 'https://app.notion.com/p/3c9c40abce3981428547fb6475a808a1',
     brokers: [
       {
+        name: 'Daniel Diaz',
+        firm: 'Walker & Dunlop, Seniors Housing Sales (Assoc. Director)',
+        contact: 'daniel.diaz@walkerdunlop.com · cell 480-586-5647',
+        note: 'Phoenix based, national coverage. Cold-wrote Blake, forwarded 8/27. The ask: where debt is coming due on 1990s senior LIHTC deals and who is prepping to sell.',
+      },
+      {
         name: 'Marshall Urban Development',
         firm: 'Owner / developer, Encore on First',
         contact: '(480) 966-3008',
