@@ -246,25 +246,11 @@ main { padding: 1.5rem var(--gutter) 3rem; }
   margin-top: 0.1rem;
 }
 .city-card .codes { font-family: var(--mono); }
-.city-card .units {
-  display: flex;
-  gap: 1.2rem;
+.city-card .card-log {
   margin-top: 0.7rem;
-  padding-top: 0.6rem;
+  padding-top: 0.55rem;
   border-top: 1px solid var(--line);
-}
-.city-card .units .u { display: block; }
-.city-card .units .n {
-  font-family: var(--mono);
-  font-size: 1.1rem;
-  font-weight: 600;
-  display: block;
-  line-height: 1.2;
-}
-.city-card .units .l {
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.78rem;
   color: var(--muted);
 }
 .no-results { color: var(--muted); padding: 1rem 0; }
@@ -288,25 +274,6 @@ main { padding: 1.5rem var(--gutter) 3rem; }
 }
 .city-head .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.1rem; }
 .city-head .meta .codes { font-family: var(--mono); }
-
-.stat-row { display: flex; gap: 12px; }
-.stat {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-top: 2px solid var(--copper);
-  border-radius: var(--r);
-  padding: 0.55rem 1rem 0.5rem;
-  min-width: 150px;
-}
-.stat .n { font-family: var(--mono); font-size: 1.4rem; font-weight: 600; line-height: 1.2; }
-.stat .l {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--muted);
-}
-.stat .sub { font-size: 0.75rem; color: var(--muted); }
 
 .flag {
   color: var(--amber);

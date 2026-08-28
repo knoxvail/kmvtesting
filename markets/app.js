@@ -62,15 +62,6 @@
     return bakedRows(m, listKey).concat(localRows(m.id, listKey));
   }
 
-  function unitTotal(m, listKey) {
-    var total = 0;
-    combinedRows(m, listKey).forEach(function (r) {
-      var n = parseInt(String(r.units || '').replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(n)) total += n;
-    });
-    return total;
-  }
-
   function fmt(n) { return n.toLocaleString('en-US'); }
 
   // ---------- shared renderers ----------
@@ -116,9 +107,7 @@
     var def = LISTS[listKey];
     var n = combinedRows(m, listKey).length;
     if (!n) return '';
-    if (def.unitField) {
-      return n + (n === 1 ? ' property' : ' properties') + ' · ' + fmt(unitTotal(m, listKey)) + ' units';
-    }
+    if (def.unitField) return n + (n === 1 ? ' property' : ' properties');
     return n + (n === 1 ? ' contact' : ' contacts');
   }
 
@@ -157,18 +146,17 @@
     var search = document.getElementById('search');
 
     function cardHTML(m) {
-      var lihtc = unitTotal(m, 'deals');
-      var il = unitTotal(m, 'il');
+      var lihtc = combinedRows(m, 'deals').length;
+      var il = combinedRows(m, 'il').length;
       var brokers = combinedRows(m, 'brokers').length;
+      var log = (lihtc + il + brokers)
+        ? [lihtc + ' LIHTC', il + ' SL', brokers + (brokers === 1 ? ' broker' : ' brokers')].join(' · ')
+        : 'nothing logged yet';
       return '<a class="city-card" href="city.html?m=' + m.id + '" data-id="' + m.id + '">' +
         '<span class="idx">' + String(MARKETS.indexOf(m) + 1).padStart(2, '0') + '</span>' +
         '<h3>' + esc(m.name) + '</h3>' +
         '<div class="meta"><span>' + esc(m.state) + '</span><span class="codes">' + esc(codesOf(m)) + '</span></div>' +
-        '<div class="units">' +
-          '<span class="u"><span class="n">' + fmt(lihtc) + '</span><span class="l">LIHTC</span></span>' +
-          '<span class="u"><span class="n">' + fmt(il) + '</span><span class="l">Standard SL</span></span>' +
-          '<span class="u"><span class="n">' + fmt(brokers) + '</span><span class="l">Brokers</span></span>' +
-        '</div></a>';
+        '<div class="card-log">' + log + '</div></a>';
     }
 
     function renderGrid(query) {
@@ -240,22 +228,11 @@
     }).join('');
     if (m.airportNote) airportBar += '<span class="ap-note">' + esc(m.airportNote) + '</span>';
 
-    var dealProps = combinedRows(m, 'deals').length;
-    var ilProps = combinedRows(m, 'il').length;
-
     root.innerHTML =
       '<div class="city-head">' +
         '<div>' +
           '<h2>' + esc(m.name) + '</h2>' +
           '<p class="meta">' + esc(m.state) + ' · <span class="codes">' + esc(codesOf(m)) + '</span></p>' +
-        '</div>' +
-        '<div class="stat-row">' +
-          '<div class="stat"><span class="n" id="stat-deals">' + fmt(unitTotal(m, 'deals')) + '</span>' +
-            '<span class="l">LIHTC units</span><p class="sub" id="stat-deals-sub">across ' + dealProps + ' logged</p></div>' +
-          '<div class="stat"><span class="n" id="stat-il">' + fmt(unitTotal(m, 'il')) + '</span>' +
-            '<span class="l">Standard SL units</span><p class="sub" id="stat-il-sub">across ' + ilProps + ' logged</p></div>' +
-          '<div class="stat"><span class="n" id="stat-brokers">' + fmt(combinedRows(m, 'brokers').length) + '</span>' +
-            '<span class="l">Brokers &amp; owners</span><p class="sub">on the call list</p></div>' +
         '</div>' +
       '</div>' +
       (m.flag ? '<p class="flag">' + esc(m.flag) + '</p>' : '') +
@@ -276,11 +253,6 @@
     function refresh(listKey) {
       document.getElementById('list-' + listKey).innerHTML = entryCards(m, listKey);
       document.getElementById('count-' + listKey).textContent = listCount(m, listKey);
-      document.getElementById('stat-deals').textContent = fmt(unitTotal(m, 'deals'));
-      document.getElementById('stat-il').textContent = fmt(unitTotal(m, 'il'));
-      document.getElementById('stat-brokers').textContent = fmt(combinedRows(m, 'brokers').length);
-      document.getElementById('stat-deals-sub').textContent = 'across ' + combinedRows(m, 'deals').length + ' logged';
-      document.getElementById('stat-il-sub').textContent = 'across ' + combinedRows(m, 'il').length + ' logged';
     }
 
     root.addEventListener('click', function (e) {
