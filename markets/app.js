@@ -72,53 +72,48 @@
     if (!baked.length && !local.length) {
       return '<p class="empty">' + esc(def.empty) + '</p>';
     }
-    function delBtn(kind, ref) {
-      return '<button type="button" class="del" data-market="' + m.id + '" data-list="' + listKey +
-        '" data-kind="' + kind + '" data-ref="' + esc(String(ref)) + '" aria-label="Delete entry">&times;</button>';
-    }
-    function card(r, delBtn) {
+    function card(r, kind, ref) {
       var primary = r[def.fields[0].k] || '(unnamed)';
-      var subParts = [];
-      def.fields.forEach(function (f, i) {
-        if (i === 0 || f.k === 'note' || f.k === def.unitField) return;
-        if (r[f.k]) subParts.push(r[f.k]);
-      });
-      var uv = def.unitField && r[def.unitField] ? String(r[def.unitField]).trim() : '';
-      var unitsHtml = uv
-        ? '<span class="entry-units">' + esc(/[a-z]/i.test(uv) ? uv : uv + ' units') + '</span>'
-        : '';
-      var sub = '';
-      var mapsAttr = '';
-      if (subParts.length) {
-        var subText = subParts.join(' · ');
-        if (def.unitField) {
-          // property lists: whole card opens Maps; copy and CoStar actions inline
-          var addr = /\d/.test(subText) ? subText : (primary + ', ' + subText + ', ' + m.state);
-          mapsAttr = ' data-maps="https://www.google.com/maps/search/?api=1&amp;query=' +
-            encodeURIComponent(addr) + '" title="Open in Google Maps"';
-          sub = '<div class="entry-sub">' +
-            '<span class="addr-text">' + esc(subText) + '</span>' +
-            '<button type="button" class="mini-act" data-act="copy" data-addr="' + esc(addr) + '">copy</button>' +
-            '<button type="button" class="mini-act" data-act="costar" data-addr="' + esc(addr) + '">CoStar &#8599;</button>' +
-            '</div>';
-        } else {
-          sub = '<div class="entry-sub">' + esc(subText) + '</div>';
-        }
-      }
-      return '<div class="entry"' + mapsAttr + '>' +
+      var info = entryInfo(m, listKey, r);
+      var del = '<button type="button" class="del" data-market="' + m.id + '" data-list="' + listKey +
+        '" data-kind="' + kind + '" data-ref="' + esc(String(ref)) + '" aria-label="Delete entry">&times;</button>';
+      var sub = info.subText ? '<div class="entry-sub">' + esc(info.subText) + '</div>' : '';
+      return '<div class="entry" data-list="' + listKey + '" data-kind="' + kind +
+        '" data-ref="' + esc(String(ref)) + '" title="Open">' +
         (r.photo ? '<img class="entry-photo" src="' + esc(r.photo) + '" alt="' + esc(primary) + '" loading="lazy">' : '') +
         '<div class="entry-top"><span class="entry-name">' + esc(primary) + '</span>' +
-        unitsHtml + delBtn +
+        (info.unitsText ? '<span class="entry-units">' + esc(info.unitsText) + '</span>' : '') + del +
         '</div>' +
         sub +
         (r.note ? '<div class="entry-note">' + esc(r.note) + '</div>' : '') +
         '</div>';
     }
-    var html = baked.map(function (r) { return card(r, delBtn('baked', r[def.fields[0].k])); }).join('');
+    var html = baked.map(function (r) { return card(r, 'baked', r[def.fields[0].k]); }).join('');
     local.forEach(function (r, i) {
-      html += card(r, delBtn('local', i));
+      html += card(r, 'local', i);
     });
     return '<div class="entries">' + html + '</div>';
+  }
+
+  // shared row facts: sub line, units label, pasteable address
+  function entryInfo(m, listKey, r) {
+    var def = LISTS[listKey];
+    var primary = r[def.fields[0].k] || '(unnamed)';
+    var subParts = [];
+    def.fields.forEach(function (f, i) {
+      if (i === 0 || f.k === 'note' || f.k === def.unitField) return;
+      if (r[f.k]) subParts.push(r[f.k]);
+    });
+    var subText = subParts.join(' · ');
+    var uv = def.unitField && r[def.unitField] ? String(r[def.unitField]).trim() : '';
+    return {
+      primary: primary,
+      subText: subText,
+      unitsText: uv ? (/[a-z]/i.test(uv) ? uv : uv + ' units') : '',
+      addr: (def.unitField && subText)
+        ? (/\d/.test(subText) ? subText : (primary + ', ' + subText + ', ' + m.state))
+        : null,
+    };
   }
 
   function listCount(m, listKey) {
@@ -266,7 +261,62 @@
             'aria-label="Notes for ' + esc(m.name) + '"></textarea>' +
           '<p class="micro">Type, then click anywhere else. It saves straight to Notion.</p>' +
         '</div>' +
+      '</div>' +
+      '<div class="modal" id="entry-modal" hidden>' +
+        '<div class="modal-backdrop"></div>' +
+        '<div class="modal-card" role="dialog" aria-modal="true" id="modal-card"></div>' +
       '</div>';
+
+    // ---- entry detail modal ----
+    var modalEl = document.getElementById('entry-modal');
+    var modalCard = document.getElementById('modal-card');
+
+    function openModal(listKey, kind, ref) {
+      var def = LISTS[listKey];
+      var row = kind === 'baked'
+        ? bakedRows(m, listKey).filter(function (r) {
+            return String(r[def.fields[0].k]) === ref;
+          })[0]
+        : localRows(m.id, listKey)[Number(ref)];
+      if (!row) return;
+      var info = entryInfo(m, listKey, row);
+      var actions = '';
+      if (info.addr) {
+        actions =
+          '<button type="button" class="mini-act" data-act="maps" data-addr="' + esc(info.addr) + '">Google Maps &#8599;</button>' +
+          '<button type="button" class="mini-act" data-act="copy" data-addr="' + esc(info.addr) + '">Copy address</button>' +
+          '<button type="button" class="mini-act" data-act="costar" data-addr="' + esc(info.addr) + '">CoStar &#8599;</button>';
+      } else if (row.contact) {
+        actions = '<button type="button" class="mini-act" data-act="copy" data-addr="' + esc(row.contact) + '">Copy contact</button>';
+      }
+      modalCard.innerHTML =
+        '<button type="button" class="modal-close" aria-label="Close">&times;</button>' +
+        (row.photo ? '<img class="modal-photo" src="' + esc(row.photo) + '" alt="' + esc(info.primary) + '">' : '') +
+        '<h3>' + esc(info.primary) + '</h3>' +
+        (info.unitsText ? '<p class="modal-units">' + esc(info.unitsText) + '</p>' : '') +
+        (info.subText ? '<p class="modal-addr">' + esc(info.subText) + '</p>' : '') +
+        (row.note ? '<p class="modal-note">' + esc(row.note) + '</p>' : '') +
+        '<div class="modal-actions">' + actions +
+          '<button type="button" class="del" data-market="' + m.id + '" data-list="' + listKey +
+            '" data-kind="' + kind + '" data-ref="' + esc(String(ref)) + '">Delete</button>' +
+        '</div>';
+      modalEl.hidden = false;
+      // force a style pass so the transition runs from the closed state
+      void modalCard.offsetWidth;
+      setTimeout(function () { modalEl.classList.add('open'); }, 20);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      if (modalEl.hidden) return;
+      modalEl.classList.remove('open');
+      document.body.style.overflow = '';
+      setTimeout(function () { modalEl.hidden = true; }, 200);
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeModal();
+    });
 
     function refresh(listKey) {
       document.getElementById('list-' + listKey).innerHTML = entryCards(m, listKey);
@@ -274,9 +324,19 @@
     }
 
     root.addEventListener('click', function (e) {
+      if (e.target.closest('.modal-close') || e.target.classList.contains('modal-backdrop')) {
+        closeModal();
+        return;
+      }
+
       var act = e.target.closest('button.mini-act');
       if (act) {
         var addr = act.dataset.addr;
+        if (act.dataset.act === 'maps') {
+          window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr),
+            '_blank', 'noopener');
+          return;
+        }
         var isCostar = act.dataset.act === 'costar';
         var orig = act.innerHTML;
         function flash(t) {
@@ -300,9 +360,9 @@
 
       var del = e.target.closest('button.del');
       if (!del) {
-        var entry = e.target.closest('.entry[data-maps]');
+        var entry = e.target.closest('.entry[data-list]');
         if (entry && !e.target.closest('button, a')) {
-          window.open(entry.dataset.maps, '_blank', 'noopener');
+          openModal(entry.dataset.list, entry.dataset.kind, entry.dataset.ref);
         }
         return;
       }
@@ -313,6 +373,7 @@
       }
       saveJSON(LS_KEY, store);
       refresh(del.dataset.list);
+      if (del.closest('.modal')) closeModal();
     });
 
     root.addEventListener('submit', function (e) {
