@@ -26,6 +26,22 @@
     return store.lists[id][listKey];
   }
 
+  // baked entries deleted in this browser, keyed by their primary field
+  function hiddenKeys(id, listKey) {
+    store.hidden = store.hidden || {};
+    store.hidden[id] = store.hidden[id] || {};
+    store.hidden[id][listKey] = store.hidden[id][listKey] || [];
+    return store.hidden[id][listKey];
+  }
+
+  function bakedRows(m, listKey) {
+    var keyField = LISTS[listKey].fields[0].k;
+    var hidden = hiddenKeys(m.id, listKey);
+    return (m[listKey] || []).filter(function (r) {
+      return hidden.indexOf(r[keyField]) === -1;
+    });
+  }
+
   // ---------- helpers ----------
   function esc(s) {
     return String(s == null ? '' : s)
@@ -43,7 +59,7 @@
   }
 
   function combinedRows(m, listKey) {
-    return (m[listKey] || []).concat(localRows(m.id, listKey));
+    return bakedRows(m, listKey).concat(localRows(m.id, listKey));
   }
 
   function unitTotal(m, listKey) {
@@ -60,10 +76,14 @@
   // ---------- shared renderers ----------
   function entryCards(m, listKey) {
     var def = LISTS[listKey];
-    var baked = m[listKey] || [];
+    var baked = bakedRows(m, listKey);
     var local = localRows(m.id, listKey);
     if (!baked.length && !local.length) {
       return '<p class="empty">' + esc(def.empty) + '</p>';
+    }
+    function delBtn(kind, ref) {
+      return '<button type="button" class="del" data-market="' + m.id + '" data-list="' + listKey +
+        '" data-kind="' + kind + '" data-ref="' + esc(String(ref)) + '" aria-label="Delete entry">&times;</button>';
     }
     function card(r, delBtn) {
       var primary = r[def.fields[0].k] || '(unnamed)';
@@ -82,10 +102,9 @@
         delBtn +
         '</div>';
     }
-    var html = baked.map(function (r) { return card(r, ''); }).join('');
+    var html = baked.map(function (r) { return card(r, delBtn('baked', r[def.fields[0].k])); }).join('');
     local.forEach(function (r, i) {
-      html += card(r, '<button type="button" class="del" data-market="' + m.id + '" data-list="' + listKey +
-        '" data-index="' + i + '" aria-label="Delete entry">&times;</button>');
+      html += card(r, delBtn('local', i));
     });
     return '<div class="entries">' + html + '</div>';
   }
@@ -264,7 +283,11 @@
     root.addEventListener('click', function (e) {
       var del = e.target.closest('button.del');
       if (!del) return;
-      localRows(m.id, del.dataset.list).splice(Number(del.dataset.index), 1);
+      if (del.dataset.kind === 'baked') {
+        hiddenKeys(m.id, del.dataset.list).push(del.dataset.ref);
+      } else {
+        localRows(m.id, del.dataset.list).splice(Number(del.dataset.ref), 1);
+      }
       saveJSON(LS_KEY, store);
       refresh(del.dataset.list);
     });
