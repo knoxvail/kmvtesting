@@ -92,14 +92,17 @@
         if (i === 0 || f.k === 'note' || f.k === def.unitField) return;
         if (r[f.k]) subParts.push(r[f.k]);
       });
+      var uv = def.unitField && r[def.unitField] ? String(r[def.unitField]).trim() : '';
+      var unitsHtml = uv
+        ? '<span class="entry-units">' + esc(/[a-z]/i.test(uv) ? uv : uv + ' units') + '</span>'
+        : '';
       return '<div class="entry">' +
         (r.photo ? '<img class="entry-photo" src="' + esc(r.photo) + '" alt="' + esc(primary) + '" loading="lazy">' : '') +
         '<div class="entry-top"><span class="entry-name">' + esc(primary) + '</span>' +
-        (def.unitField && r[def.unitField] ? '<span class="entry-units">' + esc(r[def.unitField]) + ' u</span>' : '') +
+        unitsHtml + delBtn +
         '</div>' +
         (subParts.length ? '<div class="entry-sub">' + esc(subParts.join(' · ')) + '</div>' : '') +
         (r.note ? '<div class="entry-note">' + esc(r.note) + '</div>' : '') +
-        delBtn +
         '</div>';
     }
     var html = baked.map(function (r) { return card(r, delBtn('baked', r[def.fields[0].k])); }).join('');
