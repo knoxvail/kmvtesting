@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FFF7EE">
+<meta name="color-scheme" content="light only">
+<title>The Angel Split</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   THEME — change colors and fonts here, everything else reads from these
+   ===================================================================== */
+:root {
+  --pink: #F2A7C3;
+  --pink-deep: #E4628F;
+  --pink-pale: #FBE4EC;
+  --sage: #9DB38B;
+  --sage-deep: #5F7A58;
+  --sage-pale: #E6EDE0;
+  --ink: #3B2A20;
+  --cream: #FFF7EE;
+
+  --font-head: "Fredoka", "Poppins", system-ui, sans-serif;
+  --font-body: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 20px;
+}
+/* ===================== END THEME ===================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background-color: var(--cream);
+  background-image: radial-gradient(var(--pink-pale) 2px, transparent 2.5px);
+  background-size: 22px 22px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-x: hidden;
+}
+button { font: inherit; color: inherit; }
+/* phone taps: no double-tap zoom or grey flash on quick set taps */
+button, .set, summary { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--sage-deep); outline-offset: 2px; }
+
+/* Header + day tabs */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--cream);
+  padding: 12px 16px 12px;
+  border-bottom: 3px solid var(--pink);
+}
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+header h1 {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
+}
+header h1 span { color: var(--pink-deep); }
+.angel { font-size: 34px; line-height: 1; transform: rotate(12deg); }
+
+/* Silly photo strip — polaroids */
+.starring {
+  margin: 0 0 10px;
+  text-align: center;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--sage-deep);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.starring b { color: var(--pink-deep); font-weight: 700; font-size: 19px; letter-spacing: .02em; }
+.photos {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 2px 0 6px;
+  margin-bottom: 14px;
+}
+.polaroid {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 150px;
+  margin: 0;
+  padding: 7px 7px 0;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--pink);
+  transform: rotate(-4deg);
+}
+.polaroid:nth-child(2) { transform: rotate(3deg) translateY(4px); box-shadow: 3px 3px 0 var(--sage); }
+.polaroid:nth-child(3) { transform: rotate(-2deg); }
+.polaroid .pic {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 3px;
+  background: var(--pink-pale);
+  border: 2px dashed var(--pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 12px;
+  color: var(--pink-deep);
+  overflow: hidden;
+}
+.polaroid img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.polaroid figcaption {
+  padding: 6px 2px 8px;
+  text-align: center;
+  font-family: var(--font-head);
+  font-size: 13px;
+  line-height: 1.2;
+}
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+.tab {
+  min-height: 48px;
+  padding: 0;
+  border: 2px solid var(--pink);
+  border-radius: 14px;
+  background: var(--pink-pale);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  position: relative;
+}
+.tab[aria-selected="true"] {
+  background: var(--pink-deep);
+  border-color: var(--pink-deep);
+  color: #fff;
+}
+.tab.today::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--sage-deep);
+}
+.tab.today[aria-selected="true"]::after { background: #fff; }
+
+/* Page body */
+main { padding: 18px 16px 40px; max-width: 560px; margin: 0 auto; }
+.day-name {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--sage-deep);
+}
+.today-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--pink-deep);
+  color: #fff;
+  letter-spacing: .04em;
+  transform: rotate(-3deg);
+}
+.vibe {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--pink);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 15px;
+  transform: rotate(-1.5deg);
+}
+
+/* Day progress */
+.progress { margin: 0 0 14px; }
+.progress-top { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; font-weight: 800; }
+.progress-bar {
+  margin-top: 6px;
+  height: 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--pink);
+  overflow: hidden;
+}
+.progress-fill { height: 100%; background: var(--sage); border-radius: 999px; }
+
+.day-title {
+  margin: 2px 0 8px;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.1;
+}
+.warmup {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--sage-pale);
+  border-left: 6px solid var(--sage);
+  color: var(--sage-deep);
+  font-size: 15px;
+  font-weight: 800;
+}
+.warmup b { color: var(--ink); }
+
+ul.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.card {
+  position: relative;
+  background: #fff;
+  border: 2px solid var(--pink);
+  border-radius: var(--radius);
+  padding: 14px 16px 16px;
+  box-shadow: 4px 4px 0 var(--pink);
+}
+.card.done { background: var(--sage-pale); border-color: var(--sage); box-shadow: 4px 4px 0 var(--sage); }
+.card.done::after {
+  content: "nailed it";
+  position: absolute;
+  top: -12px;
+  right: 16px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--sage-deep);
+  color: #fff;
+  font-family: var(--font-head);
+  font-size: 13px;
+  transform: rotate(4deg);
+}
+.card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.ex-name {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1.15;
+}
+.ex-sets {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--pink-pale);
+  font-weight: 800;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.cue { margin: 6px 0 0; font-size: 15px; font-weight: 600; }
+.sets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+/* Set checkboxes: real inputs, styled as big round chips */
+.set { position: relative; cursor: pointer; }
+.set input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.set span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid var(--pink);
+  background: var(--cream);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 17px;
+}
+.set input:checked + span { background: var(--sage-deep); border-color: var(--sage-deep); color: #fff; }
+.set input:focus-visible + span { outline: 3px solid var(--sage-deep); outline-offset: 2px; }
+
+/* "How to do it" — tap to open form steps */
+.how { margin-top: 10px; }
+.how summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--sage-pale);
+  color: var(--sage-deep);
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  list-style: none;
+}
+.how summary::-webkit-details-marker { display: none; }
+.how summary::after { content: "+"; margin-left: 8px; font-size: 19px; }
+.how[open] summary::after { content: "\2212"; }
+.how ol { margin: 10px 0 0; padding-left: 22px; font-size: 15px; font-weight: 600; }
+.how li + li { margin-top: 6px; }
+
+.clear {
+  display: block;
+  margin: 22px auto 0;
+  min-height: 44px;
+  padding: 8px 22px;
+  border: 2px solid var(--pink-deep);
+  border-radius: 999px;
+  background: transparent;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- HERO: reserved for your own theme / graphics. Leave empty. -->
+<div id="hero"></div>
+
+<header>
+  <div class="title-row">
+    <h1>The <span>Angel</span> Split</h1>
+    <span class="angel" aria-hidden="true">😇</span>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Days of the week" id="tabs"></nav>
+</header>
+
+<main id="day" role="tabpanel"></main>
+
+<script>
+// ---------------------------------------------------------------------
+// SILLY PHOTOS — three polaroids at the top of each day.
+// Put images in the "photos" folder and list them here: [file, caption].
+// Days left out show empty "silly pic" frames.
+// ---------------------------------------------------------------------
+const STAR = "BBL Moses"; // the poodle in every photo
+const PHOTOS = {
+  mon: [["photos/mon-1.webp", "hinge queen"],
+        ["photos/mon-2.webp", "the physique"],
+        ["photos/mon-3.webp", "hip thrust hero"]],
+  tue: [["photos/tue-1.webp", "guns out"],
+        ["photos/tue-2.webp", "bicep check"],
+        ["photos/tue-3.webp", "pump achieved"]],
+  wed: [["photos/wed-1.webp", "deadlift setup"],
+        ["photos/wed-2.webp", "squat depth"],
+        ["photos/wed-3.webp", "quads unlocked"]],
+  thu: [["photos/thu-1.webp", "press day"],
+        ["photos/thu-2.webp", "ab-solutely"],
+        ["photos/thu-3.webp", "stair queen"]],
+  fri: [["photos/fri-1.webp", "sumo vibes"],
+        ["photos/fri-2.webp", "kickback era"],
+        ["photos/fri-3.webp", "hamstring hour"]]
+};
+
+// ---------------------------------------------------------------------
+// How-to steps, shown under "How to do it" on each card.
+// ---------------------------------------------------------------------
+const HOW = {
+  rdl: ["Stand tall holding the bar or dumbbells at your thighs, feet hip-width.",
+        "Soft knees, push your hips straight back and slide the weight down your legs with a flat back.",
+        "Stop when you feel a big hamstring stretch (around mid-shin), then squeeze your glutes to stand up."],
+  hipThrust: ["Upper back on the edge of a bench, bar padded across your hip crease, feet flat about hip-width.",
+        "Tuck your chin and drive through your heels until your hips are level with your knees.",
+        "Squeeze your glutes hard at the top, then lower with control."],
+  abduction: ["Sit in the machine with the pads on the outside of your knees.",
+        "Lean your chest forward a little and push your knees out as far as you can.",
+        "Come back in slowly. Don't let the weight stack slam."],
+  adduction: ["Sit in the machine with the pads on the inside of your knees, starting wide.",
+        "Squeeze your legs together until the pads meet.",
+        "Open back up slowly, keeping control the whole time."],
+  kickback: ["Strap the cuff to your ankle on a low cable (or use the kickback machine). Hold the frame, slight forward lean.",
+        "Keeping a small bend in your knee, kick the leg straight back by squeezing your glute.",
+        "Return slowly. Don't arch your lower back for extra range. All reps on one side, then switch."],
+  kickbackMachine: ["Set the pad so it sits on the back of your working foot or the bottom of your shoe. Forearms or chest on the support pad, hold the handles.",
+        "Keep your hips square and drive the pad back and up by squeezing your glute, not by arching your lower back.",
+        "Let the pad come back slowly until your knee is under your hip. All reps on one side, then switch."],
+  abs: ["Cable crunch: kneel facing a high cable, rope behind your head, crunch your ribs toward your hips.",
+        "Hanging knee raise: hang from the bar, pull your knees toward your chest without swinging, lower slowly.",
+        "Plank: forearms under shoulders, straight line head to heels, squeeze glutes and abs. Check one box per round."],
+  absShort: ["Cable crunch: kneel facing a high cable, rope behind your head, crunch your ribs toward your hips.",
+        "Plank: forearms under shoulders, straight line head to heels, squeeze glutes and abs.",
+        "Do a crunch set, then a plank. Check one box per round."],
+  cardio: ["Pick the stairmaster or the treadmill on an incline.",
+        "Keep a pace where you could still hold a conversation.",
+        "Don't lean on the rails. Check a box at each third of the time."],
+  pulldown: ["Sit with thighs under the pads, grab the bar wider than your shoulders.",
+        "Chest up, pull the bar to your upper chest by driving your elbows down to your back pockets.",
+        "Let it rise slowly until your arms are straight."],
+  dbCurl: ["Stand tall, dumbbells at your sides, palms forward.",
+        "Keep your elbows pinned to your sides and curl the weights up.",
+        "Lower slowly all the way down. If you have to swing, go lighter."],
+  hammer: ["Hold dumbbells at your sides with palms facing your legs.",
+        "Curl up keeping your thumbs pointing up the whole time.",
+        "Lower slowly. Elbows stay still."],
+  cableCurl: ["Stand facing a low cable with a straight bar or rope.",
+        "Elbows at your sides, curl up and squeeze at the top.",
+        "Lower slowly without letting the stack touch down between reps."],
+  squat: ["Bar on your upper back (not your neck), feet shoulder-width, toes slightly out.",
+        "Brace your core, sit your hips back and down until thighs are about parallel, knees over toes.",
+        "Drive up through your whole foot to stand."],
+  deadlift: ["Bar over your mid-foot, feet hip-width. Hinge down and grab it just outside your legs.",
+        "Flat back, chest up, pull the slack out of the bar, then push the floor away to stand.",
+        "Keep the bar close to your legs. Finish by squeezing your glutes, don't lean back."],
+  legPress: ["Back flat on the pad, feet shoulder-width in the middle of the platform.",
+        "Unlock and lower until your knees reach about 90 degrees.",
+        "Press back up through your heels. Don't lock your knees at the top."],
+  lunge: ["Hold dumbbells at your sides, or just bodyweight.",
+        "Take a big step forward and lower until your back knee nearly touches the floor.",
+        "Push through your front heel and step into the next lunge. 20 steps total per set."],
+  ohp: ["Hold the bar or dumbbells at shoulder height, feet hip-width.",
+        "Squeeze your glutes and brace your core so your back doesn't arch.",
+        "Press straight up overhead, then lower back to your shoulders with control."],
+  lateral: ["Stand with light dumbbells at your sides, slight bend in your elbows.",
+        "Raise your arms out to the side, leading with your elbows, up to shoulder height.",
+        "Lower slowly. No shrugging, no swinging."],
+  pushdown: ["Face a high cable with the rope, elbows tucked at your sides.",
+        "Push the rope down until your arms are straight, spreading the ends apart at the bottom.",
+        "Let it come back up to about chest height. Only your forearms move."],
+  overheadExt: ["Grab the rope on a cable, turn away from the machine and step forward.",
+        "Start with your hands behind your head, elbows pointing forward.",
+        "Straighten your arms overhead, then bend back down slowly. Elbows stay still."],
+  bridge: ["Lie on your back, knees bent, feet flat and close to your butt.",
+        "Push through your heels and lift your hips until you're a straight line from knees to shoulders.",
+        "Big squeeze at the top for a second, then lower."],
+  legCurl: ["Lie face down on the machine with the pad just above your heels.",
+        "Keep your hips pressed into the bench and curl your heels toward your butt.",
+        "Lower slowly all the way down."]
+};
+
+// ---------------------------------------------------------------------
+// Workout content. sets = number of checkboxes; amount = "sets x reps" label.
+// ---------------------------------------------------------------------
+const ABS_FULL = "Cable crunch 3 x 15, hanging knee raise 3 x 12, plank 3 x 45 sec.";
+
+const DAYS = [
+  { key: "mon", short: "Mon", name: "Monday", vibe: "Booty day, part one", title: "Glutes and Hip Flexors (Hinge Focus)",
+    warmup: "5 min incline walk, 2 light sets of RDL.",
+    items: [
+      { how: "rdl", name: "Romanian deadlift", amount: "3 x 10", sets: 3, cue: "Lead with this one." },
+      { how: "hipThrust", name: "Hip thrust", amount: "4 x 10", sets: 4, cue: "Pause one second at the top." },
+      { how: "abduction", name: "Hip abduction machine (outer)", amount: "3 x 15-20", sets: 3, cue: "Lean forward slightly." },
+      { how: "adduction", name: "Hip adduction machine (inner)", amount: "3 x 15", sets: 3, cue: "Controlled." },
+      { how: "kickbackMachine", name: "Glute kickback machine", amount: "3 x 12 per side", sets: 3, cue: "Slow on the way back." },
+      { how: "abs", name: "Abs", sets: 3, cue: ABS_FULL }
+    ] },
+  { key: "tue", short: "Tue", name: "Tuesday", vibe: "Sleeves are optional", title: "Arms and Back",
+    warmup: "5 min bike or walk, 1 light set of pulldowns.",
+    items: [
+      { how: "pulldown", name: "Lat pulldown", amount: "3 x 12", sets: 3, cue: "Wide grip, elbows to back pockets." },
+      { how: "dbCurl", name: "Dumbbell curl", amount: "3 x 12", sets: 3, cue: "No swinging." },
+      { how: "hammer", name: "Hammer curl", amount: "3 x 12", sets: 3, cue: "Thumbs up the whole way." },
+      { how: "cableCurl", name: "Cable curl", amount: "2 x 15", sets: 2, cue: "Constant tension." },
+      { how: "cardio", name: "Cardio", sets: 3, cue: "Stairmaster or incline walk, 20 min. Easy pace." },
+      { how: "absShort", name: "Abs finisher", sets: 3, cue: "Cable crunch 2 x 15, plank 2 x 45 sec." }
+    ] },
+  { key: "wed", short: "Wed", name: "Wednesday", vibe: "Do not skip. We will know.", title: "Leg Day",
+    warmup: "Bodyweight squats, light bar.",
+    items: [
+      { how: "squat", name: "Squats", amount: "4 x 8-10", sets: 4 },
+      { how: "deadlift", name: "Deadlift", amount: "3 x 8", sets: 3 },
+      { how: "legPress", name: "Leg press", amount: "3 x 12", sets: 3 },
+      { how: "lunge", name: "Walking lunges", amount: "2 x 20 steps", sets: 2 }
+    ] },
+  { key: "thu", short: "Thu", name: "Thursday", vibe: "Delts, abs, and a little sweat", title: "Cardio, Abs, Shoulders and Triceps",
+    items: [
+      { how: "ohp", name: "Overhead press", amount: "3 x 10", sets: 3, cue: "Barbell or dumbbell, brace your core." },
+      { how: "lateral", name: "Lateral raises", amount: "3 x 15", sets: 3, cue: "Light, lead with the elbows." },
+      { how: "pushdown", name: "Rope pushdown", amount: "3 x 12", sets: 3 },
+      { how: "overheadExt", name: "Overhead cable extension", amount: "3 x 12", sets: 3 },
+      { how: "abs", name: "Abs", sets: 3, cue: ABS_FULL },
+      { how: "cardio", name: "Cardio", sets: 3, cue: "Stairmaster or treadmill walk, 25-30 min." }
+    ] },
+  { key: "fri", short: "Fri", name: "Friday", vibe: "Booty day: the sequel", title: "Glutes and Hamstrings",
+    warmup: "5 min incline walk, 2 light sets of hip thrust.",
+    items: [
+      { how: "hipThrust", name: "Hip thrust", amount: "4 x 8-10", sets: 4, cue: "Heavier than Monday." },
+      { how: "bridge", name: "Glute bridges", amount: "3 x 15", sets: 3, cue: "Big squeeze at the top." },
+      { how: "legCurl", name: "Lying leg curl", amount: "3 x 12", sets: 3 },
+      { how: "kickback", name: "Glute kickbacks", amount: "3 x 12 per side", sets: 3 },
+      { how: "abs", name: "Abs", sets: 3, cue: ABS_FULL }
+    ] }
+];
+
+// ---------------------------------------------------------------------
+// Storage: one object of checked boxes, wiped when a new Monday-week starts.
+// ---------------------------------------------------------------------
+const STORE = "theSplit.checks";
+const WEEK = "theSplit.week";
+
+function mondayOf(d) {
+  const m = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  m.setDate(m.getDate() - ((m.getDay() + 6) % 7));
+  return m.getFullYear() + "-" + (m.getMonth() + 1) + "-" + m.getDate();
+}
+function load() {
+  try {
+    const week = mondayOf(new Date());
+    if (localStorage.getItem(WEEK) !== week) {
+      localStorage.setItem(WEEK, week);
+      localStorage.removeItem(STORE);
+      return {};
+    }
+    return JSON.parse(localStorage.getItem(STORE)) || {};
+  } catch (e) { return {}; }
+}
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(checks)); } catch (e) {}
+}
+
+let checks = load();
+const todayIdx = (new Date().getDay() + 6) % 7; // 0 = Monday
+let current = todayIdx < DAYS.length ? todayIdx : 0; // weekends: open Monday
+
+const tabsEl = document.getElementById("tabs");
+const dayEl = document.getElementById("day");
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+function renderTabs() {
+  tabsEl.innerHTML = DAYS.map((d, i) =>
+    `<button class="tab${i === todayIdx ? " today" : ""}" role="tab" id="tab-${d.key}"
+      aria-selected="${i === current}" aria-controls="day" data-i="${i}">${d.short}</button>`
+  ).join("");
+}
+
+function renderDay() {
+  const d = DAYS[current];
+  dayEl.setAttribute("aria-labelledby", "tab-" + d.key);
+  const pics = PHOTOS[d.key] || [];
+  let html = `<p class="starring">starring <b>${esc(STAR)}</b></p>
+    <section class="photos" aria-label="Photos of ${esc(STAR)}">${[0, 1, 2].map(n => {
+    const p = pics[n];
+    return `<figure class="polaroid"><div class="pic">${p
+      ? `<img src="${esc(p[0])}" alt="${esc(STAR + ": " + p[1])}" onerror="this.remove()">`
+      : `silly pic #${n + 1}`}</div><figcaption>${p ? esc(p[1]) : "exhibit " + "ABC"[n]}</figcaption></figure>`;
+  }).join("")}</section>
+    <p class="day-name">${d.name}${current === todayIdx ? `<span class="today-badge">today!</span>` : ""}</p>
+    <h2 class="day-title">${esc(d.title)}</h2>
+    <p class="vibe">${esc(d.vibe)}</p>`;
+  if (d.items.some(it => it.sets > 0)) html += `<div class="progress" id="progress"></div>`;
+  if (d.warmup) html += `<p class="warmup"><b>Warm-up:</b> ${esc(d.warmup)}</p>`;
+  html += `<ul class="cards">`;
+  d.items.forEach((it, j) => {
+    const done = it.sets > 0 && Array.from({ length: it.sets }, (_, s) => checks[`${d.key}-${j}-${s}`]).every(Boolean);
+    html += `<li class="card${done ? " done" : ""}">
+      <div class="card-top">
+        <h3 class="ex-name">${esc(it.name)}</h3>
+        ${it.amount ? `<span class="ex-sets">${esc(it.amount)}</span>` : ""}
+      </div>
+      ${it.cue ? `<p class="cue">${esc(it.cue)}</p>` : ""}
+      ${it.how ? `<details class="how"><summary>How to do it</summary><ol>${HOW[it.how].map(t => `<li>${esc(t)}</li>`).join("")}</ol></details>` : ""}`;
+    if (it.sets > 0) {
+      html += `<div class="sets">`;
+      for (let s = 0; s < it.sets; s++) {
+        const id = `${d.key}-${j}-${s}`;
+        html += `<label class="set"><input type="checkbox" data-id="${id}"
+          aria-label="${esc(it.name)} set ${s + 1}"${checks[id] ? " checked" : ""}><span>${s + 1}</span></label>`;
+      }
+      html += `</div>`;
+    }
+    html += `</li>`;
+  });
+  html += `</ul>`;
+  if (d.items.some(it => it.sets > 0)) html += `<button class="clear" type="button">Clear</button>`;
+  dayEl.innerHTML = html;
+  renderProgress();
+}
+
+function renderProgress() {
+  const el = document.getElementById("progress");
+  if (!el) return;
+  const boxes = dayEl.querySelectorAll(".set input");
+  const done = [...boxes].filter(b => b.checked).length;
+  const pct = Math.round(done / boxes.length * 100);
+  const msg = pct === 100 ? "Done! Absolute angel 😇"
+    : pct >= 50 ? "Over halfway, keep going"
+    : done > 0 ? "Ooh, she's moving"
+    : "Let's gooo";
+  el.innerHTML = `<div class="progress-top"><span>${msg}</span><span>${done} / ${boxes.length} ${boxes.length === 1 ? "set" : "sets"}</span></div>
+    <div class="progress-bar" role="progressbar" aria-label="Sets done" aria-valuemin="0"
+      aria-valuemax="${boxes.length}" aria-valuenow="${done}"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+}
+
+tabsEl.addEventListener("click", e => {
+  const b = e.target.closest(".tab");
+  if (!b) return;
+  current = +b.dataset.i;
+  renderTabs();
+  renderDay();
+  // jump to the top of the day (just under the sticky header) if scrolled past it
+  const top = dayEl.getBoundingClientRect().top + window.scrollY - document.querySelector("header").offsetHeight - 8;
+  if (window.scrollY > top) window.scrollTo(0, top);
+});
+
+dayEl.addEventListener("change", e => {
+  const id = e.target.dataset.id;
+  if (!id) return;
+  if (e.target.checked) checks[id] = 1; else delete checks[id];
+  save();
+  // toggle in place so any open "How to do it" stays open
+  const card = e.target.closest(".card");
+  card.classList.toggle("done", [...card.querySelectorAll("input")].every(i => i.checked));
+  renderProgress();
+});
+
+dayEl.addEventListener("click", e => {
+  if (!e.target.classList.contains("clear")) return;
+  const prefix = DAYS[current].key + "-";
+  Object.keys(checks).forEach(k => { if (k.startsWith(prefix)) delete checks[k]; });
+  save();
+  renderDay();
+});
+
+renderTabs();
+renderDay();
+</script>
+</body>
+</html>
