@@ -15,6 +15,7 @@
       --accent-dark: #1D4ED8;
       --card-bg: #FFFFFF;
       --done: #16A34A;
+      --done-bg: #F0FDF4;
       --danger: #DC2626;
     }
 
@@ -44,27 +45,64 @@
       line-height: 1.2;
     }
 
-    .sub { color: var(--muted); margin-top: 0.35rem; margin-bottom: 1.75rem; }
+    .sub { color: var(--muted); margin-top: 0.35rem; margin-bottom: 2rem; }
 
-    h2 {
+    /* the two sides */
+    .cols { display: grid; gap: 2.5rem; }
+
+    .colhead { margin-bottom: 1rem; }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #fff;
+      background: var(--accent);
+      border-radius: 6px;
+      padding: 0.1rem 0.55rem;
+    }
+
+    .col.k .eyebrow { background: var(--done); }
+
+    .colhead h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-top: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .colhead p { color: var(--muted); font-size: 0.95rem; margin-top: 0.1rem; }
+
+    .lh {
       font-size: 0.85rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
-      margin: 2rem 0 0.75rem;
+      margin: 1.75rem 0 0.75rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
-    h2 .count {
+    .count {
       background: var(--border);
       color: var(--text);
       border-radius: 999px;
       padding: 0 0.55rem;
       font-size: 0.8rem;
       line-height: 1.5;
+    }
+
+    @media (min-width: 900px) {
+      main { max-width: 1140px; }
+      .cols { grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; }
+      .col.k { border-left: 1px solid var(--border); padding-left: 2.5rem; }
     }
 
     .card {
@@ -118,7 +156,6 @@
     }
 
     .drop:hover, .drop.over { border-color: var(--accent); background: #EFF6FF; color: var(--accent-dark); }
-
     .drop svg { flex-shrink: 0; }
 
     .files { list-style: none; margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
@@ -179,6 +216,7 @@
     .status.err { color: var(--danger); }
     .status.ok { color: var(--done); }
 
+    /* items, both sides */
     .list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
 
     .item {
@@ -211,11 +249,24 @@
     }
 
     .check:hover { border-color: var(--done); }
-    .item.done .check { background: var(--done); border-color: var(--done); }
+
+    .badge, .ask-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: #fff;
+    }
+
+    .badge { background: var(--done); }
+    .ask-badge { background: var(--done); font-weight: 800; font-size: 0.95rem; }
 
     .body { min-width: 0; }
     .title { font-weight: 600; overflow-wrap: anywhere; }
-    .item.done .title { text-decoration: line-through; color: var(--muted); font-weight: 500; }
 
     .notes {
       color: var(--muted);
@@ -225,9 +276,86 @@
       overflow-wrap: anywhere;
     }
 
-    .meta { margin-top: 0.4rem; font-size: 0.85rem; }
-    .meta a { color: var(--accent); text-decoration: none; }
-    .meta a:hover { text-decoration: underline; }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      max-width: 100%;
+      background: #F4F4F5;
+      border-radius: 999px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.85rem;
+      color: var(--text);
+      text-decoration: none;
+      border: none;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .chip:hover { background: #E4E4E7; }
+    .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* the answer block on a completed item */
+    .reply {
+      margin-top: 0.6rem;
+      background: var(--done-bg);
+      border-left: 3px solid var(--done);
+      border-radius: 0 10px 10px 0;
+      padding: 0.6rem 0.8rem;
+    }
+
+    .reply .who {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--done);
+      margin-bottom: 0.2rem;
+    }
+
+    .reply .txt { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+    .checked-only { margin-top: 0.5rem; color: var(--done); font-size: 0.9rem; font-weight: 600; }
+
+    /* answering one of Knox's asks, inline */
+    .answer { margin-top: 0.7rem; border-top: 1px dashed var(--border); padding-top: 0.7rem; }
+    .answer label { font-size: 0.85rem; }
+    .answer textarea { min-height: 76px; font-size: 1rem; }
+
+    .answer .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+      align-items: center;
+    }
+
+    .btn {
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      min-height: 44px;
+      padding: 0 1rem;
+      border-radius: 10px;
+      border: 1px solid #CBD5E1;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn:hover { background: #F4F4F5; }
+    .btn.send { background: var(--done); border-color: var(--done); color: #fff; }
+    .btn.send:hover { background: #15803D; }
+    .btn:disabled { opacity: 0.6; cursor: default; }
+
+    .meta { margin-top: 0.5rem; font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.9rem; }
+    .meta a, .meta button { color: var(--accent); text-decoration: none; background: none; border: none; font: inherit; font-size: 0.85rem; cursor: pointer; padding: 0; }
+    .meta a:hover, .meta button:hover { text-decoration: underline; }
 
     .trash {
       background: none;
@@ -245,22 +373,17 @@
 
     .trash:hover { background: #FEF2F2; color: var(--danger); }
 
-    .empty {
-      color: var(--muted);
-      padding: 1.25rem 0.5rem;
-      text-align: center;
-    }
+    .empty { color: var(--muted); padding: 1.25rem 0.5rem; text-align: center; }
 
-    /* files Knox dropped for him */
-    .from-knox { margin-bottom: 1.75rem; }
-    .from-knox h2 { margin-top: 0; }
-
+    /* file grids: the shelf, and files inside an answer */
     .fgrid {
       list-style: none;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 0.6rem;
     }
+
+    .reply .fgrid { margin-top: 0.6rem; gap: 0.45rem; }
 
     .fcard {
       position: relative;
@@ -322,6 +445,9 @@
 
     .fcard .x:hover { color: var(--danger); }
 
+    .from-knox { margin-bottom: 0.5rem; }
+    .from-knox .lh { margin-top: 0; }
+
     .lightbox {
       position: fixed;
       inset: 0;
@@ -363,43 +489,67 @@
 <body>
   <main>
     <h1>Blake's List</h1>
-    <p class="sub">Anything you put here lands on Knox's list the moment you add it.</p>
+    <p class="sub">B side is what you send up. K side is what Knox sends down.</p>
 
-    <section class="from-knox" id="from-knox" hidden aria-labelledby="fk-heading">
-      <h2 id="fk-heading">From Knox <span class="count" id="file-count">0</span></h2>
-      <ul class="fgrid" id="file-grid"></ul>
-    </section>
-
-    <section class="card" aria-labelledby="add-heading">
-      <form id="add-form" novalidate>
-        <div class="field">
-          <label for="title" id="add-heading">What needs doing?</label>
-          <input type="text" id="title" autocomplete="off" placeholder="Call the roofer about the Elm St. bid" maxlength="200" required>
-        </div>
-        <div class="field">
-          <label for="notes">Details <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-          <textarea id="notes" placeholder="Who, where, numbers, anything Knox should know." maxlength="4000"></textarea>
+    <div class="cols">
+      <section class="col b" aria-labelledby="b-h">
+        <div class="colhead">
+          <span class="eyebrow">B side</span>
+          <h2 id="b-h">You <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> Knox</h2>
+          <p>Ask for things, send things up. Knox answers here with a check, a note, or files.</p>
         </div>
 
-        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Add files, photos or documents">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-          <span id="drop-text">Drop photos or files here, or tap to choose</span>
-          <input type="file" id="file-input" multiple hidden>
+        <section class="card" aria-labelledby="add-heading">
+          <form id="add-form" novalidate>
+            <div class="field">
+              <label for="title" id="add-heading">What do you need from Knox?</label>
+              <input type="text" id="title" autocomplete="off" placeholder="Send me the Elm St. bid" maxlength="200" required>
+            </div>
+            <div class="field">
+              <label for="notes">Details <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <textarea id="notes" placeholder="Who, where, numbers, anything Knox should know." maxlength="4000"></textarea>
+            </div>
+
+            <div class="drop" id="drop" tabindex="0" role="button" aria-label="Add files, photos or documents">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              <span id="drop-text">Drop photos or files here, or tap to choose</span>
+              <input type="file" id="file-input" multiple hidden>
+            </div>
+            <ul class="files" id="file-list"></ul>
+
+            <button type="submit" class="primary" id="add-btn">Send to Knox</button>
+            <p class="status" id="status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <h3 class="lh">Waiting on Knox <span class="count" id="b-open-count">0</span></h3>
+        <ul class="list" id="b-open"></ul>
+
+        <h3 class="lh">Knox answered <span class="count" id="b-done-count">0</span></h3>
+        <ul class="list" id="b-done"></ul>
+      </section>
+
+      <section class="col k" aria-labelledby="k-h">
+        <div class="colhead">
+          <span class="eyebrow">K side</span>
+          <h2 id="k-h">Knox <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> You</h2>
+          <p>Things Knox needs from you. Answer with a note, a file, or just check it off.</p>
         </div>
-        <ul class="files" id="file-list"></ul>
 
-        <button type="submit" class="primary" id="add-btn">Add to the list</button>
-        <p class="status" id="status" role="status" aria-live="polite"></p>
-      </form>
-    </section>
+        <section class="from-knox" id="from-knox" hidden aria-labelledby="fk-heading">
+          <h3 class="lh" id="fk-heading">Files from Knox <span class="count" id="file-count">0</span></h3>
+          <ul class="fgrid" id="file-grid"></ul>
+        </section>
 
-    <h2>To do <span class="count" id="open-count">0</span></h2>
-    <ul class="list" id="open-list"></ul>
+        <h3 class="lh">Knox asked you <span class="count" id="k-open-count">0</span></h3>
+        <ul class="list" id="k-open"></ul>
 
-    <h2>Done <span class="count" id="done-count">0</span></h2>
-    <ul class="list" id="done-list"></ul>
+        <h3 class="lh">You answered <span class="count" id="k-done-count">0</span></h3>
+        <ul class="list" id="k-done"></ul>
+      </section>
+    </div>
 
-    <footer>Tap the circle when something is finished. The trash can takes it off the list for good.</footer>
+    <footer>The trash can takes an item off the list for good. Finished items clear out on their own each Monday.</footer>
   </main>
 
   <div class="lightbox" id="lightbox" role="dialog" aria-label="Photo, tap anywhere to close">
@@ -414,11 +564,13 @@
     var API = LOCAL ? 'http://localhost:3000/api/blake' : 'https://knox-dashboard-pnsj.vercel.app/api/blake';
     var MAX_BYTES = 4 * 1024 * 1024;
 
-    var items = [];
-    var queued = []; // files waiting to go with the next item
+    var items = [];       // asks from both sides, each with files (asker's) and responseFiles (answer)
+    var files = [];       // the loose shelf from Knox
+    var queued = [];      // files waiting to go with the next ask up
+    var answerQueue = {}; // files waiting to go with an answer, by ask id
+    var answerDraft = {}; // typed answers, by ask id, so a refresh can't wipe them
 
     var $ = function (id) { return document.getElementById(id); };
-    var openList = $('open-list'), doneList = $('done-list');
     var statusEl = $('status');
 
     function esc(s) {
@@ -438,39 +590,151 @@
       return (n / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
+    function fmtDate(iso) {
+      var d = new Date(iso);
+      return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    function byId(id) { return items.filter(function (i) { return i.id === id; })[0]; }
+
     // ---------- rendering ----------
     var CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>';
     var TRASH = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+    var CLIP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
+    var CLIP_LG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
+    var FILE_ICON = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/></svg>';
+    var X_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 
-    function itemHtml(it) {
-      var label = it.done ? 'Put back on the list' : 'Mark as done';
-      return '<li class="item' + (it.done ? ' done' : '') + (it.saving ? ' saving' : '') + '" data-id="' + esc(it.id) + '">' +
-        '<button class="check" type="button" data-act="toggle" aria-label="' + label + '" aria-pressed="' + (it.done ? 'true' : 'false') + '">' + (it.done ? CHECK : '') + '</button>' +
+    // a file as a square card: photos open the lightbox, anything else a new tab
+    function fileCardHtml(f, removable) {
+      var when = f.created ? ', ' + fmtDate(f.created) : '';
+      var inner = f.kind === 'image'
+        ? '<button type="button" class="open" data-lb-src="' + esc(f.url) + '" data-lb-cap="' + esc(f.name) + '" aria-label="View ' + esc(f.name) + when + '"><img src="' + esc(f.url) + '" alt="' + esc(f.name) + '" loading="lazy"></button>'
+        : '<a class="open" href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer" aria-label="Open ' + esc(f.name) + when + '">' + FILE_ICON + '<span class="fn">' + esc(f.name) + '</span></a>';
+      return '<li class="fcard" title="' + esc(f.name) + when + '">' + inner +
+        (removable ? '<button type="button" class="x" data-rm-file="' + esc(f.id) + '" aria-label="Remove ' + esc(f.name) + '">' + X_ICON + '</button>' : '') +
+      '</li>';
+    }
+
+    // attachments on an ask, as small chips
+    function chipsHtml(list) {
+      if (!list || !list.length) return '';
+      return '<div class="chips">' + list.map(function (f) {
+        return f.kind === 'image'
+          ? '<button type="button" class="chip" data-lb-src="' + esc(f.url) + '" data-lb-cap="' + esc(f.name) + '">' + CLIP + '<span>' + esc(f.name) + '</span></button>'
+          : '<a class="chip" href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer">' + CLIP + '<span>' + esc(f.name) + '</span></a>';
+      }).join('') + '</div>';
+    }
+
+    function metaHtml(it, extra) {
+      var bits = [];
+      if (it.saving) bits.push('<span>' + esc(it.saving) + '</span>');
+      else {
+        if (extra) bits.push(extra);
+        if (it.url) bits.push('<a href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">Open in Notion</a>');
+      }
+      return '<div class="meta">' + bits.join('') + '</div>';
+    }
+
+    // the answer on a completed ask, whoever gave it
+    function answerHtml(it, who) {
+      var hasText = !!(it.response && it.response.trim());
+      var hasFiles = !!(it.responseFiles && it.responseFiles.length);
+      if (!hasText && !hasFiles) return '<div class="checked-only">Checked off</div>';
+      return '<div class="reply"><div class="who">' + who + '</div>' +
+        (hasText ? '<div class="txt">' + esc(it.response) + '</div>' : '') +
+        (hasFiles ? '<ul class="fgrid">' + it.responseFiles.map(function (f) { return fileCardHtml(f, false); }).join('') + '</ul>' : '') +
+      '</div>';
+    }
+
+    // B side, still waiting: your ask going up
+    function bOpenHtml(it) {
+      return '<li class="item' + (it.saving ? ' saving' : '') + '" data-id="' + esc(it.id) + '">' +
+        '<button class="check" type="button" data-act="done" aria-label="I handled this myself, mark it done"></button>' +
         '<div class="body">' +
           '<div class="title">' + esc(it.title) + '</div>' +
           (it.notes ? '<div class="notes">' + esc(it.notes) + '</div>' : '') +
-          '<div class="meta">' + (it.saving ? esc(it.saving) : (it.url ? '<a href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">Open in Notion</a>' : '')) + '</div>' +
+          chipsHtml(it.files) +
+          metaHtml(it) +
+        '</div>' +
+        '<button class="trash" type="button" data-act="remove" aria-label="Remove from the list"' + (it.saving ? ' disabled' : '') + '>' + TRASH + '</button>' +
+      '</li>';
+    }
+
+    // either side, completed: the ask plus the answer that closed it
+    function doneHtml(it, who) {
+      return '<li class="item done" data-id="' + esc(it.id) + '">' +
+        '<div class="badge" aria-label="Completed">' + CHECK + '</div>' +
+        '<div class="body">' +
+          '<div class="title">' + esc(it.title) + '</div>' +
+          (it.notes ? '<div class="notes">' + esc(it.notes) + '</div>' : '') +
+          chipsHtml(it.files) +
+          answerHtml(it, who) +
+          metaHtml(it, '<button type="button" data-act="reopen">Put it back</button>') +
+        '</div>' +
+        '<button class="trash" type="button" data-act="remove" aria-label="Remove from the list">' + TRASH + '</button>' +
+      '</li>';
+    }
+
+    // K side, open: Knox's ask with the answer box right under it
+    function kOpenHtml(it) {
+      var q = answerQueue[it.id] || [];
+      var qHtml = q.length ? '<div class="chips">' + q.map(function (f, i) {
+        return '<button type="button" class="chip" data-ans-unqueue="' + i + '" aria-label="Remove ' + esc(f.name) + '">' + CLIP + '<span>' + esc(f.name) + '</span> ' + X_ICON + '</button>';
+      }).join('') + '</div>' : '';
+      return '<li class="item' + (it.saving ? ' saving' : '') + '" data-id="' + esc(it.id) + '">' +
+        '<div class="ask-badge" aria-label="Knox asked">K</div>' +
+        '<div class="body">' +
+          '<div class="title">' + esc(it.title) + '</div>' +
+          (it.notes ? '<div class="notes">' + esc(it.notes) + '</div>' : '') +
+          chipsHtml(it.files) +
+          '<form class="answer" data-answer="' + esc(it.id) + '">' +
+            '<label for="ans-' + esc(it.id) + '">Your answer</label>' +
+            '<textarea id="ans-' + esc(it.id) + '" placeholder="Type a note, or just add a file and send."' + (it.saving ? ' disabled' : '') + '>' + esc(answerDraft[it.id] || '') + '</textarea>' +
+            qHtml +
+            '<div class="row">' +
+              '<button type="button" class="btn" data-ans-pick aria-label="Add files to your answer">' + CLIP_LG + ' Add files</button>' +
+              '<input type="file" multiple hidden data-ans-input>' +
+              '<button type="submit" class="btn send"' + (it.saving ? ' disabled' : '') + '>Send answer</button>' +
+              '<button type="button" class="btn" data-act="done"' + (it.saving ? ' disabled' : '') + '>Just check off</button>' +
+            '</div>' +
+          '</form>' +
+          metaHtml(it) +
         '</div>' +
         '<button class="trash" type="button" data-act="remove" aria-label="Remove from the list"' + (it.saving ? ' disabled' : '') + '>' + TRASH + '</button>' +
       '</li>';
     }
 
     function render() {
-      var open = items.filter(function (i) { return !i.done; });
-      var done = items.filter(function (i) { return i.done; });
-      // newest first so what he just added is on top
-      open.reverse(); done.reverse();
-      openList.innerHTML = open.length ? open.map(itemHtml).join('') : '<li class="empty">Nothing on the list right now.</li>';
-      doneList.innerHTML = done.length ? done.map(itemHtml).join('') : '<li class="empty">Nothing finished yet.</li>';
-      $('open-count').textContent = open.length;
-      $('done-count').textContent = done.length;
+      // keep whatever is being typed in an answer box across a re-render
+      document.querySelectorAll('form[data-answer] textarea').forEach(function (ta) {
+        answerDraft[ta.closest('form').getAttribute('data-answer')] = ta.value;
+      });
+      var newest = function (list) { return list.slice().reverse(); };
+      var bOpen = newest(items.filter(function (i) { return i.side !== 'K' && !i.done; }));
+      var bDone = newest(items.filter(function (i) { return i.side !== 'K' && i.done; }));
+      var kOpen = newest(items.filter(function (i) { return i.side === 'K' && !i.done; }));
+      var kDone = newest(items.filter(function (i) { return i.side === 'K' && i.done; }));
+      $('b-open').innerHTML = bOpen.length ? bOpen.map(bOpenHtml).join('') : '<li class="empty">Nothing waiting. Send something up.</li>';
+      $('b-done').innerHTML = bDone.length ? bDone.map(function (it) { return doneHtml(it, 'Knox'); }).join('') : '<li class="empty">Nothing back yet.</li>';
+      $('k-open').innerHTML = kOpen.length ? kOpen.map(kOpenHtml).join('') : '<li class="empty">Knox hasn\'t asked for anything.</li>';
+      $('k-done').innerHTML = kDone.length ? kDone.map(function (it) { return doneHtml(it, 'You'); }).join('') : '<li class="empty">Nothing answered yet.</li>';
+      $('b-open-count').textContent = bOpen.length;
+      $('b-done-count').textContent = bDone.length;
+      $('k-open-count').textContent = kOpen.length;
+      $('k-done-count').textContent = kDone.length;
+    }
+
+    function renderFiles() {
+      $('from-knox').hidden = files.length === 0;
+      $('file-count').textContent = files.length;
+      $('file-grid').innerHTML = files.map(function (f) { return fileCardHtml(f, true); }).join('');
     }
 
     function renderQueue() {
       $('file-list').innerHTML = queued.map(function (f, i) {
         return '<li><span class="fname">' + esc(f.name) + '</span><span class="fsize">' + fmtSize(f.size) + '</span>' +
-          '<button type="button" data-unqueue="' + i + '" aria-label="Remove ' + esc(f.name) + '">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></li>';
+          '<button type="button" data-unqueue="' + i + '" aria-label="Remove ' + esc(f.name) + '">' + X_ICON + '</button></li>';
       }).join('');
       $('drop-text').textContent = queued.length ? 'Add more files' : 'Drop photos or files here, or tap to choose';
     }
@@ -489,13 +753,19 @@
       fetch(API, { cache: 'no-store' })
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(function (j) {
-          // keep anything still mid-save on screen
           var saving = items.filter(function (i) { return i.saving; });
           items = (j.items || []).concat(saving);
           render();
         })
         .catch(function () { setStatus("Couldn't reach the list. Check the connection and try again.", 'err'); })
         .then(function () { loading = false; });
+    }
+
+    function loadFiles() {
+      fetch(API + '/files', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : { files: files }; })
+        .then(function (j) { files = j.files || []; renderFiles(); })
+        .catch(function () {});
     }
 
     // Phone photos run 3 to 8 MB; the API takes 4. Shrink big images in the
@@ -526,11 +796,13 @@
       });
     }
 
-    function upload(pageId, file) {
+    // extra: {section:'response', by:'B'} puts the file under the answer heading
+    function upload(pageId, file, extra) {
       return shrinkImage(file).then(function (f) {
         if (f.size > MAX_BYTES) throw new Error(f.name + ' is over 4 MB. Text or email that one to Knox.');
         var fd = new FormData();
         fd.append('pageId', pageId);
+        Object.keys(extra || {}).forEach(function (k) { fd.append(k, extra[k]); });
         fd.append('file', f, f.name);
         return fetch(API + '/upload', { method: 'POST', body: fd }).then(function (r) {
           if (!r.ok) return r.json().then(function (j) { throw new Error(j.error === 'too large' ? f.name + ' is too big to send.' : "Couldn't attach " + f.name + '.'); });
@@ -538,53 +810,54 @@
       });
     }
 
-    // ---------- add ----------
+    // ---------- B side: send an ask up ----------
     $('add-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var title = $('title').value.trim();
       var notes = $('notes').value.trim();
-      if (!title) { setStatus('Type what needs doing first.', 'err'); $('title').focus(); return; }
+      if (!title) { setStatus('Type what you need first.', 'err'); $('title').focus(); return; }
 
-      var files = queued.slice();
+      var toSend = queued.slice();
       queued = []; renderQueue();
       $('title').value = ''; $('notes').value = '';
       $('add-btn').disabled = true;
-      setStatus('Saving…');
+      setStatus('Sending…');
 
-      var temp = { id: 'temp-' + Date.now(), title: title, notes: notes, done: false, saving: 'Saving…' };
+      var temp = { id: 'temp-' + Date.now(), title: title, notes: notes, done: false, side: 'B', files: [], responseFiles: [], saving: 'Sending…' };
       items.push(temp); render();
 
-      api({ action: 'add', title: title, notes: notes })
+      api({ action: 'add', title: title, notes: notes, side: 'B' })
         .then(function (j) {
           var real = j.item;
           var idx = items.indexOf(temp);
-          if (idx >= 0) items[idx] = Object.assign({}, real, { saving: files.length ? 'Attaching files…' : '' });
+          if (idx >= 0) items[idx] = Object.assign({ files: [], responseFiles: [] }, real, { saving: toSend.length ? 'Attaching files…' : '' });
           render();
           var chain = Promise.resolve();
           var failed = [];
-          files.forEach(function (f, n) {
+          toSend.forEach(function (f, n) {
             chain = chain.then(function () {
-              var cur = items.filter(function (i) { return i.id === real.id; })[0];
-              if (cur) { cur.saving = 'Attaching ' + (n + 1) + ' of ' + files.length + '…'; render(); }
+              var cur = byId(real.id);
+              if (cur) { cur.saving = 'Attaching ' + (n + 1) + ' of ' + toSend.length + '…'; render(); }
               return upload(real.id, f).catch(function (err) { failed.push(err.message); });
             });
           });
           return chain.then(function () {
-            var cur = items.filter(function (i) { return i.id === real.id; })[0];
+            var cur = byId(real.id);
             if (cur) { cur.saving = ''; render(); }
-            if (failed.length) setStatus('Added, but ' + failed.join(' '), 'err');
-            else setStatus(files.length ? 'Added with ' + files.length + (files.length === 1 ? ' file.' : ' files.') : 'Added.', 'ok');
+            if (failed.length) setStatus('Sent, but ' + failed.join(' '), 'err');
+            else setStatus(toSend.length ? 'Sent with ' + toSend.length + (toSend.length === 1 ? ' file.' : ' files.') : 'Sent.', 'ok');
+            if (toSend.length) load();
           });
         })
         .catch(function () {
           items = items.filter(function (i) { return i !== temp; }); render();
-          $('title').value = title; $('notes').value = notes; queued = files; renderQueue();
-          setStatus("That didn't save. Check the connection and tap Add again.", 'err');
+          $('title').value = title; $('notes').value = notes; queued = toSend; renderQueue();
+          setStatus("That didn't send. Check the connection and tap Send again.", 'err');
         })
         .then(function () { $('add-btn').disabled = false; });
     });
 
-    // ---------- files ----------
+    // ---------- files on the ask form ----------
     var drop = $('drop'), fileInput = $('file-input');
     drop.addEventListener('click', function () { fileInput.click(); });
     drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
@@ -611,25 +884,88 @@
       renderQueue();
     });
 
-    // ---------- toggle / remove ----------
+    // ---------- K side: answer one of Knox's asks ----------
+    function sendAnswer(id) {
+      var it = byId(id);
+      if (!it || it.saving) return;
+      var form = document.querySelector('form[data-answer="' + id + '"]');
+      var text = form ? form.querySelector('textarea').value.trim() : (answerDraft[id] || '');
+      var toSend = (answerQueue[id] || []).slice();
+      if (!text && !toSend.length) { setStatus('Type a note or add a file before sending.', 'err'); return; }
+      delete answerQueue[id]; delete answerDraft[id];
+      it.saving = 'Sending your answer…'; render();
+      api({ action: 'respond', id: id, text: text })
+        .then(function () {
+          var chain = Promise.resolve();
+          var failed = [];
+          toSend.forEach(function (f, n) {
+            chain = chain.then(function () {
+              var cur = byId(id);
+              if (cur) { cur.saving = 'Attaching ' + (n + 1) + ' of ' + toSend.length + '…'; render(); }
+              return upload(id, f, { section: 'response', by: 'B' }).catch(function (err) { failed.push(err.message); });
+            });
+          });
+          return chain.then(function () {
+            var cur = byId(id);
+            if (cur) { cur.saving = ''; cur.done = true; cur.response = text; render(); }
+            if (failed.length) setStatus('Answered, but ' + failed.join(' '), 'err');
+            load();
+          });
+        })
+        .catch(function () {
+          var cur = byId(id);
+          if (cur) { cur.saving = ''; }
+          answerQueue[id] = toSend; answerDraft[id] = text; render();
+          setStatus("That answer didn't send. Try again.", 'err');
+        });
+    }
+
+    document.addEventListener('submit', function (e) {
+      var form = e.target.closest('form[data-answer]');
+      if (!form) return;
+      e.preventDefault();
+      sendAnswer(form.getAttribute('data-answer'));
+    });
+
+    document.addEventListener('change', function (e) {
+      var input = e.target.closest('input[data-ans-input]');
+      if (!input) return;
+      var id = input.closest('form[data-answer]').getAttribute('data-answer');
+      var list = answerQueue[id] || (answerQueue[id] = []);
+      Array.prototype.forEach.call(input.files, function (f) { if (f.size <= 25 * 1024 * 1024) list.push(f); });
+      input.value = '';
+      render();
+    });
+
+    // ---------- clicks on either list ----------
     function onListClick(e) {
+      var pick = e.target.closest('[data-ans-pick]');
+      if (pick) { pick.closest('form').querySelector('input[data-ans-input]').click(); return; }
+      var unq = e.target.closest('[data-ans-unqueue]');
+      if (unq) {
+        var qid = unq.closest('form[data-answer]').getAttribute('data-answer');
+        (answerQueue[qid] || []).splice(Number(unq.getAttribute('data-ans-unqueue')), 1);
+        render();
+        return;
+      }
       var btn = e.target.closest('button[data-act]');
       if (!btn) return;
       var li = btn.closest('.item');
       var id = li.getAttribute('data-id');
-      var it = items.filter(function (i) { return i.id === id; })[0];
+      var it = byId(id);
       if (!it || it.saving) return;
+      var act = btn.getAttribute('data-act');
 
-      if (btn.getAttribute('data-act') === 'toggle') {
+      if (act === 'done' || act === 'reopen') {
         var was = it.done;
-        it.done = !was; render();
+        it.done = act === 'done'; render();
         api({ action: 'toggle', id: id, done: it.done }).catch(function () {
           it.done = was; render();
           setStatus("Couldn't save that change. Try again.", 'err');
         });
       }
 
-      if (btn.getAttribute('data-act') === 'remove') {
+      if (act === 'remove') {
         if (!confirm('Take "' + it.title + '" off the list for good?')) return;
         var keep = items.slice();
         items = items.filter(function (i) { return i.id !== id; }); render();
@@ -639,61 +975,27 @@
         });
       }
     }
-    openList.addEventListener('click', onListClick);
-    doneList.addEventListener('click', onListClick);
+    ['b-open', 'b-done', 'k-open', 'k-done'].forEach(function (id) { $(id).addEventListener('click', onListClick); });
 
-    // ---------- files from Knox ----------
-    // Dropped on the dashboard's Blake column; shown here as a shelf. Photos
-    // open in a lightbox, anything else opens in a new tab. Notion signs the
-    // links for about an hour, which the regular reload keeps fresh.
-    var files = [];
-    var FILE_ICON = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/></svg>';
-
-    function fmtDate(iso) {
-      var d = new Date(iso);
-      return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    }
-
-    function renderFiles() {
-      $('from-knox').hidden = files.length === 0;
-      $('file-count').textContent = files.length;
-      $('file-grid').innerHTML = files.map(function (f, i) {
-        var when = f.created ? ', ' + fmtDate(f.created) : '';
-        var inner = f.kind === 'image'
-          ? '<button type="button" class="open" data-view="' + i + '" aria-label="View ' + esc(f.name) + when + '"><img src="' + esc(f.url) + '" alt="' + esc(f.name) + '" loading="lazy"></button>'
-          : '<a class="open" href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer" aria-label="Open ' + esc(f.name) + when + '">' + FILE_ICON + '<span class="fn">' + esc(f.name) + '</span></a>';
-        return '<li class="fcard" title="' + esc(f.name) + when + '">' + inner +
-          '<button type="button" class="x" data-rm="' + i + '" aria-label="Remove ' + esc(f.name) + '">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></li>';
-      }).join('');
-    }
-
-    function loadFiles() {
-      fetch(API + '/files', { cache: 'no-store' })
-        .then(function (r) { return r.ok ? r.json() : { files: files }; })
-        .then(function (j) { files = j.files || []; renderFiles(); })
-        .catch(function () {});
-    }
-
-    $('file-grid').addEventListener('click', function (e) {
-      var v = e.target.closest('[data-view]');
-      if (v) {
-        var f = files[Number(v.getAttribute('data-view'))];
-        if (!f) return;
-        $('lightbox-img').src = f.url;
-        $('lightbox-cap').textContent = f.name;
+    // ---------- the shelf, and photos anywhere ----------
+    document.addEventListener('click', function (e) {
+      var lb = e.target.closest('[data-lb-src]');
+      if (lb) {
+        $('lightbox-img').src = lb.getAttribute('data-lb-src');
+        $('lightbox-cap').textContent = lb.getAttribute('data-lb-cap') || '';
         $('lightbox').classList.add('show');
         return;
       }
-      var x = e.target.closest('[data-rm]');
+      var x = e.target.closest('[data-rm-file]');
       if (!x) return;
-      var g = files[Number(x.getAttribute('data-rm'))];
+      var fid = x.getAttribute('data-rm-file');
+      var g = files.filter(function (q) { return q.id === fid; })[0];
       if (!g || !confirm('Remove "' + g.name + '"?')) return;
-      var keep = files.slice();
+      var keepFiles = files.slice();
       files = files.filter(function (q) { return q !== g; }); renderFiles();
       fetch(API + '/files', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', id: g.id }) })
         .then(function (r) { if (!r.ok) throw new Error(); })
-        .catch(function () { files = keep; renderFiles(); setStatus("Couldn't remove that file. Try again.", 'err'); });
+        .catch(function () { files = keepFiles; renderFiles(); setStatus("Couldn't remove that file. Try again.", 'err'); });
     });
 
     function closeLightbox() { $('lightbox').classList.remove('show'); $('lightbox-img').src = ''; }
