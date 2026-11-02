@@ -251,6 +251,103 @@
       text-align: center;
     }
 
+    /* files Knox dropped for him */
+    .from-knox { margin-bottom: 1.75rem; }
+    .from-knox h2 { margin-top: 0; }
+
+    .fgrid {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+    }
+
+    .fcard {
+      position: relative;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 1;
+    }
+
+    .fcard .open {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      color: var(--text);
+      font: inherit;
+      text-decoration: none;
+    }
+
+    .fcard img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .fcard .fn {
+      font-size: 0.8rem;
+      padding: 0 0.5rem;
+      text-align: center;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow-wrap: anywhere;
+    }
+
+    .fcard .x {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    }
+
+    .fcard .x:hover { color: var(--danger); }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.93);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 1rem;
+      cursor: zoom-out;
+    }
+
+    .lightbox.show { display: flex; }
+    .lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+    .lightbox .cap {
+      position: absolute;
+      bottom: 1.25rem;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #fff;
+      font-size: 0.9rem;
+      padding: 0 1rem;
+    }
+
     footer {
       margin-top: 3rem;
       text-align: center;
@@ -267,6 +364,11 @@
   <main>
     <h1>Blake's List</h1>
     <p class="sub">Anything you put here lands on Knox's list the moment you add it.</p>
+
+    <section class="from-knox" id="from-knox" hidden aria-labelledby="fk-heading">
+      <h2 id="fk-heading">From Knox <span class="count" id="file-count">0</span></h2>
+      <ul class="fgrid" id="file-grid"></ul>
+    </section>
 
     <section class="card" aria-labelledby="add-heading">
       <form id="add-form" novalidate>
@@ -299,6 +401,11 @@
 
     <footer>Tap the circle when something is finished. The trash can takes it off the list for good.</footer>
   </main>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-label="Photo, tap anywhere to close">
+    <img id="lightbox-img" alt="">
+    <div class="cap" id="lightbox-cap"></div>
+  </div>
 
   <script>
     // The list lives in Knox's Notion. This page talks to the dashboard's API,
@@ -378,6 +485,7 @@
     function load() {
       if (loading) return;
       loading = true;
+      loadFiles();
       fetch(API, { cache: 'no-store' })
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(function (j) {
@@ -533,6 +641,64 @@
     }
     openList.addEventListener('click', onListClick);
     doneList.addEventListener('click', onListClick);
+
+    // ---------- files from Knox ----------
+    // Dropped on the dashboard's Blake column; shown here as a shelf. Photos
+    // open in a lightbox, anything else opens in a new tab. Notion signs the
+    // links for about an hour, which the regular reload keeps fresh.
+    var files = [];
+    var FILE_ICON = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/></svg>';
+
+    function fmtDate(iso) {
+      var d = new Date(iso);
+      return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    function renderFiles() {
+      $('from-knox').hidden = files.length === 0;
+      $('file-count').textContent = files.length;
+      $('file-grid').innerHTML = files.map(function (f, i) {
+        var when = f.created ? ', ' + fmtDate(f.created) : '';
+        var inner = f.kind === 'image'
+          ? '<button type="button" class="open" data-view="' + i + '" aria-label="View ' + esc(f.name) + when + '"><img src="' + esc(f.url) + '" alt="' + esc(f.name) + '" loading="lazy"></button>'
+          : '<a class="open" href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer" aria-label="Open ' + esc(f.name) + when + '">' + FILE_ICON + '<span class="fn">' + esc(f.name) + '</span></a>';
+        return '<li class="fcard" title="' + esc(f.name) + when + '">' + inner +
+          '<button type="button" class="x" data-rm="' + i + '" aria-label="Remove ' + esc(f.name) + '">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></li>';
+      }).join('');
+    }
+
+    function loadFiles() {
+      fetch(API + '/files', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : { files: files }; })
+        .then(function (j) { files = j.files || []; renderFiles(); })
+        .catch(function () {});
+    }
+
+    $('file-grid').addEventListener('click', function (e) {
+      var v = e.target.closest('[data-view]');
+      if (v) {
+        var f = files[Number(v.getAttribute('data-view'))];
+        if (!f) return;
+        $('lightbox-img').src = f.url;
+        $('lightbox-cap').textContent = f.name;
+        $('lightbox').classList.add('show');
+        return;
+      }
+      var x = e.target.closest('[data-rm]');
+      if (!x) return;
+      var g = files[Number(x.getAttribute('data-rm'))];
+      if (!g || !confirm('Remove "' + g.name + '"?')) return;
+      var keep = files.slice();
+      files = files.filter(function (q) { return q !== g; }); renderFiles();
+      fetch(API + '/files', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', id: g.id }) })
+        .then(function (r) { if (!r.ok) throw new Error(); })
+        .catch(function () { files = keep; renderFiles(); setStatus("Couldn't remove that file. Try again.", 'err'); });
+    });
+
+    function closeLightbox() { $('lightbox').classList.remove('show'); $('lightbox-img').src = ''; }
+    $('lightbox').addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLightbox(); });
 
     // ---------- keep fresh ----------
     load();
