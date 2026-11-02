@@ -557,12 +557,19 @@
     <div class="cap" id="lightbox-cap"></div>
   </div>
 
+  <script type="module">
+    // files go straight from this page to Knox's Vercel Blob store; the
+    // dashboard only hands out a short-lived upload token and records the link
+    import { upload } from 'https://esm.sh/@vercel/blob@2.8.2/client';
+    window.blobUpload = upload;
+  </script>
+
   <script>
     // The list lives in Knox's Notion. This page talks to the dashboard's API,
     // which holds the Notion token; nothing secret is in this file.
     var LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     var API = LOCAL ? 'http://localhost:3000/api/blake' : 'https://knox-dashboard-pnsj.vercel.app/api/blake';
-    var MAX_BYTES = 4 * 1024 * 1024;
+    var MAX_BYTES = 500 * 1024 * 1024;
 
     var items = [];       // asks from both sides, each with files (asker's) and responseFiles (answer)
     var files = [];       // the loose shelf from Knox
@@ -796,16 +803,24 @@
       });
     }
 
+    // Shrink a photo if it is big, push the file straight to the Blob store,
+    // then tell the dashboard where it landed so Notion gets the link.
     // extra: {section:'response', by:'B'} puts the file under the answer heading
     function upload(pageId, file, extra) {
       return shrinkImage(file).then(function (f) {
-        if (f.size > MAX_BYTES) throw new Error(f.name + ' is over 4 MB. Text or email that one to Knox.');
-        var fd = new FormData();
-        fd.append('pageId', pageId);
-        Object.keys(extra || {}).forEach(function (k) { fd.append(k, extra[k]); });
-        fd.append('file', f, f.name);
-        return fetch(API + '/upload', { method: 'POST', body: fd }).then(function (r) {
-          if (!r.ok) return r.json().then(function (j) { throw new Error(j.error === 'too large' ? f.name + ' is too big to send.' : "Couldn't attach " + f.name + '.'); });
+        if (f.size > MAX_BYTES) throw new Error(f.name + ' is over 500 MB.');
+        if (!window.blobUpload) throw new Error("The uploader didn't load. Refresh the page and try again.");
+        return window.blobUpload('blake/' + f.name, f, {
+          access: 'public',
+          handleUploadUrl: API + '/blob',
+          multipart: f.size > 8 * 1024 * 1024,
+          contentType: f.type || 'application/octet-stream',
+        }).then(function (blob) {
+          var body = Object.assign({ url: blob.url, name: f.name, contentType: f.type || '' }, pageId ? { pageId: pageId } : {}, extra || {});
+          return fetch(API + '/attach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+            .then(function (r) { if (!r.ok) throw new Error("Couldn't attach " + f.name + '.'); });
+        }, function () {
+          throw new Error("Couldn't upload " + f.name + '. Check the connection and try again.');
         });
       });
     }
@@ -869,7 +884,7 @@
     function addFiles(list) {
       var tooBig = [];
       Array.prototype.forEach.call(list, function (f) {
-        if (f.size > 25 * 1024 * 1024) { tooBig.push(f.name); return; }
+        if (f.size > MAX_BYTES) { tooBig.push(f.name); return; }
         queued.push(f);
       });
       renderQueue();
@@ -932,7 +947,7 @@
       if (!input) return;
       var id = input.closest('form[data-answer]').getAttribute('data-answer');
       var list = answerQueue[id] || (answerQueue[id] = []);
-      Array.prototype.forEach.call(input.files, function (f) { if (f.size <= 25 * 1024 * 1024) list.push(f); });
+      Array.prototype.forEach.call(input.files, function (f) { if (f.size <= MAX_BYTES) list.push(f); });
       input.value = '';
       render();
     });
