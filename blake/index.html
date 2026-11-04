@@ -2,396 +2,413 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex">
   <title>Blake's List</title>
   <style>
     :root {
-      --bg: #FAFAFA;
-      --text: #09090B;
-      --muted: #52525B;
-      --border: #E4E4E7;
-      --accent: #2563EB;
-      --accent-dark: #1D4ED8;
-      --card-bg: #FFFFFF;
-      --done: #16A34A;
-      --done-bg: #F0FDF4;
-      --danger: #DC2626;
+      --bg: #F2F2F7;
+      --card: #FFFFFF;
+      --text: #111113;
+      --muted: #6B6B73;
+      --line: #E5E5EA;
+      --blue: #2563EB;
+      --blue-bg: #EEF4FF;
+      --green: #16A34A;
+      --green-bg: #EFFBF3;
+      --amber: #C2410C;
+      --amber-bg: #FFF1E6;
+      --red: #DC2626;
+      --radius: 14px;
+      --bar: 88px;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
 
     body {
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      font-size: 18px;
-      line-height: 1.5;
+      font-size: 17px;
+      line-height: 1.45;
       min-height: 100vh;
-      -webkit-text-size-adjust: 100%;
+      padding-bottom: calc(var(--bar) + 32px + env(safe-area-inset-bottom));
     }
 
-    main {
-      width: 100%;
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 2.5rem 1rem 4rem;
+    .wrap { max-width: 680px; margin: 0 auto; padding: 0 16px; }
+
+    /* ---------- top ---------- */
+    header.top {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(242, 242, 247, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
-    h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.2;
-    }
-
-    .sub { color: var(--muted); margin-top: 0.35rem; margin-bottom: 2rem; }
-
-    /* the two sides */
-    .cols { display: grid; gap: 2.5rem; }
-
-    .colhead { margin-bottom: 1rem; }
-
-    .eyebrow {
-      display: inline-block;
-      font-size: 0.78rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: #fff;
-      background: var(--accent);
-      border-radius: 6px;
-      padding: 0.1rem 0.55rem;
-    }
-
-    .col.k .eyebrow { background: var(--done); }
-
-    .colhead h2 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      margin-top: 0.4rem;
+    header.top .wrap {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 16px 10px;
     }
 
-    .colhead p { color: var(--muted); font-size: 0.95rem; margin-top: 0.1rem; }
+    h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
 
-    .lh {
-      font-size: 0.85rem;
+    .files-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 40px;
+      padding: 0 14px 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      font: inherit;
+      font-size: 15px;
       font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .files-btn:hover { background: #FAFAFA; }
+    .files-btn[hidden] { display: none; }
+
+    /* ---------- sections ---------- */
+    section { margin-top: 22px; }
+
+    section h2 {
+      font-size: 13px;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
-      margin: 1.75rem 0 0.75rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 8px;
+      margin: 0 4px 8px;
     }
 
-    .count {
-      background: var(--border);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 0 0.55rem;
-      font-size: 0.8rem;
-      line-height: 1.5;
+    .pill { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 1px 8px; line-height: 1.6; }
+    .pill.count { background: var(--line); color: var(--text); }
+    .pill.new { background: var(--blue); color: #fff; }
+
+    ul.group {
+      list-style: none;
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
-    @media (min-width: 900px) {
-      main { max-width: 1140px; }
-      .cols { grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; }
-      .col.k { border-left: 1px solid var(--border); padding-left: 2.5rem; }
+    ul.group li + li { border-top: 1px solid var(--line); }
+
+    .row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 14px 13px 16px;
+      min-height: 66px;
+      background: none;
+      border: none;
+      font: inherit;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
     }
 
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.25rem;
+    .row:hover { background: #FAFAFA; }
+    .row:focus-visible { outline: 3px solid var(--blue); outline-offset: -3px; }
+
+    .mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 800;
+      font-size: 15px;
     }
 
-    label {
-      display: block;
+    .mark.open { border: 2px solid #C7C7CC; background: #fff; }
+    .mark.needs { background: var(--amber-bg); color: var(--amber); border: 2px solid #F3C9A6; }
+    .mark.done { background: var(--green); color: #fff; }
+
+    .body { min-width: 0; }
+
+    .title {
       font-weight: 600;
-      font-size: 0.95rem;
-      margin-bottom: 0.4rem;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
-    input[type="text"], textarea {
+    .sub {
+      color: var(--muted);
+      font-size: 14.5px;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sub b { font-weight: 600; color: var(--green); }
+    .sub.amber b { color: var(--amber); }
+    .sub.blue b { color: var(--blue); }
+
+    .right { display: flex; align-items: center; gap: 10px; color: #C7C7CC; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
+
+    .empty { color: var(--muted); padding: 18px 16px; text-align: center; font-size: 15px; }
+
+    /* ---------- quick add bar ---------- */
+    .quick {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--line);
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    }
+
+    .quick .wrap { padding: 0; }
+
+    .collapsed {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 60px;
+      background: #F2F2F7;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px 8px 8px;
+      font: inherit;
+      font-size: 17px;
+      color: var(--muted);
+      cursor: text;
+      text-align: left;
+    }
+
+    .collapsed:hover { background: #ECECF1; }
+
+    .plus {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .quick form { display: none; flex-direction: column; gap: 10px; }
+    .quick.open .collapsed { display: none; }
+    .quick.open form { display: flex; }
+
+    .quick input[type="text"], .quick textarea, .sheet textarea {
       width: 100%;
       font: inherit;
+      font-size: 17px;
       color: var(--text);
+      border: 1px solid #D1D1D6;
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-height: 50px;
       background: #fff;
-      border: 1px solid #CBD5E1;
-      border-radius: 10px;
-      padding: 0.8rem 0.9rem;
-      min-height: 52px;
     }
 
-    textarea { min-height: 110px; resize: vertical; }
+    .quick textarea, .sheet textarea { min-height: 84px; resize: vertical; }
 
-    input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible, .drop:focus-visible {
-      outline: 3px solid var(--accent);
+    input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+      outline: 3px solid var(--blue);
       outline-offset: 2px;
     }
 
-    .field + .field { margin-top: 1rem; }
+    .qrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
-    .drop {
-      margin-top: 1rem;
-      border: 2px dashed #CBD5E1;
-      border-radius: 12px;
-      padding: 1.1rem 1rem;
-      text-align: center;
-      color: var(--muted);
-      cursor: pointer;
-      transition: border-color 150ms ease, background 150ms ease;
-      min-height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-    }
-
-    .drop:hover, .drop.over { border-color: var(--accent); background: #EFF6FF; color: var(--accent-dark); }
-    .drop svg { flex-shrink: 0; }
-
-    .files { list-style: none; margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
-
-    .files li {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      background: #F4F4F5;
-      border-radius: 8px;
-      padding: 0.45rem 0.6rem 0.45rem 0.8rem;
-      font-size: 0.95rem;
-    }
-
-    .files .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .files .fsize { color: var(--muted); font-size: 0.85rem; }
-
-    .files button {
+    .ghost {
       background: none;
       border: none;
-      color: var(--muted);
+      font: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--blue);
       cursor: pointer;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      display: flex;
+      padding: 0 10px;
+      min-height: 44px;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
+      gap: 6px;
+      border-radius: 10px;
     }
 
-    .files button:hover { background: #E4E4E7; color: var(--danger); }
+    .ghost:hover { background: var(--blue-bg); }
+    .ghost.quiet { color: var(--muted); }
 
-    .primary {
-      margin-top: 1.1rem;
-      width: 100%;
-      min-height: 56px;
-      font: inherit;
-      font-weight: 700;
-      font-size: 1.05rem;
+    .send {
+      margin-left: auto;
+      background: var(--blue);
       color: #fff;
-      background: var(--accent);
       border: none;
       border-radius: 12px;
+      font: inherit;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 0 18px;
+      min-height: 46px;
       cursor: pointer;
-      transition: background 150ms ease;
     }
 
-    .primary:hover { background: var(--accent-dark); }
-    .primary:disabled { background: #93C5FD; cursor: default; }
+    .send:hover { background: #1D4ED8; }
+    .send:disabled { opacity: 0.5; cursor: default; }
 
-    .status {
-      margin-top: 0.75rem;
-      min-height: 1.5em;
-      font-size: 0.95rem;
-      color: var(--muted);
-    }
-
-    .status.err { color: var(--danger); }
-    .status.ok { color: var(--done); }
-
-    /* items, both sides */
-    .list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-
-    .item {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 0.9rem 0.9rem 0.9rem 1rem;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 0.8rem;
-      align-items: start;
-    }
-
-    .item.saving { opacity: 0.6; }
-
-    .check {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 2px solid #A1A1AA;
-      background: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      flex-shrink: 0;
-      margin-top: 1px;
-      transition: background 150ms ease, border-color 150ms ease;
-    }
-
-    .check:hover { border-color: var(--done); }
-
-    .badge, .ask-badge {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
-      color: #fff;
-    }
-
-    .badge { background: var(--done); }
-    .ask-badge { background: var(--done); font-weight: 800; font-size: 0.95rem; }
-
-    .body { min-width: 0; }
-    .title { font-weight: 600; overflow-wrap: anywhere; }
-
-    .notes {
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin-top: 0.25rem;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 6px;
       max-width: 100%;
-      background: #F4F4F5;
+      background: #F2F2F7;
+      border: none;
       border-radius: 999px;
-      padding: 0.2rem 0.7rem;
-      font-size: 0.85rem;
-      color: var(--text);
-      text-decoration: none;
-      border: none;
-      font-family: inherit;
-      cursor: pointer;
-    }
-
-    .chip:hover { background: #E4E4E7; }
-    .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    /* the answer block on a completed item */
-    .reply {
-      margin-top: 0.6rem;
-      background: var(--done-bg);
-      border-left: 3px solid var(--done);
-      border-radius: 0 10px 10px 0;
-      padding: 0.6rem 0.8rem;
-    }
-
-    .reply .who {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--done);
-      margin-bottom: 0.2rem;
-    }
-
-    .reply .txt { white-space: pre-wrap; overflow-wrap: anywhere; }
-
-    .checked-only { margin-top: 0.5rem; color: var(--done); font-size: 0.9rem; font-weight: 600; }
-
-    /* answering one of Knox's asks, inline */
-    .answer { margin-top: 0.7rem; border-top: 1px dashed var(--border); padding-top: 0.7rem; }
-    .answer label { font-size: 0.85rem; }
-    .answer textarea { min-height: 76px; font-size: 1rem; }
-
-    .answer .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.6rem;
-      align-items: center;
-    }
-
-    .btn {
+      padding: 6px 8px 6px 12px;
       font: inherit;
-      font-size: 0.95rem;
-      font-weight: 700;
-      min-height: 44px;
-      padding: 0 1rem;
-      border-radius: 10px;
-      border: 1px solid #CBD5E1;
-      background: #fff;
+      font-size: 14px;
       color: var(--text);
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
     }
 
-    .btn:hover { background: #F4F4F5; }
-    .btn.send { background: var(--done); border-color: var(--done); color: #fff; }
-    .btn.send:hover { background: #15803D; }
-    .btn:disabled { opacity: 0.6; cursor: default; }
+    .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chip .x { display: flex; color: var(--muted); }
 
-    .meta { margin-top: 0.5rem; font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.9rem; }
-    .meta a, .meta button { color: var(--accent); text-decoration: none; background: none; border: none; font: inherit; font-size: 0.85rem; cursor: pointer; padding: 0; }
-    .meta a:hover, .meta button:hover { text-decoration: underline; }
+    .status { font-size: 14px; color: var(--muted); min-height: 1.3em; }
+    .status.err { color: var(--red); }
+    .status.ok { color: var(--green); }
 
-    .trash {
-      background: none;
+    /* ---------- sheet ---------- */
+    .scrim {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.38);
+      z-index: 30;
+      display: none;
+    }
+
+    .scrim.show { display: block; }
+
+    .sheet {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: min(680px, 100%);
+      max-height: 92vh;
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 18px 18px 0 0;
+      z-index: 31;
+      display: none;
+      padding: 8px 20px calc(28px + env(safe-area-inset-bottom));
+      box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    @media (min-width: 720px) {
+      .sheet {
+        bottom: auto;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 18px;
+        max-height: 86vh;
+        padding-bottom: 28px;
+      }
+    }
+
+    .sheet.show { display: block; }
+    .grab { width: 40px; height: 5px; background: #D1D1D6; border-radius: 3px; margin: 6px auto 14px; }
+
+    .sheet .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .sheet h3 { font-size: 22px; font-weight: 800; line-height: 1.25; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+
+    .close {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #F2F2F7;
       border: none;
-      color: #A1A1AA;
       cursor: pointer;
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: -3px -4px 0 0;
+      flex-shrink: 0;
+      color: var(--muted);
     }
 
-    .trash:hover { background: #FEF2F2; color: var(--danger); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 3px 10px;
+      margin-top: 10px;
+    }
 
-    .empty { color: var(--muted); padding: 1.25rem 0.5rem; text-align: center; }
+    .badge.done { background: var(--green-bg); color: var(--green); }
+    .badge.needs { background: var(--amber-bg); color: var(--amber); }
+    .badge.open { background: var(--blue-bg); color: var(--blue); }
 
-    /* file grids: the shelf, and files inside an answer */
+    .meta { color: var(--muted); font-size: 14px; margin-top: 8px; }
+
+    .block { margin-top: 20px; }
+
+    .block h4 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .desc { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+    .answer { background: var(--green-bg); border-radius: 12px; padding: 12px 14px; }
+    .answer.none { background: #F2F2F7; color: var(--muted); }
+
     .fgrid {
       list-style: none;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.6rem;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
     }
-
-    .reply .fgrid { margin-top: 0.6rem; gap: 0.45rem; }
 
     .fcard {
       position: relative;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
+      aspect-ratio: 1;
       border-radius: 12px;
       overflow: hidden;
-      aspect-ratio: 1;
+      background: #F2F2F7;
+      border: 1px solid var(--line);
     }
 
     .fcard .open {
@@ -407,7 +424,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.4rem;
+      gap: 6px;
       color: var(--text);
       font: inherit;
       text-decoration: none;
@@ -416,8 +433,8 @@
     .fcard img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     .fcard .fn {
-      font-size: 0.8rem;
-      padding: 0 0.5rem;
+      font-size: 12px;
+      padding: 0 6px;
       text-align: center;
       overflow: hidden;
       display: -webkit-box;
@@ -426,15 +443,15 @@
       overflow-wrap: anywhere;
     }
 
-    .fcard .x {
+    .fcard .xbtn {
       position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 32px;
-      height: 32px;
+      top: 5px;
+      right: 5px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       border: none;
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.94);
       color: var(--muted);
       cursor: pointer;
       display: flex;
@@ -443,10 +460,54 @@
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
     }
 
-    .fcard .x:hover { color: var(--danger); }
+    .frows { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .frows li { display: flex; align-items: center; gap: 6px; }
 
-    .from-knox { margin-bottom: 0.5rem; }
-    .from-knox .lh { margin-top: 0; }
+    .frows a {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration: none;
+      min-height: 50px;
+      min-width: 0;
+    }
+
+    .frows a:hover { background: #FAFAFA; }
+    .frows a span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .frows a small { color: var(--blue); font-weight: 600; font-size: 14px; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; align-items: center; }
+
+    .btn {
+      font: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      min-height: 48px;
+      padding: 0 16px;
+      border-radius: 12px;
+      border: 1px solid #D1D1D6;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover { background: #F7F7F9; }
+    .btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+    .btn.primary:hover { background: #15803D; }
+    .btn.danger { color: var(--red); margin-left: auto; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+
+    .sheet .status { margin-top: 10px; }
 
     .lightbox {
       position: fixed;
@@ -474,83 +535,68 @@
       padding: 0 1rem;
     }
 
-    footer {
-      margin-top: 3rem;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.85rem;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * { transition: none !important; }
-    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Blake's List</h1>
-    <p class="sub">B side is what you send up. K side is what Knox sends down.</p>
-
-    <div class="cols">
-      <section class="col b" aria-labelledby="b-h">
-        <div class="colhead">
-          <span class="eyebrow">B side</span>
-          <h2 id="b-h">You <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> Knox</h2>
-          <p>Ask for things, send things up. Knox answers here with a check, a note, or files.</p>
-        </div>
-
-        <section class="card" aria-labelledby="add-heading">
-          <form id="add-form" novalidate>
-            <div class="field">
-              <label for="title" id="add-heading">What do you need from Knox?</label>
-              <input type="text" id="title" autocomplete="off" placeholder="Send me the Elm St. bid" maxlength="200" required>
-            </div>
-            <div class="field">
-              <label for="notes">Details <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-              <textarea id="notes" placeholder="Who, where, numbers, anything Knox should know." maxlength="4000"></textarea>
-            </div>
-
-            <div class="drop" id="drop" tabindex="0" role="button" aria-label="Add files, photos or documents">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-              <span id="drop-text">Drop photos or files here, or tap to choose</span>
-              <input type="file" id="file-input" multiple hidden>
-            </div>
-            <ul class="files" id="file-list"></ul>
-
-            <button type="submit" class="primary" id="add-btn">Send to Knox</button>
-            <p class="status" id="status" role="status" aria-live="polite"></p>
-          </form>
-        </section>
-
-        <h3 class="lh">Waiting on Knox <span class="count" id="b-open-count">0</span></h3>
-        <ul class="list" id="b-open"></ul>
-
-        <h3 class="lh">Knox answered <span class="count" id="b-done-count">0</span></h3>
-        <ul class="list" id="b-done"></ul>
-      </section>
-
-      <section class="col k" aria-labelledby="k-h">
-        <div class="colhead">
-          <span class="eyebrow">K side</span>
-          <h2 id="k-h">Knox <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> You</h2>
-          <p>Things Knox needs from you. Answer with a note, a file, or just check it off.</p>
-        </div>
-
-        <section class="from-knox" id="from-knox" hidden aria-labelledby="fk-heading">
-          <h3 class="lh" id="fk-heading">Files from Knox <span class="count" id="file-count">0</span></h3>
-          <ul class="fgrid" id="file-grid"></ul>
-        </section>
-
-        <h3 class="lh">Knox asked you <span class="count" id="k-open-count">0</span></h3>
-        <ul class="list" id="k-open"></ul>
-
-        <h3 class="lh">You answered <span class="count" id="k-done-count">0</span></h3>
-        <ul class="list" id="k-done"></ul>
-      </section>
+  <header class="top">
+    <div class="wrap">
+      <h1>Blake's List</h1>
+      <button type="button" class="files-btn" id="files-btn" hidden aria-label="Files from Knox">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        Files from Knox <span class="pill count" id="files-count">0</span>
+      </button>
     </div>
+  </header>
 
-    <footer>The trash can takes an item off the list for good. Finished items clear out on their own each Monday.</footer>
+  <main class="wrap">
+    <section id="sec-needs">
+      <h2>Needs you <span class="pill count" id="needs-count">0</span><span class="pill new" id="needs-new" hidden></span></h2>
+      <ul class="group" id="list-needs"></ul>
+    </section>
+
+    <section id="sec-waiting">
+      <h2>Waiting on Knox <span class="pill count" id="waiting-count">0</span></h2>
+      <ul class="group" id="list-waiting"></ul>
+    </section>
+
+    <section id="sec-done">
+      <h2>Completed <span class="pill count" id="done-count">0</span><span class="pill new" id="done-new" hidden></span></h2>
+      <ul class="group" id="list-done"></ul>
+    </section>
   </main>
+
+  <!-- quick add, pinned to the bottom like a message bar -->
+  <div class="quick" id="quick">
+    <div class="wrap">
+      <button type="button" class="collapsed" id="quick-open">
+        <span class="plus" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        Ask Knox for something
+      </button>
+      <form id="add-form" novalidate>
+        <input type="text" id="title" autocomplete="off" placeholder="What do you need from Knox?" maxlength="200" aria-label="What do you need from Knox?">
+        <textarea id="notes" hidden placeholder="Details: who, where, numbers, anything Knox should know." maxlength="4000" aria-label="Details"></textarea>
+        <div class="chips" id="file-list"></div>
+        <div class="qrow">
+          <button type="button" class="ghost" id="toggle-notes">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            Add details
+          </button>
+          <button type="button" class="ghost" id="pick-files">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            Add files
+          </button>
+          <input type="file" id="file-input" multiple hidden>
+          <button type="button" class="ghost quiet" id="quick-cancel">Cancel</button>
+          <button type="submit" class="send" id="add-btn">Send</button>
+        </div>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
 
   <div class="lightbox" id="lightbox" role="dialog" aria-label="Photo, tap anywhere to close">
     <img id="lightbox-img" alt="">
@@ -568,17 +614,20 @@
     // The list lives in Knox's Notion. This page talks to the dashboard's API,
     // which holds the Notion token; nothing secret is in this file.
     var LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    var API = LOCAL ? 'http://localhost:3000/api/blake' : 'https://knox-dashboard-pnsj.vercel.app/api/blake';
+    var PROD_API = 'https://knox-dashboard-pnsj.vercel.app/api/blake';
+    var API = (LOCAL && new URLSearchParams(location.search).get('api') !== 'prod') ? 'http://localhost:3000/api/blake' : PROD_API;
     var MAX_BYTES = 500 * 1024 * 1024;
 
-    var items = [];       // asks from both sides, each with files (asker's) and responseFiles (answer)
-    var files = [];       // the loose shelf from Knox
-    var queued = [];      // files waiting to go with the next ask up
-    var answerQueue = {}; // files waiting to go with an answer, by ask id
-    var answerDraft = {}; // typed answers, by ask id, so a refresh can't wipe them
+    var items = [];         // asks from both sides, each with files (asker's) and responseFiles (answer)
+    var files = [];         // the loose shelf from Knox
+    var queued = [];        // files waiting to go with the next ask
+    var sheetItem = null;   // the ask open in the sheet, or 'files' for the shelf
+    var sheetQueue = [];    // files waiting to go with an answer in the sheet
+    var seen = {};          // id -> edited stamp Blake has already looked at
+    var justActed = {};     // ids Blake changed himself; the next refresh marks them seen
+    try { seen = JSON.parse(localStorage.getItem('blake-seen') || '{}'); } catch (e) {}
 
     var $ = function (id) { return document.getElementById(id); };
-    var statusEl = $('status');
 
     function esc(s) {
       return String(s).replace(/[&<>"']/g, function (c) {
@@ -587,163 +636,231 @@
     }
 
     function setStatus(msg, kind) {
-      statusEl.textContent = msg || '';
-      statusEl.className = 'status' + (kind ? ' ' + kind : '');
+      var el = $('status');
+      el.textContent = msg || '';
+      el.className = 'status' + (kind ? ' ' + kind : '');
     }
 
-    function fmtSize(n) {
-      if (n < 1024) return n + ' B';
-      if (n < 1024 * 1024) return Math.round(n / 1024) + ' KB';
-      return (n / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-
-    function fmtDate(iso) {
-      var d = new Date(iso);
-      return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    function rel(iso) {
+      var t = new Date(iso).getTime();
+      if (isNaN(t)) return '';
+      var m = Math.round((Date.now() - t) / 60000);
+      if (m < 1) return 'just now';
+      if (m < 60) return m + 'm ago';
+      var h = Math.round(m / 60);
+      if (h < 24) return h + 'h ago';
+      var d = Math.round(h / 24);
+      if (d < 7) return d + 'd ago';
+      return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
 
     function byId(id) { return items.filter(function (i) { return i.id === id; })[0]; }
+    function kindOf(it) { return it.done ? 'done' : (it.side === 'K' ? 'needs' : 'waiting'); }
+    function stamp(it) { return it.edited || it.created || ''; }
+    function isNew(it) {
+      if (kindOf(it) === 'waiting') return false;
+      return !seen[it.id] || seen[it.id] < stamp(it);
+    }
+    function markSeen(it) {
+      seen[it.id] = stamp(it) || new Date().toISOString();
+      try { localStorage.setItem('blake-seen', JSON.stringify(seen)); } catch (e) {}
+    }
 
     // ---------- rendering ----------
     var CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>';
-    var TRASH = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-    var CLIP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
-    var CLIP_LG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
-    var FILE_ICON = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/></svg>';
+    var CHEV = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+    var CLIP = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
     var X_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    var FILE_ICON = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/></svg>';
+    var FILE_SM = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/></svg>';
+    var TRASH = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+    var DETAILS_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>';
 
-    // a file as a square card: photos open the lightbox, anything else a new tab
-    function fileCardHtml(f, removable) {
-      var when = f.created ? ', ' + fmtDate(f.created) : '';
-      var inner = f.kind === 'image'
-        ? '<button type="button" class="open" data-lb-src="' + esc(f.url) + '" data-lb-cap="' + esc(f.name) + '" aria-label="View ' + esc(f.name) + when + '"><img src="' + esc(f.url) + '" alt="' + esc(f.name) + '" loading="lazy"></button>'
-        : '<a class="open" href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer" aria-label="Open ' + esc(f.name) + when + '">' + FILE_ICON + '<span class="fn">' + esc(f.name) + '</span></a>';
-      return '<li class="fcard" title="' + esc(f.name) + when + '">' + inner +
-        (removable ? '<button type="button" class="x" data-rm-file="' + esc(f.id) + '" aria-label="Remove ' + esc(f.name) + '">' + X_ICON + '</button>' : '') +
-      '</li>';
+    function nfiles(n) { return n + (n === 1 ? ' file' : ' files'); }
+
+    // the one gray line under a title: the state, in words
+    function subline(it) {
+      var k = kindOf(it);
+      var att = (it.files && it.files.length) ? ' · ' + nfiles(it.files.length) : '';
+      if (k === 'needs') return { cls: 'amber', html: '<b>Knox asked</b> · ' + esc(rel(it.created)) + att };
+      if (k === 'waiting') return { cls: 'blue', html: '<b>Waiting</b> · sent ' + esc(rel(it.created)) + att };
+      var who = it.side === 'K' ? 'You' : 'Knox';
+      var txt = (it.response || '').trim();
+      var rf = it.responseFiles ? it.responseFiles.length : 0;
+      // a bare check on his own ask could be either of them, so no name on it
+      if (!txt && !rf) return { cls: '', html: it.side === 'K' ? '<b>You:</b> checked it off' : '<b>Done</b> · checked off' };
+      var what = txt ? esc(txt) : 'sent ' + nfiles(rf);
+      return { cls: '', html: '<b>' + who + ':</b> ' + what + (txt && rf ? ' · ' + nfiles(rf) : '') };
     }
 
-    // attachments on an ask, as small chips
-    function chipsHtml(list) {
-      if (!list || !list.length) return '';
-      return '<div class="chips">' + list.map(function (f) {
-        return f.kind === 'image'
-          ? '<button type="button" class="chip" data-lb-src="' + esc(f.url) + '" data-lb-cap="' + esc(f.name) + '">' + CLIP + '<span>' + esc(f.name) + '</span></button>'
-          : '<a class="chip" href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer">' + CLIP + '<span>' + esc(f.name) + '</span></a>';
-      }).join('') + '</div>';
-    }
-
-    function metaHtml(it, extra) {
-      var bits = [];
-      if (it.saving) bits.push('<span>' + esc(it.saving) + '</span>');
-      else {
-        if (extra) bits.push(extra);
-        if (it.url) bits.push('<a href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">Open in Notion</a>');
-      }
-      return '<div class="meta">' + bits.join('') + '</div>';
-    }
-
-    // the answer on a completed ask, whoever gave it
-    function answerHtml(it, who) {
-      var hasText = !!(it.response && it.response.trim());
-      var hasFiles = !!(it.responseFiles && it.responseFiles.length);
-      if (!hasText && !hasFiles) return '<div class="checked-only">Checked off</div>';
-      return '<div class="reply"><div class="who">' + who + '</div>' +
-        (hasText ? '<div class="txt">' + esc(it.response) + '</div>' : '') +
-        (hasFiles ? '<ul class="fgrid">' + it.responseFiles.map(function (f) { return fileCardHtml(f, false); }).join('') + '</ul>' : '') +
-      '</div>';
-    }
-
-    // B side, still waiting: your ask going up
-    function bOpenHtml(it) {
-      return '<li class="item' + (it.saving ? ' saving' : '') + '" data-id="' + esc(it.id) + '">' +
-        '<button class="check" type="button" data-act="done" aria-label="I handled this myself, mark it done"></button>' +
-        '<div class="body">' +
-          '<div class="title">' + esc(it.title) + '</div>' +
-          (it.notes ? '<div class="notes">' + esc(it.notes) + '</div>' : '') +
-          chipsHtml(it.files) +
-          metaHtml(it) +
-        '</div>' +
-        '<button class="trash" type="button" data-act="remove" aria-label="Remove from the list"' + (it.saving ? ' disabled' : '') + '>' + TRASH + '</button>' +
-      '</li>';
-    }
-
-    // either side, completed: the ask plus the answer that closed it
-    function doneHtml(it, who) {
-      return '<li class="item done" data-id="' + esc(it.id) + '">' +
-        '<div class="badge" aria-label="Completed">' + CHECK + '</div>' +
-        '<div class="body">' +
-          '<div class="title">' + esc(it.title) + '</div>' +
-          (it.notes ? '<div class="notes">' + esc(it.notes) + '</div>' : '') +
-          chipsHtml(it.files) +
-          answerHtml(it, who) +
-          metaHtml(it, '<button type="button" data-act="reopen">Put it back</button>') +
-        '</div>' +
-        '<button class="trash" type="button" data-act="remove" aria-label="Remove from the list">' + TRASH + '</button>' +
-      '</li>';
-    }
-
-    // K side, open: Knox's ask with the answer box right under it
-    function kOpenHtml(it) {
-      var q = answerQueue[it.id] || [];
-      var qHtml = q.length ? '<div class="chips">' + q.map(function (f, i) {
-        return '<button type="button" class="chip" data-ans-unqueue="' + i + '" aria-label="Remove ' + esc(f.name) + '">' + CLIP + '<span>' + esc(f.name) + '</span> ' + X_ICON + '</button>';
-      }).join('') + '</div>' : '';
-      return '<li class="item' + (it.saving ? ' saving' : '') + '" data-id="' + esc(it.id) + '">' +
-        '<div class="ask-badge" aria-label="Knox asked">K</div>' +
-        '<div class="body">' +
-          '<div class="title">' + esc(it.title) + '</div>' +
-          (it.notes ? '<div class="notes">' + esc(it.notes) + '</div>' : '') +
-          chipsHtml(it.files) +
-          '<form class="answer" data-answer="' + esc(it.id) + '">' +
-            '<label for="ans-' + esc(it.id) + '">Your answer</label>' +
-            '<textarea id="ans-' + esc(it.id) + '" placeholder="Type a note, or just add a file and send."' + (it.saving ? ' disabled' : '') + '>' + esc(answerDraft[it.id] || '') + '</textarea>' +
-            qHtml +
-            '<div class="row">' +
-              '<button type="button" class="btn" data-ans-pick aria-label="Add files to your answer">' + CLIP_LG + ' Add files</button>' +
-              '<input type="file" multiple hidden data-ans-input>' +
-              '<button type="submit" class="btn send"' + (it.saving ? ' disabled' : '') + '>Send answer</button>' +
-              '<button type="button" class="btn" data-act="done"' + (it.saving ? ' disabled' : '') + '>Just check off</button>' +
-            '</div>' +
-          '</form>' +
-          metaHtml(it) +
-        '</div>' +
-        '<button class="trash" type="button" data-act="remove" aria-label="Remove from the list"' + (it.saving ? ' disabled' : '') + '>' + TRASH + '</button>' +
-      '</li>';
+    function rowHtml(it) {
+      var k = kindOf(it);
+      var mark = k === 'done' ? '<span class="mark done" aria-hidden="true">' + CHECK + '</span>'
+        : k === 'needs' ? '<span class="mark needs" aria-hidden="true">K</span>'
+        : '<span class="mark open" aria-hidden="true"></span>';
+      var sub = subline(it);
+      var fresh = isNew(it);
+      return '<li><button type="button" class="row" data-open="' + esc(it.id) + '" aria-label="' + esc(it.title) + (fresh ? ', new' : '') + '">' +
+        mark +
+        '<span class="body"><span class="title">' + esc(it.title) + '</span><span class="sub ' + sub.cls + '">' + sub.html + '</span></span>' +
+        '<span class="right">' + (fresh ? '<span class="dot" aria-hidden="true"></span>' : '') + (it.saving ? '' : CHEV) + '</span>' +
+      '</button></li>';
     }
 
     function render() {
-      // keep whatever is being typed in an answer box across a re-render
-      document.querySelectorAll('form[data-answer] textarea').forEach(function (ta) {
-        answerDraft[ta.closest('form').getAttribute('data-answer')] = ta.value;
-      });
-      var newest = function (list) { return list.slice().reverse(); };
-      var bOpen = newest(items.filter(function (i) { return i.side !== 'K' && !i.done; }));
-      var bDone = newest(items.filter(function (i) { return i.side !== 'K' && i.done; }));
-      var kOpen = newest(items.filter(function (i) { return i.side === 'K' && !i.done; }));
-      var kDone = newest(items.filter(function (i) { return i.side === 'K' && i.done; }));
-      $('b-open').innerHTML = bOpen.length ? bOpen.map(bOpenHtml).join('') : '<li class="empty">Nothing waiting. Send something up.</li>';
-      $('b-done').innerHTML = bDone.length ? bDone.map(function (it) { return doneHtml(it, 'Knox'); }).join('') : '<li class="empty">Nothing back yet.</li>';
-      $('k-open').innerHTML = kOpen.length ? kOpen.map(kOpenHtml).join('') : '<li class="empty">Knox hasn\'t asked for anything.</li>';
-      $('k-done').innerHTML = kDone.length ? kDone.map(function (it) { return doneHtml(it, 'You'); }).join('') : '<li class="empty">Nothing answered yet.</li>';
-      $('b-open-count').textContent = bOpen.length;
-      $('b-done-count').textContent = bDone.length;
-      $('k-open-count').textContent = kOpen.length;
-      $('k-done-count').textContent = kDone.length;
+      var needs = items.filter(function (i) { return kindOf(i) === 'needs'; }).sort(function (a, b) { return (b.created || '').localeCompare(a.created || ''); });
+      var waiting = items.filter(function (i) { return kindOf(i) === 'waiting'; }).sort(function (a, b) { return (b.created || '').localeCompare(a.created || ''); });
+      var done = items.filter(function (i) { return kindOf(i) === 'done'; }).sort(function (a, b) { return stamp(b).localeCompare(stamp(a)); });
+
+      $('list-needs').innerHTML = needs.length ? needs.map(rowHtml).join('') : '<li class="empty">Nothing from Knox right now.</li>';
+      $('list-waiting').innerHTML = waiting.length ? waiting.map(rowHtml).join('') : '<li class="empty">Nothing waiting. Use the blue + below to ask for something.</li>';
+      $('list-done').innerHTML = done.length ? done.map(rowHtml).join('') : '<li class="empty">Nothing finished yet.</li>';
+
+      $('needs-count').textContent = needs.length;
+      $('waiting-count').textContent = waiting.length;
+      $('done-count').textContent = done.length;
+      var nn = needs.filter(isNew).length, dn = done.filter(isNew).length;
+      $('needs-new').hidden = !nn; $('needs-new').textContent = nn + ' new';
+      $('done-new').hidden = !dn; $('done-new').textContent = dn + ' new';
+      document.title = (nn + dn ? '(' + (nn + dn) + ') ' : '') + "Blake's List";
     }
 
     function renderFiles() {
-      $('from-knox').hidden = files.length === 0;
-      $('file-count').textContent = files.length;
-      $('file-grid').innerHTML = files.map(function (f) { return fileCardHtml(f, true); }).join('');
+      $('files-btn').hidden = files.length === 0;
+      $('files-count').textContent = files.length;
+      if (sheetItem === 'files') renderSheet();
     }
 
     function renderQueue() {
       $('file-list').innerHTML = queued.map(function (f, i) {
-        return '<li><span class="fname">' + esc(f.name) + '</span><span class="fsize">' + fmtSize(f.size) + '</span>' +
-          '<button type="button" data-unqueue="' + i + '" aria-label="Remove ' + esc(f.name) + '">' + X_ICON + '</button></li>';
+        return '<button type="button" class="chip" data-unqueue="' + i + '" aria-label="Remove ' + esc(f.name) + '">' + CLIP + '<span>' + esc(f.name) + '</span><span class="x">' + X_ICON + '</span></button>';
       }).join('');
-      $('drop-text').textContent = queued.length ? 'Add more files' : 'Drop photos or files here, or tap to choose';
+    }
+
+    // ---------- the sheet ----------
+    function fileCardHtml(f, removable) {
+      var inner = f.kind === 'image'
+        ? '<button type="button" class="open" data-lb-src="' + esc(f.url) + '" data-lb-cap="' + esc(f.name) + '" aria-label="View ' + esc(f.name) + '"><img src="' + esc(f.url) + '" alt="' + esc(f.name) + '" loading="lazy"></button>'
+        : '<a class="open" href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer" aria-label="Open ' + esc(f.name) + '">' + FILE_ICON + '<span class="fn">' + esc(f.name) + '</span></a>';
+      return '<li class="fcard" title="' + esc(f.name) + '">' + inner +
+        (removable ? '<button type="button" class="xbtn" data-rm-file="' + esc(f.id) + '" aria-label="Remove ' + esc(f.name) + '">' + X_ICON + '</button></li>' : '</li>');
+    }
+
+    // photos as a thumbnail grid, everything else as tappable rows
+    function filesHtml(list, removable) {
+      if (!list || !list.length) return '';
+      var imgs = list.filter(function (f) { return f.kind === 'image'; });
+      var docs = list.filter(function (f) { return f.kind !== 'image'; });
+      var h = '';
+      if (imgs.length) h += '<ul class="fgrid">' + imgs.map(function (f) { return fileCardHtml(f, removable); }).join('') + '</ul>';
+      if (docs.length) h += '<ul class="frows">' + docs.map(function (f) {
+        return '<li><a href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer">' + FILE_SM + '<span>' + esc(f.name) + '</span><small>Open</small></a>' +
+          (removable ? '<button type="button" class="chip" data-rm-file="' + esc(f.id) + '" aria-label="Remove ' + esc(f.name) + '">' + X_ICON + '</button>' : '') + '</li>';
+      }).join('') + '</ul>';
+      return h;
+    }
+
+    function sheetHtml(it) {
+      var k = kindOf(it);
+      var who = it.side === 'K' ? 'Knox' : 'You';
+      var badge = k === 'done' ? '<span class="badge done">' + CHECK + ' Completed</span>'
+        : k === 'needs' ? '<span class="badge needs">Knox is asking you</span>'
+        : '<span class="badge open">Waiting on Knox</span>';
+      var h = '<div class="grab" aria-hidden="true"></div>' +
+        '<div class="head"><h3 id="sheet-title">' + esc(it.title) + '</h3><button type="button" class="close" data-close aria-label="Close">' + X_ICON + '</button></div>' +
+        badge +
+        '<div class="meta">' + who + ' asked · ' + esc(rel(it.created)) + '</div>';
+
+      if (it.notes) h += '<div class="block"><h4>Details</h4><div class="desc">' + esc(it.notes) + '</div></div>';
+      if (it.files && it.files.length) h += '<div class="block"><h4>' + (it.side === 'K' ? 'Files from Knox' : 'Your files') + '</h4>' + filesHtml(it.files, false) + '</div>';
+
+      if (k === 'done') {
+        var answerer = it.side === 'K' ? 'Your answer' : "Knox's answer";
+        var txt = (it.response || '').trim();
+        var rf = it.responseFiles || [];
+        h += '<div class="block"><h4>' + answerer + '</h4>';
+        if (txt || rf.length) h += '<div class="answer">' + (txt ? '<div class="desc">' + esc(txt) + '</div>' : '') + filesHtml(rf, false) + '</div>';
+        else h += '<div class="answer none">Checked off, no note.</div>';
+        h += '</div>';
+        h += '<div class="actions">' +
+          '<button type="button" class="btn" data-act="reopen">Put it back</button>' +
+          (it.url ? '<a class="btn" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">Open in Notion</a>' : '') +
+          '<button type="button" class="btn danger" data-act="remove">' + TRASH + ' Remove</button>' +
+        '</div>';
+      } else if (k === 'needs') {
+        h += '<div class="block"><h4>Your answer</h4>' +
+          '<textarea id="sheet-answer" placeholder="Type a note, or just add a file and send."></textarea>' +
+          '<div class="chips" id="sheet-chips" style="margin-top:8px"></div>' +
+          '<div class="actions">' +
+            '<button type="button" class="btn" data-act="pick">' + CLIP + ' Add files</button>' +
+            '<input type="file" id="sheet-file" multiple hidden>' +
+            '<button type="button" class="btn primary" data-act="answer">Send answer</button>' +
+            '<button type="button" class="btn" data-act="done">Just check off</button>' +
+          '</div>' +
+          '<p class="status" id="sheet-status" role="status" aria-live="polite"></p>' +
+        '</div>' +
+        '<div class="actions">' +
+          (it.url ? '<a class="btn" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">Open in Notion</a>' : '') +
+          '<button type="button" class="btn danger" data-act="remove">' + TRASH + ' Remove</button>' +
+        '</div>';
+      } else {
+        h += '<div class="block"><div class="answer none">Knox hasn\'t answered yet. A blue dot will show up here when he does.</div></div>' +
+          '<div class="actions">' +
+            '<button type="button" class="btn" data-act="done">' + CHECK + ' I handled it</button>' +
+            (it.url ? '<a class="btn" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">Open in Notion</a>' : '') +
+            '<button type="button" class="btn danger" data-act="remove">' + TRASH + ' Remove</button>' +
+          '</div>';
+      }
+      return h;
+    }
+
+    function shelfHtml() {
+      return '<div class="grab" aria-hidden="true"></div>' +
+        '<div class="head"><h3 id="sheet-title">Files from Knox</h3><button type="button" class="close" data-close aria-label="Close">' + X_ICON + '</button></div>' +
+        '<div class="meta">Things Knox dropped for you outside any ask. Photos open full screen, files open in a new tab.</div>' +
+        '<div class="block">' + (files.length ? filesHtml(files, true) : '<div class="answer none">Nothing here right now.</div>') + '</div>';
+    }
+
+    function renderSheet() {
+      if (!sheetItem) return;
+      var draft = $('sheet-answer') ? $('sheet-answer').value : '';
+      $('sheet').innerHTML = sheetItem === 'files' ? shelfHtml() : sheetHtml(sheetItem);
+      if ($('sheet-answer')) { $('sheet-answer').value = draft; renderSheetChips(); }
+    }
+
+    function renderSheetChips() {
+      var box = $('sheet-chips');
+      if (!box) return;
+      box.innerHTML = sheetQueue.map(function (f, i) {
+        return '<button type="button" class="chip" data-sheet-unqueue="' + i + '" aria-label="Remove ' + esc(f.name) + '">' + CLIP + '<span>' + esc(f.name) + '</span><span class="x">' + X_ICON + '</span></button>';
+      }).join('');
+    }
+
+    function openSheet(target) {
+      sheetItem = target;
+      sheetQueue = [];
+      if (target !== 'files') { markSeen(target); render(); }
+      renderSheet();
+      $('scrim').classList.add('show');
+      $('sheet').classList.add('show');
+      $('sheet').scrollTop = 0;
+      var c = $('sheet').querySelector('[data-close]');
+      if (c) c.focus();
+    }
+
+    function closeSheet() {
+      sheetItem = null;
+      sheetQueue = [];
+      $('scrim').classList.remove('show');
+      $('sheet').classList.remove('show');
+      $('sheet').innerHTML = '';
+    }
+
+    function setSheetStatus(msg, kind) {
+      var el = $('sheet-status');
+      if (!el) return;
+      el.textContent = msg || '';
+      el.className = 'status' + (kind ? ' ' + kind : '');
     }
 
     // ---------- API ----------
@@ -762,7 +879,21 @@
         .then(function (j) {
           var saving = items.filter(function (i) { return i.saving; });
           items = (j.items || []).concat(saving);
+          // his own edits move the row's edited time; that is not news to him.
+          // Notion reports the new time a little late, so keep marking for two minutes.
+          items.forEach(function (i) {
+            var t = justActed[i.id];
+            if (!t) return;
+            if (Date.now() - t < 120000) markSeen(i); else delete justActed[i.id];
+          });
           render();
+          // keep an open sheet pointed at the fresh copy of its item
+          if (sheetItem && sheetItem !== 'files') {
+            var fresh = byId(sheetItem.id);
+            if (fresh && (fresh.done !== sheetItem.done || fresh.response !== sheetItem.response || (fresh.responseFiles || []).length !== (sheetItem.responseFiles || []).length || (fresh.files || []).length !== (sheetItem.files || []).length)) {
+              sheetItem = fresh; renderSheet();
+            } else if (fresh) { sheetItem = fresh; }
+          }
         })
         .catch(function () { setStatus("Couldn't reach the list. Check the connection and try again.", 'err'); })
         .then(function () { loading = false; });
@@ -775,8 +906,7 @@
         .catch(function () {});
     }
 
-    // Phone photos run 3 to 8 MB; the API takes 4. Shrink big images in the
-    // browser before sending so they go through without anyone thinking about it.
+    // Phone photos run big; shrink them before upload so the store stays lean.
     function shrinkImage(file) {
       return new Promise(function (resolve) {
         if (!/^image\//.test(file.type) || file.size <= 1.5 * 1024 * 1024) return resolve(file);
@@ -793,8 +923,7 @@
             c.toBlob(function (blob) {
               URL.revokeObjectURL(url);
               if (!blob) return resolve(file);
-              var name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
-              resolve(new File([blob], name, { type: 'image/jpeg' }));
+              resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
             }, 'image/jpeg', 0.85);
           } catch (e) { URL.revokeObjectURL(url); resolve(file); }
         };
@@ -803,8 +932,7 @@
       });
     }
 
-    // Shrink a photo if it is big, push the file straight to the Blob store,
-    // then tell the dashboard where it landed so Notion gets the link.
+    // straight to the Blob store, then the dashboard records the link in Notion
     // extra: {section:'response', by:'B'} puts the file under the answer heading
     function upload(pageId, file, extra) {
       return shrinkImage(file).then(function (f) {
@@ -825,7 +953,64 @@
       });
     }
 
-    // ---------- B side: send an ask up ----------
+    function uploadAll(pageId, list, extra, onProgress) {
+      var chain = Promise.resolve();
+      var failed = [];
+      list.forEach(function (f, n) {
+        chain = chain.then(function () {
+          onProgress(n + 1, list.length);
+          return upload(pageId, f, extra).catch(function (err) { failed.push(err.message); });
+        });
+      });
+      return chain.then(function () { return failed; });
+    }
+
+    // ---------- quick add ----------
+    function setDetailsToggle(open) {
+      $('toggle-notes').innerHTML = open ? 'Hide details' : DETAILS_ICON + ' Add details';
+    }
+
+    function openQuick() {
+      $('quick').classList.add('open');
+      setTimeout(function () { $('title').focus(); }, 30);
+    }
+
+    function closeQuick() {
+      $('quick').classList.remove('open');
+      $('notes').hidden = true;
+      setDetailsToggle(false);
+    }
+
+    $('quick-open').addEventListener('click', openQuick);
+    $('quick-cancel').addEventListener('click', function () { $('title').value = ''; $('notes').value = ''; queued = []; renderQueue(); setStatus(''); closeQuick(); });
+    $('toggle-notes').addEventListener('click', function () {
+      var show = $('notes').hidden;
+      $('notes').hidden = !show;
+      setDetailsToggle(show);
+      if (show) $('notes').focus();
+    });
+    $('pick-files').addEventListener('click', function () { $('file-input').click(); });
+    $('file-input').addEventListener('change', function () {
+      Array.prototype.forEach.call($('file-input').files, function (f) { if (f.size <= MAX_BYTES) queued.push(f); else setStatus(f.name + ' is over 500 MB.', 'err'); });
+      $('file-input').value = '';
+      renderQueue();
+    });
+    $('file-list').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-unqueue]');
+      if (!b) return;
+      queued.splice(Number(b.getAttribute('data-unqueue')), 1);
+      renderQueue();
+    });
+    // dropping files anywhere on the bar queues them
+    ['dragenter', 'dragover'].forEach(function (ev) { $('quick').addEventListener(ev, function (e) { e.preventDefault(); }); });
+    $('quick').addEventListener('drop', function (e) {
+      e.preventDefault();
+      openQuick();
+      Array.prototype.forEach.call(e.dataTransfer.files, function (f) { if (f.size <= MAX_BYTES) queued.push(f); });
+      renderQueue();
+    });
+    $('title').addEventListener('keydown', function (e) { if (e.key === 'Escape') $('quick-cancel').click(); });
+
     $('add-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var title = $('title').value.trim();
@@ -838,161 +1023,123 @@
       $('add-btn').disabled = true;
       setStatus('Sending…');
 
-      var temp = { id: 'temp-' + Date.now(), title: title, notes: notes, done: false, side: 'B', files: [], responseFiles: [], saving: 'Sending…' };
+      var temp = { id: 'temp-' + Date.now(), title: title, notes: notes, done: false, side: 'B', files: [], responseFiles: [], created: new Date().toISOString(), saving: 'Sending…' };
       items.push(temp); render();
 
       api({ action: 'add', title: title, notes: notes, side: 'B' })
         .then(function (j) {
-          var real = j.item;
+          var real = Object.assign({ files: [], responseFiles: [] }, j.item);
           var idx = items.indexOf(temp);
-          if (idx >= 0) items[idx] = Object.assign({ files: [], responseFiles: [] }, real, { saving: toSend.length ? 'Attaching files…' : '' });
+          if (idx >= 0) items[idx] = Object.assign(real, { saving: toSend.length ? 'Attaching…' : '' });
           render();
-          var chain = Promise.resolve();
-          var failed = [];
-          toSend.forEach(function (f, n) {
-            chain = chain.then(function () {
-              var cur = byId(real.id);
-              if (cur) { cur.saving = 'Attaching ' + (n + 1) + ' of ' + toSend.length + '…'; render(); }
-              return upload(real.id, f).catch(function (err) { failed.push(err.message); });
-            });
-          });
-          return chain.then(function () {
+          return uploadAll(real.id, toSend, null, function (n, total) {
+            var cur = byId(real.id);
+            if (cur) { cur.saving = 'Attaching ' + n + ' of ' + total + '…'; render(); }
+            setStatus('Sending file ' + n + ' of ' + total + '…');
+          }).then(function (failed) {
             var cur = byId(real.id);
             if (cur) { cur.saving = ''; render(); }
             if (failed.length) setStatus('Sent, but ' + failed.join(' '), 'err');
-            else setStatus(toSend.length ? 'Sent with ' + toSend.length + (toSend.length === 1 ? ' file.' : ' files.') : 'Sent.', 'ok');
+            else { setStatus(toSend.length ? 'Sent with ' + nfiles(toSend.length) + '.' : 'Sent.', 'ok'); closeQuick(); }
             if (toSend.length) load();
+            setTimeout(function () { setStatus(''); }, 4000);
           });
         })
         .catch(function () {
           items = items.filter(function (i) { return i !== temp; }); render();
-          $('title').value = title; $('notes').value = notes; queued = toSend; renderQueue();
+          $('title').value = title; $('notes').value = notes; if (notes) { $('notes').hidden = false; setDetailsToggle(true); }
+          queued = toSend; renderQueue();
           setStatus("That didn't send. Check the connection and tap Send again.", 'err');
         })
         .then(function () { $('add-btn').disabled = false; });
     });
 
-    // ---------- files on the ask form ----------
-    var drop = $('drop'), fileInput = $('file-input');
-    drop.addEventListener('click', function () { fileInput.click(); });
-    drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
-    fileInput.addEventListener('change', function () { addFiles(fileInput.files); fileInput.value = ''; });
-    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
-    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
-    drop.addEventListener('drop', function (e) { addFiles(e.dataTransfer.files); });
-
-    function addFiles(list) {
-      var tooBig = [];
-      Array.prototype.forEach.call(list, function (f) {
-        if (f.size > MAX_BYTES) { tooBig.push(f.name); return; }
-        queued.push(f);
-      });
-      renderQueue();
-      if (tooBig.length) setStatus(tooBig.join(', ') + ' is too big to send from here.', 'err');
-      else setStatus('');
-    }
-
-    $('file-list').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-unqueue]');
+    // ---------- list clicks ----------
+    document.querySelector('main').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-open]');
       if (!b) return;
-      queued.splice(Number(b.getAttribute('data-unqueue')), 1);
-      renderQueue();
+      var it = byId(b.getAttribute('data-open'));
+      if (it && !it.saving) openSheet(it);
+    });
+    $('files-btn').addEventListener('click', function () { openSheet('files'); });
+
+    // ---------- sheet clicks ----------
+    $('scrim').addEventListener('click', closeSheet);
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if ($('lightbox').classList.contains('show')) { closeLightbox(); return; }
+      if (sheetItem) closeSheet();
     });
 
-    // ---------- K side: answer one of Knox's asks ----------
-    function sendAnswer(id) {
-      var it = byId(id);
-      if (!it || it.saving) return;
-      var form = document.querySelector('form[data-answer="' + id + '"]');
-      var text = form ? form.querySelector('textarea').value.trim() : (answerDraft[id] || '');
-      var toSend = (answerQueue[id] || []).slice();
-      if (!text && !toSend.length) { setStatus('Type a note or add a file before sending.', 'err'); return; }
-      delete answerQueue[id]; delete answerDraft[id];
-      it.saving = 'Sending your answer…'; render();
-      api({ action: 'respond', id: id, text: text })
-        .then(function () {
-          var chain = Promise.resolve();
-          var failed = [];
-          toSend.forEach(function (f, n) {
-            chain = chain.then(function () {
-              var cur = byId(id);
-              if (cur) { cur.saving = 'Attaching ' + (n + 1) + ' of ' + toSend.length + '…'; render(); }
-              return upload(id, f, { section: 'response', by: 'B' }).catch(function (err) { failed.push(err.message); });
-            });
-          });
-          return chain.then(function () {
-            var cur = byId(id);
-            if (cur) { cur.saving = ''; cur.done = true; cur.response = text; render(); }
-            if (failed.length) setStatus('Answered, but ' + failed.join(' '), 'err');
-            load();
-          });
-        })
-        .catch(function () {
-          var cur = byId(id);
-          if (cur) { cur.saving = ''; }
-          answerQueue[id] = toSend; answerDraft[id] = text; render();
-          setStatus("That answer didn't send. Try again.", 'err');
-        });
-    }
-
-    document.addEventListener('submit', function (e) {
-      var form = e.target.closest('form[data-answer]');
-      if (!form) return;
-      e.preventDefault();
-      sendAnswer(form.getAttribute('data-answer'));
-    });
-
-    document.addEventListener('change', function (e) {
-      var input = e.target.closest('input[data-ans-input]');
-      if (!input) return;
-      var id = input.closest('form[data-answer]').getAttribute('data-answer');
-      var list = answerQueue[id] || (answerQueue[id] = []);
-      Array.prototype.forEach.call(input.files, function (f) { if (f.size <= MAX_BYTES) list.push(f); });
-      input.value = '';
-      render();
-    });
-
-    // ---------- clicks on either list ----------
-    function onListClick(e) {
-      var pick = e.target.closest('[data-ans-pick]');
-      if (pick) { pick.closest('form').querySelector('input[data-ans-input]').click(); return; }
-      var unq = e.target.closest('[data-ans-unqueue]');
-      if (unq) {
-        var qid = unq.closest('form[data-answer]').getAttribute('data-answer');
-        (answerQueue[qid] || []).splice(Number(unq.getAttribute('data-ans-unqueue')), 1);
-        render();
-        return;
-      }
-      var btn = e.target.closest('button[data-act]');
-      if (!btn) return;
-      var li = btn.closest('.item');
-      var id = li.getAttribute('data-id');
-      var it = byId(id);
-      if (!it || it.saving) return;
+    $('sheet').addEventListener('click', function (e) {
+      if (e.target.closest('[data-close]')) { closeSheet(); return; }
+      var unq = e.target.closest('[data-sheet-unqueue]');
+      if (unq) { sheetQueue.splice(Number(unq.getAttribute('data-sheet-unqueue')), 1); renderSheetChips(); return; }
+      var btn = e.target.closest('[data-act]');
+      if (!btn || !sheetItem || sheetItem === 'files') return;
+      var it = sheetItem;
       var act = btn.getAttribute('data-act');
+
+      if (act === 'pick') { $('sheet-file').click(); return; }
 
       if (act === 'done' || act === 'reopen') {
         var was = it.done;
-        it.done = act === 'done'; render();
-        api({ action: 'toggle', id: id, done: it.done }).catch(function () {
+        it.done = act === 'done';
+        justActed[it.id] = Date.now();
+        markSeen(it); render(); closeSheet();
+        api({ action: 'toggle', id: it.id, done: it.done }).then(function () { setTimeout(load, 1500); setTimeout(load, 7000); }).catch(function () {
           it.done = was; render();
           setStatus("Couldn't save that change. Try again.", 'err');
         });
+        return;
       }
 
       if (act === 'remove') {
         if (!confirm('Take "' + it.title + '" off the list for good?')) return;
         var keep = items.slice();
-        items = items.filter(function (i) { return i.id !== id; }); render();
-        api({ action: 'remove', id: id }).catch(function () {
+        items = items.filter(function (i) { return i.id !== it.id; }); render(); closeSheet();
+        api({ action: 'remove', id: it.id }).catch(function () {
           items = keep; render();
           setStatus("Couldn't remove that. Try again.", 'err');
         });
+        return;
       }
-    }
-    ['b-open', 'b-done', 'k-open', 'k-done'].forEach(function (id) { $(id).addEventListener('click', onListClick); });
 
-    // ---------- the shelf, and photos anywhere ----------
+      if (act === 'answer') {
+        var text = ($('sheet-answer') ? $('sheet-answer').value : '').trim();
+        var toSend = sheetQueue.slice();
+        if (!text && !toSend.length) { setSheetStatus('Type a note or add a file before sending.', 'err'); return; }
+        var buttons = $('sheet').querySelectorAll('button[data-act]');
+        buttons.forEach(function (x) { x.disabled = true; });
+        setSheetStatus('Sending…');
+        api({ action: 'respond', id: it.id, text: text })
+          .then(function () {
+            return uploadAll(it.id, toSend, { section: 'response', by: 'B' }, function (n, total) { setSheetStatus('Sending file ' + n + ' of ' + total + '…'); });
+          })
+          .then(function (failed) {
+            it.done = true; it.response = text;
+            justActed[it.id] = Date.now();
+            markSeen(it); render(); closeSheet();
+            if (failed.length) setStatus('Answered, but ' + failed.join(' '), 'err');
+            load();
+            setTimeout(load, 7000);
+          })
+          .catch(function () {
+            buttons.forEach(function (x) { x.disabled = false; });
+            setSheetStatus("That didn't send. Try again.", 'err');
+          });
+      }
+    });
+
+    $('sheet').addEventListener('change', function (e) {
+      var input = e.target.closest('#sheet-file');
+      if (!input) return;
+      Array.prototype.forEach.call(input.files, function (f) { if (f.size <= MAX_BYTES) sheetQueue.push(f); else setSheetStatus(f.name + ' is over 500 MB.', 'err'); });
+      input.value = '';
+      renderSheetChips();
+    });
+
+    // ---------- photos anywhere, and removing shelf files ----------
     document.addEventListener('click', function (e) {
       var lb = e.target.closest('[data-lb-src]');
       if (lb) {
@@ -1015,7 +1162,6 @@
 
     function closeLightbox() { $('lightbox').classList.remove('show'); $('lightbox-img').src = ''; }
     $('lightbox').addEventListener('click', closeLightbox);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLightbox(); });
 
     // ---------- keep fresh ----------
     load();
