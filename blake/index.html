@@ -73,10 +73,45 @@
       font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
+      transition: background 150ms ease, color 150ms ease;
     }
 
     .files-btn:hover { background: #FAFAFA; }
     .files-btn[hidden] { display: none; }
+    .files-btn.fresh { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .files-btn.fresh:hover { background: #1D4ED8; }
+    .files-btn.fresh .pill.count { background: rgba(255, 255, 255, 0.28); color: #fff; }
+
+    /* something new landed on the shelf */
+    .banner {
+      margin-top: 18px;
+      background: var(--blue);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.28);
+    }
+
+    .banner[hidden] { display: none; }
+    .banner .txt { flex: 1; font-weight: 700; line-height: 1.3; }
+    .banner .txt small { display: block; font-weight: 400; opacity: 0.9; font-size: 14px; margin-top: 2px; }
+
+    .banner button {
+      background: #fff;
+      color: var(--blue);
+      border: none;
+      border-radius: 10px;
+      font: inherit;
+      font-weight: 700;
+      font-size: 15px;
+      min-height: 44px;
+      padding: 0 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
 
     /* ---------- sections ---------- */
     section { margin-top: 22px; }
@@ -235,13 +270,15 @@
     }
 
     .quick textarea, .sheet textarea { min-height: 84px; resize: vertical; }
+    .quick input.linkrow { display: none; font-size: 15px; min-height: 46px; }
+    .quick input.linkrow.show { display: block; }
 
     input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
       outline: 3px solid var(--blue);
       outline-offset: 2px;
     }
 
-    .qrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .qrow { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 
     .ghost {
       background: none;
@@ -302,6 +339,36 @@
     .status { font-size: 14px; color: var(--muted); min-height: 1.3em; }
     .status.err { color: var(--red); }
     .status.ok { color: var(--green); }
+
+    /* ---------- whole-page drop ---------- */
+    .drop-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(37, 99, 235, 0.16);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .drop-overlay.show { display: flex; }
+
+    .drop-overlay .dz {
+      background: #fff;
+      border: 3px dashed var(--blue);
+      border-radius: 18px;
+      padding: 26px 34px;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--blue);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 90vw;
+      text-align: center;
+    }
 
     /* ---------- sheet ---------- */
     .scrim {
@@ -481,6 +548,7 @@
     .frows a:hover { background: #FAFAFA; }
     .frows a span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .frows a small { color: var(--blue); font-weight: 600; font-size: 14px; }
+    .frows li.fresh a { border-color: var(--blue); background: var(--blue-bg); }
 
     .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; align-items: center; }
 
@@ -544,12 +612,18 @@
       <h1>Blake's List</h1>
       <button type="button" class="files-btn" id="files-btn" hidden aria-label="Files from Knox">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        Files from Knox <span class="pill count" id="files-count">0</span>
+        <span id="files-label">Files from Knox</span> <span class="pill count" id="files-count">0</span>
       </button>
     </div>
   </header>
 
   <main class="wrap">
+    <div class="banner" id="shelf-banner" hidden role="status">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      <span class="txt" id="banner-text"></span>
+      <button type="button" id="banner-btn">See them</button>
+    </div>
+
     <section id="sec-needs">
       <h2>Needs you <span class="pill count" id="needs-count">0</span><span class="pill new" id="needs-new" hidden></span></h2>
       <ul class="group" id="list-needs"></ul>
@@ -576,6 +650,7 @@
       <form id="add-form" novalidate>
         <input type="text" id="title" autocomplete="off" placeholder="What do you need from Knox?" maxlength="200" aria-label="What do you need from Knox?">
         <textarea id="notes" hidden placeholder="Details: who, where, numbers, anything Knox should know." maxlength="4000" aria-label="Details"></textarea>
+        <input type="text" id="link-input" class="linkrow" autocomplete="off" placeholder="Paste a link and press Enter" aria-label="Add a link">
         <div class="chips" id="file-list"></div>
         <div class="qrow">
           <button type="button" class="ghost" id="toggle-notes">
@@ -586,12 +661,23 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
             Add files
           </button>
+          <button type="button" class="ghost" id="toggle-link">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Add link
+          </button>
           <input type="file" id="file-input" multiple hidden>
           <button type="button" class="ghost quiet" id="quick-cancel">Cancel</button>
           <button type="submit" class="send" id="add-btn">Send</button>
         </div>
         <p class="status" id="status" role="status" aria-live="polite"></p>
       </form>
+    </div>
+  </div>
+
+  <div class="drop-overlay" id="drop-overlay" aria-hidden="true">
+    <div class="dz">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+      <span id="drop-text">Drop to send to Knox</span>
     </div>
   </div>
 
@@ -620,12 +706,14 @@
 
     var items = [];         // asks from both sides, each with files (asker's) and responseFiles (answer)
     var files = [];         // the loose shelf from Knox
-    var queued = [];        // files waiting to go with the next ask
+    var queued = [];        // files and links waiting to go with the next ask
     var sheetItem = null;   // the ask open in the sheet, or 'files' for the shelf
-    var sheetQueue = [];    // files waiting to go with an answer in the sheet
+    var sheetQueue = [];    // files and links waiting to go with an answer in the sheet
     var seen = {};          // id -> edited stamp Blake has already looked at
-    var justActed = {};     // ids Blake changed himself; the next refresh marks them seen
+    var seenShelf = {};     // shelf file id -> true once he has opened the shelf
+    var justActed = {};     // ids Blake changed himself; refreshes mark them seen for a while
     try { seen = JSON.parse(localStorage.getItem('blake-seen') || '{}'); } catch (e) {}
+    try { seenShelf = JSON.parse(localStorage.getItem('blake-seen-shelf') || '{}'); } catch (e) {}
 
     var $ = function (id) { return document.getElementById(id); };
 
@@ -665,6 +753,16 @@
       seen[it.id] = stamp(it) || new Date().toISOString();
       try { localStorage.setItem('blake-seen', JSON.stringify(seen)); } catch (e) {}
     }
+    function newShelf() { return files.filter(function (f) { return !seenShelf[f.id]; }); }
+    function markShelfSeen() {
+      files.forEach(function (f) { seenShelf[f.id] = true; });
+      try { localStorage.setItem('blake-seen-shelf', JSON.stringify(seenShelf)); } catch (e) {}
+    }
+
+    // queue entries are Files or {link}
+    function isLink(p) { return !(p instanceof File); }
+    function pendingName(p) { return isLink(p) ? p.link.replace(/^https?:\/\//, '') : p.name; }
+    function nitems(n) { return n + (n === 1 ? ' attachment' : ' attachments'); }
 
     // ---------- rendering ----------
     var CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>';
@@ -720,13 +818,18 @@
       '</button></li>';
     }
 
+    function updateTitle() {
+      var n = items.filter(function (i) { return kindOf(i) !== 'waiting' && isNew(i); }).length + newShelf().length;
+      document.title = (n ? '(' + n + ') ' : '') + "Blake's List";
+    }
+
     function render() {
       var needs = items.filter(function (i) { return kindOf(i) === 'needs'; }).sort(function (a, b) { return (b.created || '').localeCompare(a.created || ''); });
       var waiting = items.filter(function (i) { return kindOf(i) === 'waiting'; }).sort(function (a, b) { return (b.created || '').localeCompare(a.created || ''); });
       var done = items.filter(function (i) { return kindOf(i) === 'done'; }).sort(function (a, b) { return stamp(b).localeCompare(stamp(a)); });
 
       $('list-needs').innerHTML = needs.length ? needs.map(rowHtml).join('') : '<li class="empty">Nothing from Knox right now.</li>';
-      $('list-waiting').innerHTML = waiting.length ? waiting.map(rowHtml).join('') : '<li class="empty">Nothing waiting. Use the blue + below to ask for something.</li>';
+      $('list-waiting').innerHTML = waiting.length ? waiting.map(rowHtml).join('') : '<li class="empty">Nothing waiting. Use the blue + below to ask for something, or drop a file anywhere on the page.</li>';
       $('list-done').innerHTML = done.length ? done.map(rowHtml).join('') : '<li class="empty">Nothing finished yet.</li>';
 
       $('needs-count').textContent = needs.length;
@@ -735,18 +838,30 @@
       var nn = needs.filter(isNew).length, dn = done.filter(isNew).length;
       $('needs-new').hidden = !nn; $('needs-new').textContent = nn + ' new';
       $('done-new').hidden = !dn; $('done-new').textContent = dn + ' new';
-      document.title = (nn + dn ? '(' + (nn + dn) + ') ' : '') + "Blake's List";
+      updateTitle();
     }
 
+    // the shelf pill and the banner: loud when Knox dropped something he has not seen
     function renderFiles() {
-      $('files-btn').hidden = files.length === 0;
-      $('files-count').textContent = files.length;
+      var fresh = newShelf();
+      var btn = $('files-btn');
+      btn.hidden = files.length === 0;
+      btn.classList.toggle('fresh', fresh.length > 0);
+      $('files-label').textContent = fresh.length ? 'New from Knox' : 'Files from Knox';
+      $('files-count').textContent = fresh.length ? fresh.length + ' new' : files.length;
+      var banner = $('shelf-banner');
+      banner.hidden = fresh.length === 0;
+      if (fresh.length) {
+        $('banner-text').innerHTML = 'Knox dropped ' + esc(attachLabel(fresh)) + ' for you' +
+          '<small>' + esc(fresh.slice(0, 3).map(function (f) { return f.name; }).join(', ')) + (fresh.length > 3 ? ', …' : '') + '</small>';
+      }
       if (sheetItem === 'files') renderSheet();
+      updateTitle();
     }
 
     function renderQueue() {
-      $('file-list').innerHTML = queued.map(function (f, i) {
-        return '<button type="button" class="chip" data-unqueue="' + i + '" aria-label="Remove ' + esc(f.name) + '">' + CLIP + '<span>' + esc(f.name) + '</span><span class="x">' + X_ICON + '</span></button>';
+      $('file-list').innerHTML = queued.map(function (p, i) {
+        return '<button type="button" class="chip" data-unqueue="' + i + '" aria-label="Remove ' + esc(pendingName(p)) + '">' + (isLink(p) ? LINK_SM : CLIP) + '<span>' + esc(pendingName(p)) + '</span><span class="x">' + X_ICON + '</span></button>';
       }).join('');
     }
 
@@ -760,15 +875,15 @@
     }
 
     // photos as a thumbnail grid, files and links as tappable rows
-    function filesHtml(list, removable) {
+    function filesHtml(list, removable, freshIds) {
       if (!list || !list.length) return '';
       var imgs = list.filter(function (f) { return f.kind === 'image'; });
       var docs = list.filter(function (f) { return f.kind !== 'image'; });
       var h = '';
       if (imgs.length) h += '<ul class="fgrid">' + imgs.map(function (f) { return fileCardHtml(f, removable); }).join('') + '</ul>';
       if (docs.length) h += '<ul class="frows">' + docs.map(function (f) {
-        var isLink = f.kind === 'link';
-        return '<li><a href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer">' + (isLink ? LINK_SM : FILE_SM) + '<span>' + esc(f.name) + '</span><small>' + (isLink ? 'Visit' : 'Open') + '</small></a>' +
+        var isL = f.kind === 'link';
+        return '<li' + (freshIds && freshIds[f.id] ? ' class="fresh"' : '') + '><a href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer">' + (isL ? LINK_SM : FILE_SM) + '<span>' + esc(f.name) + '</span><small>' + (isL ? 'Visit' : 'Open') + '</small></a>' +
           (removable ? '<button type="button" class="chip" data-rm-file="' + esc(f.id) + '" aria-label="Remove ' + esc(f.name) + '">' + X_ICON + '</button>' : '') + '</li>';
       }).join('') + '</ul>';
       return h;
@@ -786,7 +901,7 @@
         '<div class="meta">' + who + ' asked · ' + esc(rel(it.created)) + '</div>';
 
       if (it.notes) h += '<div class="block"><h4>Details</h4><div class="desc">' + esc(it.notes) + '</div></div>';
-      if (it.files && it.files.length) h += '<div class="block"><h4>' + (it.side === 'K' ? 'Files from Knox' : 'Your files') + '</h4>' + filesHtml(it.files, false) + '</div>';
+      if (it.files && it.files.length) h += '<div class="block"><h4>' + (it.side === 'K' ? 'From Knox' : 'Your files') + '</h4>' + filesHtml(it.files, false) + '</div>';
 
       if (k === 'done') {
         var answerer = it.side === 'K' ? 'Your answer' : "Knox's answer";
@@ -829,10 +944,12 @@
     }
 
     function shelfHtml() {
+      var fresh = {};
+      newShelf().forEach(function (f) { fresh[f.id] = true; });
       return '<div class="grab" aria-hidden="true"></div>' +
         '<div class="head"><h3 id="sheet-title">Files from Knox</h3><button type="button" class="close" data-close aria-label="Close">' + X_ICON + '</button></div>' +
         '<div class="meta">Things Knox dropped for you outside any ask. Photos open full screen, files open in a new tab.</div>' +
-        '<div class="block">' + (files.length ? filesHtml(files, true) : '<div class="answer none">Nothing here right now.</div>') + '</div>';
+        '<div class="block">' + (files.length ? filesHtml(files, true, fresh) : '<div class="answer none">Nothing here right now.</div>') + '</div>';
     }
 
     function renderSheet() {
@@ -845,8 +962,8 @@
     function renderSheetChips() {
       var box = $('sheet-chips');
       if (!box) return;
-      box.innerHTML = sheetQueue.map(function (f, i) {
-        return '<button type="button" class="chip" data-sheet-unqueue="' + i + '" aria-label="Remove ' + esc(f.name) + '">' + CLIP + '<span>' + esc(f.name) + '</span><span class="x">' + X_ICON + '</span></button>';
+      box.innerHTML = sheetQueue.map(function (p, i) {
+        return '<button type="button" class="chip" data-sheet-unqueue="' + i + '" aria-label="Remove ' + esc(pendingName(p)) + '">' + (isLink(p) ? LINK_SM : CLIP) + '<span>' + esc(pendingName(p)) + '</span><span class="x">' + X_ICON + '</span></button>';
       }).join('');
     }
 
@@ -860,14 +977,18 @@
       $('sheet').scrollTop = 0;
       var c = $('sheet').querySelector('[data-close]');
       if (c) c.focus();
+      // seeing the shelf once is enough; the highlight goes when it closes
+      if (target === 'files') { markShelfSeen(); }
     }
 
     function closeSheet() {
+      var wasShelf = sheetItem === 'files';
       sheetItem = null;
       sheetQueue = [];
       $('scrim').classList.remove('show');
       $('sheet').classList.remove('show');
       $('sheet').innerHTML = '';
+      if (wasShelf) renderFiles();
     }
 
     function setSheetStatus(msg, kind) {
@@ -920,6 +1041,22 @@
         .catch(function () {});
     }
 
+    // Heartbeat: every 15 seconds while the page is visible, ask for the
+    // cheap fingerprint of the list; reload only when it moved. This is what
+    // makes Knox's sends show up here without a refresh.
+    var lastVersion = null;
+    function checkVersion() {
+      if (document.visibilityState !== 'visible') return;
+      fetch(API + '/version', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (!j || !j.v) return;
+          if (lastVersion !== null && j.v !== lastVersion) load();
+          lastVersion = j.v;
+        })
+        .catch(function () {});
+    }
+
     // Phone photos run big; shrink them before upload so the store stays lean.
     function shrinkImage(file) {
       return new Promise(function (resolve) {
@@ -967,17 +1104,34 @@
       });
     }
 
+    // a web link, saved on the page as a bookmark
+    function attachLink(pageId, link, extra) {
+      var name = link;
+      try { var u = new URL(link); name = u.hostname.replace(/^www\./, '') + (u.pathname !== '/' ? u.pathname : '') + (u.search || ''); } catch (e) {}
+      var body = Object.assign({ link: link, name: name.slice(0, 80) }, pageId ? { pageId: pageId } : {}, extra || {});
+      return fetch(API + '/attach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { if (!r.ok) throw new Error("Couldn't attach the link " + name + '.'); });
+    }
+
+    function sendOne(pageId, p, extra) { return isLink(p) ? attachLink(pageId, p.link, extra) : upload(pageId, p, extra); }
+
     function uploadAll(pageId, list, extra, onProgress) {
       var chain = Promise.resolve();
       var failed = [];
-      list.forEach(function (f, n) {
+      list.forEach(function (p, n) {
         chain = chain.then(function () {
           onProgress(n + 1, list.length);
-          return upload(pageId, f, extra).catch(function (err) { failed.push(err.message); });
+          return sendOne(pageId, p, extra).catch(function (err) { failed.push(err.message); });
         });
       });
       return chain.then(function () { return failed; });
     }
+
+    function linksFromDrop(dt) {
+      var raw = dt.getData('text/uri-list') || dt.getData('text/plain') || '';
+      return raw.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(function (s) { return s && s.charAt(0) !== '#' && /^https?:\/\//i.test(s); });
+    }
+    function hasPayload(dt) { return !!dt && (Array.prototype.indexOf.call(dt.types, 'Files') >= 0 || Array.prototype.indexOf.call(dt.types, 'text/uri-list') >= 0); }
 
     // ---------- quick add ----------
     function setDetailsToggle(open) {
@@ -992,16 +1146,37 @@
     function closeQuick() {
       $('quick').classList.remove('open');
       $('notes').hidden = true;
+      $('link-input').classList.remove('show');
       setDetailsToggle(false);
     }
 
+    function queueLink(raw) {
+      var l = (raw || '').trim();
+      if (!/^https?:\/\//i.test(l)) { setStatus('That doesn\'t look like a link. It should start with http.', 'err'); return false; }
+      queued.push({ link: l }); renderQueue(); setStatus('');
+      return true;
+    }
+
     $('quick-open').addEventListener('click', openQuick);
-    $('quick-cancel').addEventListener('click', function () { $('title').value = ''; $('notes').value = ''; queued = []; renderQueue(); setStatus(''); closeQuick(); });
+    $('quick-cancel').addEventListener('click', function () { $('title').value = ''; $('notes').value = ''; $('link-input').value = ''; queued = []; renderQueue(); setStatus(''); closeQuick(); });
     $('toggle-notes').addEventListener('click', function () {
       var show = $('notes').hidden;
       $('notes').hidden = !show;
       setDetailsToggle(show);
       if (show) $('notes').focus();
+    });
+    $('toggle-link').addEventListener('click', function () {
+      var li = $('link-input');
+      li.classList.toggle('show');
+      if (li.classList.contains('show')) li.focus();
+    });
+    $('link-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); if (queueLink(this.value)) this.value = ''; }
+      if (e.key === 'Escape') { this.classList.remove('show'); }
+    });
+    $('link-input').addEventListener('paste', function (e) {
+      var t = (e.clipboardData.getData('text') || '').trim();
+      if (/^https?:\/\/\S+$/i.test(t)) { e.preventDefault(); if (queueLink(t)) this.value = ''; }
     });
     $('pick-files').addEventListener('click', function () { $('file-input').click(); });
     $('file-input').addEventListener('change', function () {
@@ -1015,14 +1190,6 @@
       queued.splice(Number(b.getAttribute('data-unqueue')), 1);
       renderQueue();
     });
-    // dropping files anywhere on the bar queues them
-    ['dragenter', 'dragover'].forEach(function (ev) { $('quick').addEventListener(ev, function (e) { e.preventDefault(); }); });
-    $('quick').addEventListener('drop', function (e) {
-      e.preventDefault();
-      openQuick();
-      Array.prototype.forEach.call(e.dataTransfer.files, function (f) { if (f.size <= MAX_BYTES) queued.push(f); });
-      renderQueue();
-    });
     $('title').addEventListener('keydown', function (e) { if (e.key === 'Escape') $('quick-cancel').click(); });
 
     $('add-form').addEventListener('submit', function (e) {
@@ -1033,7 +1200,7 @@
 
       var toSend = queued.slice();
       queued = []; renderQueue();
-      $('title').value = ''; $('notes').value = '';
+      $('title').value = ''; $('notes').value = ''; $('link-input').value = '';
       $('add-btn').disabled = true;
       setStatus('Sending…');
 
@@ -1049,12 +1216,12 @@
           return uploadAll(real.id, toSend, null, function (n, total) {
             var cur = byId(real.id);
             if (cur) { cur.saving = 'Attaching ' + n + ' of ' + total + '…'; render(); }
-            setStatus('Sending file ' + n + ' of ' + total + '…');
+            setStatus('Sending ' + n + ' of ' + total + '…');
           }).then(function (failed) {
             var cur = byId(real.id);
             if (cur) { cur.saving = ''; render(); }
             if (failed.length) setStatus('Sent, but ' + failed.join(' '), 'err');
-            else { setStatus(toSend.length ? 'Sent with ' + nfiles(toSend.length) + '.' : 'Sent.', 'ok'); closeQuick(); }
+            else { setStatus(toSend.length ? 'Sent with ' + nitems(toSend.length) + '.' : 'Sent.', 'ok'); closeQuick(); }
             if (toSend.length) load();
             setTimeout(function () { setStatus(''); }, 4000);
           });
@@ -1068,6 +1235,48 @@
         .then(function () { $('add-btn').disabled = false; });
     });
 
+    // ---------- drop anywhere on the page ----------
+    // Files or links dropped anywhere land where they make sense: into the
+    // answer when one of Knox's asks is open, otherwise into a new ask.
+    var dragDepth = 0;
+    function showOverlay() {
+      var answering = sheetItem && sheetItem !== 'files' && kindOf(sheetItem) === 'needs';
+      $('drop-text').textContent = answering ? 'Drop to add to your answer' : 'Drop to send to Knox';
+      $('drop-overlay').classList.add('show');
+    }
+    function hideOverlay() { dragDepth = 0; $('drop-overlay').classList.remove('show'); }
+    function routeDrop(fileList, links) {
+      var answering = sheetItem && sheetItem !== 'files' && kindOf(sheetItem) === 'needs';
+      var tooBig = [];
+      var accepted = [];
+      Array.prototype.forEach.call(fileList, function (f) { if (f.size <= MAX_BYTES) accepted.push(f); else tooBig.push(f.name); });
+      links.forEach(function (l) { accepted.push({ link: l }); });
+      if (answering) {
+        accepted.forEach(function (p) { sheetQueue.push(p); });
+        renderSheetChips();
+        if (tooBig.length) setSheetStatus(tooBig.join(', ') + ' is over 500 MB.', 'err');
+        return;
+      }
+      if (sheetItem) closeSheet();
+      accepted.forEach(function (p) { queued.push(p); });
+      renderQueue();
+      openQuick();
+      setStatus(tooBig.length ? tooBig.join(', ') + ' is over 500 MB.' : (accepted.length ? 'Added. Type what it is, then Send.' : ''), tooBig.length ? 'err' : '');
+    }
+    document.addEventListener('dragenter', function (e) { if (!hasPayload(e.dataTransfer)) return; e.preventDefault(); dragDepth++; showOverlay(); });
+    document.addEventListener('dragover', function (e) { if (!hasPayload(e.dataTransfer)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    document.addEventListener('dragleave', function (e) { if (!hasPayload(e.dataTransfer)) return; dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) hideOverlay(); });
+    document.addEventListener('drop', function (e) {
+      if (!hasPayload(e.dataTransfer)) return;
+      e.preventDefault();
+      hideOverlay();
+      var fileList = e.dataTransfer.files;
+      var links = fileList.length ? [] : linksFromDrop(e.dataTransfer);
+      if (!fileList.length && !links.length) return;
+      routeDrop(fileList, links);
+    });
+    window.addEventListener('blur', hideOverlay);
+
     // ---------- list clicks ----------
     document.querySelector('main').addEventListener('click', function (e) {
       var b = e.target.closest('[data-open]');
@@ -1076,6 +1285,7 @@
       if (it && !it.saving) openSheet(it);
     });
     $('files-btn').addEventListener('click', function () { openSheet('files'); });
+    $('banner-btn').addEventListener('click', function () { openSheet('files'); });
 
     // ---------- sheet clicks ----------
     $('scrim').addEventListener('click', closeSheet);
@@ -1128,7 +1338,7 @@
         setSheetStatus('Sending…');
         api({ action: 'respond', id: it.id, text: text })
           .then(function () {
-            return uploadAll(it.id, toSend, { section: 'response', by: 'B' }, function (n, total) { setSheetStatus('Sending file ' + n + ' of ' + total + '…'); });
+            return uploadAll(it.id, toSend, { section: 'response', by: 'B' }, function (n, total) { setSheetStatus('Sending ' + n + ' of ' + total + '…'); });
           })
           .then(function (failed) {
             it.done = true; it.response = text;
@@ -1179,8 +1389,10 @@
 
     // ---------- keep fresh ----------
     load();
-    setInterval(load, 90000);
-    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') load(); });
+    checkVersion();
+    setInterval(checkVersion, 15000);
+    setInterval(load, 300000);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { load(); checkVersion(); } });
   </script>
 </body>
 </html>
