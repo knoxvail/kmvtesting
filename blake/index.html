@@ -350,9 +350,15 @@
       align-items: center;
       justify-content: center;
       pointer-events: none;
+      will-change: opacity;
+      contain: strict;
     }
 
     .drop-overlay.show { display: flex; }
+
+    /* blur is costly to repaint under a drag; swap to solid while one is on */
+    body.dragging header.top { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
+    body.dragging .quick { backdrop-filter: none; -webkit-backdrop-filter: none; background: #fff; }
 
     .drop-overlay .dz {
       background: #fff;
@@ -1238,13 +1244,26 @@
     // ---------- drop anywhere on the page ----------
     // Files or links dropped anywhere land where they make sense: into the
     // answer when one of Knox's asks is open, otherwise into a new ask.
+    // dragover fires many times a second while a file hovers, so the handlers
+    // do nothing per tick beyond the one preventDefault the browser needs;
+    // the DOM is touched once when the overlay comes up and once when it goes
     var dragDepth = 0;
+    var dragActive = false;
     function showOverlay() {
+      if (dragActive) return;
+      dragActive = true;
       var answering = sheetItem && sheetItem !== 'files' && kindOf(sheetItem) === 'needs';
       $('drop-text').textContent = answering ? 'Drop to add to your answer' : 'Drop to send to Knox';
+      document.body.classList.add('dragging');
       $('drop-overlay').classList.add('show');
     }
-    function hideOverlay() { dragDepth = 0; $('drop-overlay').classList.remove('show'); }
+    function hideOverlay() {
+      dragDepth = 0;
+      if (!dragActive) return;
+      dragActive = false;
+      document.body.classList.remove('dragging');
+      $('drop-overlay').classList.remove('show');
+    }
     function routeDrop(fileList, links) {
       var answering = sheetItem && sheetItem !== 'files' && kindOf(sheetItem) === 'needs';
       var tooBig = [];
@@ -1263,11 +1282,20 @@
       openQuick();
       setStatus(tooBig.length ? tooBig.join(', ') + ' is over 500 MB.' : (accepted.length ? 'Added. Type what it is, then Send.' : ''), tooBig.length ? 'err' : '');
     }
-    document.addEventListener('dragenter', function (e) { if (!hasPayload(e.dataTransfer)) return; e.preventDefault(); dragDepth++; showOverlay(); });
-    document.addEventListener('dragover', function (e) { if (!hasPayload(e.dataTransfer)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
-    document.addEventListener('dragleave', function (e) { if (!hasPayload(e.dataTransfer)) return; dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) hideOverlay(); });
+    document.addEventListener('dragenter', function (e) {
+      if (!dragActive && !hasPayload(e.dataTransfer)) return;
+      e.preventDefault();
+      dragDepth++;
+      showOverlay();
+    });
+    document.addEventListener('dragover', function (e) { if (dragActive) e.preventDefault(); });
+    document.addEventListener('dragleave', function () {
+      if (!dragActive) return;
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (!dragDepth) hideOverlay();
+    });
     document.addEventListener('drop', function (e) {
-      if (!hasPayload(e.dataTransfer)) return;
+      if (!dragActive && !hasPayload(e.dataTransfer)) return;
       e.preventDefault();
       hideOverlay();
       var fileList = e.dataTransfer.files;
