@@ -522,6 +522,9 @@ const PROBLEM = {
   bad_ai_key: 'The AI key on the server is not working.',
   busy: 'The AI is busy. Try again in a minute.',
   too_big: 'There is too much data to save in one go.',
+  no_speech_key: 'Voice needs its own key on the server, and that is not set up yet.',
+  bad_speech_key: 'The voice key on the server is not working.',
+  speech_unreachable: 'Could not reach the voice service.',
 };
 const problem = code => PROBLEM[code] || 'Could not reach the server.';
 const stamp = t => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -715,7 +718,6 @@ const acts = {
   undo: () => { if (undoSnap) { restore(undoSnap); hideSay(); } },
   compose: () => openCompose(false),
   'compose-close': closeCompose,
-  mic: talk,
   photo: () => el('cam').click(),
   'go-lift': n => {
     if (E.sessionOn(E.project(S), today())) { openPanel(S.draft ? 'go' : 'lift'); return; }
@@ -880,6 +882,72 @@ function talk() {
   rec.onerror = () => {};
   rec.start();
 }
+
+/* ---------- Hold to talk ---------- */
+
+// Hold the big button, speak, let go. The recording goes to be turned into
+// words and is then read like anything typed. It is never saved on the phone.
+// Without the AI connection the button falls back to the typing box.
+const mic = el('mic');
+let stream = null, recorder = null, chunks = [], heldAt = 0, holding = false;
+
+async function startTalking() {
+  holding = true;
+  heldAt = Date.now();
+  mic.classList.add('live');
+  try {
+    if (!stream || !stream.active) stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true } });
+  } catch (e) {
+    holding = false;
+    mic.classList.remove('live');
+    say('The microphone is blocked. Allow it for this app in Settings, or type instead.');
+    return;
+  }
+  if (!holding) return;                    // let go before the mic was ready
+  chunks = [];
+  const type = ['audio/mp4', 'audio/webm'].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+  recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+  recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  recorder.onstop = sendTalk;
+  recorder.start();
+}
+
+function stopTalking() {
+  if (!holding) return;
+  holding = false;
+  mic.classList.remove('live');
+  if (recorder && recorder.state !== 'inactive') recorder.stop();
+  else if (Date.now() - heldAt < 400) say('Hold the button while you talk.');
+}
+
+async function sendTalk() {
+  const held = Date.now() - heldAt;
+  const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/mp4' });
+  recorder = null;
+  if (held < 400 || blob.size < 800) { say('Hold the button while you talk.'); return; }
+  say('Listening back.');
+  try {
+    const data = await new Promise((done, fail) => { const r = new FileReader(); r.onload = () => done(String(r.result).split(',')[1]); r.onerror = fail; r.readAsDataURL(blob); });
+    const words = await Sync.hear(data, blob.type);
+    if (!words) { say('Did not catch anything. Try again.'); return; }
+    handleText(words);
+  } catch (e) {
+    const why = e instanceof TypeError || e?.name === 'TimeoutError' ? 'offline' : e.message;
+    say(problem(why));
+  }
+}
+
+mic.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (!Sync.connected() || !navigator.mediaDevices || !window.MediaRecorder) { talk(); return; }
+  mic.setPointerCapture(e.pointerId);
+  startTalking();
+});
+mic.addEventListener('pointerup', stopTalking);
+mic.addEventListener('pointercancel', stopTalking);
+mic.addEventListener('contextmenu', e => e.preventDefault());
+// Let go of the microphone when the app is put away.
+document.addEventListener('visibilitychange', () => { if (document.hidden && stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } });
 
 // Put one reading into the log. Returns the line to show and whether it can be undone.
 function act(r, t, day) {

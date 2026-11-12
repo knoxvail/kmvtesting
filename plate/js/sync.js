@@ -124,6 +124,13 @@ export async function see(image, note) {
   return r.json;
 }
 
+// Send a short recording and get back the words.
+export async function hear(audio, mime) {
+  const r = await call('hear', 'POST', { audio, mime }, cfg.key, 30000);
+  if (r.status !== 200) throw new Error(code(r));
+  return r.json.text || '';
+}
+
 export function start() {
   // Save a moment after the last change, and whenever the app is opened or put away.
   subscribe(() => { if (cfg.key && dirty()) { clearTimeout(timer); timer = setTimeout(sync, 1500); } });

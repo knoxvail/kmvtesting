@@ -200,6 +200,9 @@ i, em { font-style: normal; }
 .sq:active { background: var(--steel); }
 .sq.on, .talk { background: var(--chalk); color: var(--floor); }
 .sq.on:active, .talk:active { background: #CFCEC9; }
+.talk { touch-action: none; }
+/* While you hold it, the button turns dark with a chalk edge. */
+.talk.live { background: var(--floor); color: var(--chalk); box-shadow: inset 0 0 0 3px var(--chalk); }
 body[data-panel="go"] .dock { display: none; }
 
 /* ---------- Panels: slide up over the screen ---------- */
