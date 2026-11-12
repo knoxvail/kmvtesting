@@ -15,7 +15,7 @@
   --ease: cubic-bezier(.2, .7, .2, 1);
   --top: env(safe-area-inset-top, 0px);
   --bot: env(safe-area-inset-bottom, 0px);
-  --dock: 68px;                 /* the bar at the bottom, without the safe area */
+  --dock: 52px;                 /* the bar at the bottom, without the safe area */
   color-scheme: dark;
 }
 

@@ -1,6 +1,6 @@
 // Keeps the app opening with no signal. Serves the saved copy first and
 // refreshes it in the background, so an update shows on the next open.
-const CACHE = 'plate-v6';
+const CACHE = 'plate-v7';
 const SHELL = ['./', 'app.css', 'js/app.js', 'js/store.js', 'js/engine.js', 'js/parse.js', 'js/draw.js', 'js/sync.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png'];
 
 self.addEventListener('install', e => {

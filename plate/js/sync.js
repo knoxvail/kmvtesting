@@ -48,6 +48,8 @@ export async function sync() {
   let result = 'ok';
   try {
     const got = await call('state');
+    // No database on the server yet: the AI still works, there is just nothing to save to.
+    if (got.status === 503 && got.json?.error === 'no_database') return (status = 'ok');
     if (got.status !== 200) throw new Error(code(got));
     const server = got.json;
     const theirs = server.data?.touched || 0;
@@ -81,6 +83,11 @@ export async function sync() {
 export async function connect(key, prefer) {
   let got;
   try { got = await call('state', 'GET', undefined, key); } catch (e) { return { error: failure(e) }; }
+  if (got.status === 503 && got.json?.error === 'no_database') {
+    cfg = { key, version: 0, pushed: 0, at: 0 }; keep();
+    status = 'ok';
+    return { ok: true, took: 'ai' };
+  }
   if (got.status !== 200) return { error: code(got) };
   const server = got.json;
   if (server.data && hasEntries() && !prefer) return { ask: true, savedAt: server.updated_at };

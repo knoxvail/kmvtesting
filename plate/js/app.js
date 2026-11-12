@@ -554,7 +554,7 @@ async function connectWith(key, prefer) {
     hideSay();
     return;
   }
-  say(r.ok ? (r.took === 'saved' ? 'Connected. Your saved copy is on this phone now.' : 'Connected. This phone is saved.') : problem(r.error));
+  say(r.ok ? (r.took === 'saved' ? 'Connected. Your saved copy is on this phone now.' : r.took === 'ai' ? 'Connected. The AI can read your messages now.' : 'Connected. This phone is saved.') : problem(r.error));
 }
 
 function sleepSheet() {
