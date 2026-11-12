@@ -21,17 +21,19 @@
 
 * { box-sizing: border-box; margin: 0; }
 
-/* The page itself is pinned. Nothing bounces, pans or zooms. */
-html, body {
-  position: fixed;
-  inset: 0;
-  width: 100%;
+/* The page itself is pinned. Nothing bounces, pans or zooms.
+   An iPhone home-screen app with a see-through status bar lays the page out
+   short by the height of that bar, which leaves a dead strip at the bottom.
+   Making the page taller by exactly that much is what gets it the full screen. */
+html {
   height: 100%;
+  min-height: calc(100% + env(safe-area-inset-top, 0px));
   overflow: hidden;
   overscroll-behavior: none;
   background: var(--floor);
   -webkit-text-size-adjust: 100%;
 }
+body { height: 100%; overflow: hidden; overscroll-behavior: none; background: var(--floor); }
 
 body {
   font-family: var(--font);
@@ -54,7 +56,7 @@ i, em { font-style: normal; }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 [hidden] { display: none !important; }
 
-#app { position: fixed; top: 0; bottom: 0; left: 0; right: 0; min-height: 100dvh; max-width: 520px; margin: 0 auto; overflow: hidden; }
+#app { position: fixed; top: 0; bottom: 0; left: 0; right: 0; max-width: 520px; margin: 0 auto; overflow: hidden; }
 
 /* ---------- Type ---------- */
 
@@ -507,10 +509,4 @@ body[data-panel="go"] .say { bottom: auto; top: calc(var(--top) + 60px); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; transition-duration: .01ms !important; }
-}
-
-/* An iPhone home-screen app measures its height short of the true bottom
-   edge. There, 100vh is the whole screen, so the app is sized by that. */
-@media (display-mode: standalone) {
-  html, body, #app { bottom: auto; height: 100vh; min-height: 100vh; }
 }
