@@ -231,18 +231,23 @@ const usualChip = f => `<button class="chip food" type="button" data-act="usual"
 function drawFood() {
   const t = today();
   const p = E.proteinOn(S, t), goal = S.profile.protein;
-  const cals = E.caloriesOn(S, t), cGoal = S.profile.calories;
+  const T = E.totalsOn(S, t), P = S.profile;
   roll(el('f-big'), p);
   text(el('f-of'), `of ${goal} g protein`);
   fill(el('f-arc'), p / goal);
-  text(el('f-note'), [p >= goal ? 'Protein goal met' : `${goal - p} g to go`, cGoal ? `${num(cals)} of ${num(cGoal)} calories` : ''].filter(Boolean).join(' · '));
+  // Calories, carbs and fat sit under the ring. A bar shows only where a goal is set.
+  const w = S.weights?.[t];
+  patch(el('f-macros'), [['Calories', T.calories, P.calories, ''], ['Carbs', T.carbs, P.carbs, ' g'], ['Fat', T.fat, P.fat, ' g']]
+    .map(([name, v, g, u]) => `<div class="mac"><span class="cap">${name}</span><b>${num(Math.round(v))}${u}</b>
+      <i>${g ? `of ${num(g)}${u}` : 'no goal'}</i><span class="bar"><i style="--p:${g ? Math.min(1, v / g) : 0}"></i></span></div>`).join('') +
+    `<button class="link quiet" type="button" data-act="weigh">${w ? `Bodyweight ${w} lb` : 'Log bodyweight'}</button>`);
   const us = E.usuals(S, new Date().getHours()).slice(0, 7);
   patch(el('f-usuals'), `<button class="chip add" type="button" data-act="add-food">Add food</button>${us.map(usualChip).join('')}`);
   const list = S.foodLog.filter(f => f.date === t).reverse();
   patch(el('f-list'), list.length ? `<ul class="eaten">${list.map(f => `<li>
       <span class="when">${esc(f.time)}</span>
       <span class="what">${esc(f.name || 'Protein')}</span>
-      <b>${f.protein} g</b>
+      <b>${f.protein} g${f.calories ? `<i>${num(f.calories)} cal</i>` : ''}</b>
       <button class="iconbtn sm" type="button" data-act="del-food" data-id="${f.id}" aria-label="Remove ${esc(f.name || 'entry')}">${icon.close}</button>
     </li>`).join('')}</ul>` : '<p class="empty">Nothing eaten yet today.</p>');
 }
@@ -495,10 +500,11 @@ function goalsSheet(first) {
     field('Lifting days per week', stepper('days', p.days, 1, 1, 7, 'Lifting days per week')) +
     field('Sleep per night, hours', stepper('sleep', p.sleep, 0.25, 4, 12, 'Sleep goal in hours')) +
     field('Calories per day', `<input name="calories" type="number" inputmode="numeric" min="0" max="9000" value="${p.calories || ''}" placeholder="Leave empty to skip">`) +
+    `<div class="pair">${field('Carbs, grams', `<input name="carbs" type="number" inputmode="numeric" min="0" max="1500" value="${p.carbs || ''}" placeholder="Skip">`)}${field('Fat, grams', `<input name="fat" type="number" inputmode="numeric" min="0" max="600" value="${p.fat || ''}" placeholder="Skip">`)}</div>` +
     (first ? '' : `<button class="link quiet" type="button" data-act="sync">${Sync.connected() ? 'Sync is on' : 'Sync and AI reader'}</button>`),
     first ? 'Start' : 'Save',
     f => commit(S => {
-      S.profile = { protein: +f.protein || 180, days: Math.min(7, Math.max(1, +f.days || 5)), sleep: +f.sleep || 8, calories: +f.calories || 0 };
+      S.profile = { protein: +f.protein || 180, days: Math.min(7, Math.max(1, +f.days || 5)), sleep: +f.sleep || 8, calories: +f.calories || 0, carbs: +f.carbs || 0, fat: +f.fat || 0 };
       S.setup = true;
     }));
   // Closing the first-run sheet any other way keeps the defaults. Either
@@ -562,14 +568,25 @@ function sleepSheet() {
     f => { const snap = snapshot(); commit(S => { S.sleep[today()] = +f.hours; }); say(`Sleep: ${fmtH(+f.hours)}.`, snap); });
 }
 
+// The fields for one food: a name and its four numbers.
+const box = (name, v, ph) => `<input name="${name}" type="number" inputmode="numeric" min="0" max="6000" value="${v || ''}" placeholder="${ph}">`;
+const foodFields = (v = {}) =>
+  field('What was it', `<input name="name" type="text" autocomplete="off" autocapitalize="sentences" maxlength="40" value="${esc(v.name || '')}" placeholder="Protein shake">`) +
+  field('Protein, grams', stepper('protein', v.protein ?? 30, 5, 0, 400, 'Protein in grams')) +
+  field('Calories', box('calories', v.calories, 'Leave empty to skip')) +
+  `<div class="pair">${field('Carbs, grams', box('carbs', v.carbs, 'Skip'))}${field('Fat, grams', box('fat', v.fat, 'Skip'))}</div>` +
+  '<label class="check"><input type="checkbox" name="keep" checked><span>Keep as a usual</span></label>';
+const foodFrom = (f, source) => ({ name: (f.name || '').trim(), protein: Math.round(+f.protein || 0), calories: Math.round(+f.calories || 0), carbs: Math.round(+f.carbs || 0), fat: Math.round(+f.fat || 0), keep: !!f.keep, source });
+
 function foodSheet() {
-  openSheet('Add food',
-    field('What was it', '<input name="name" type="text" autocomplete="off" autocapitalize="sentences" maxlength="40" placeholder="Protein shake">') +
-    field('Protein, grams', stepper('protein', 30, 5, 0, 300, 'Protein in grams')) +
-    field('Calories', '<input name="calories" type="number" inputmode="numeric" min="0" max="5000" placeholder="Leave empty to skip">') +
-    '<label class="check"><input type="checkbox" name="keep" checked><span>Keep as a usual</span></label>',
-    'Log it',
-    f => addFood({ name: (f.name || '').trim(), protein: Math.round(+f.protein || 0), calories: +f.calories || 0, keep: !!f.keep, source: 'form' }));
+  openSheet('Add food', foodFields(), 'Log it', f => addFood(foodFrom(f, 'form')));
+}
+
+function weighSheet() {
+  const days = Object.keys(S.weights || {}).sort();
+  const last = days.length ? S.weights[days[days.length - 1]] : 180;
+  openSheet('Bodyweight', field('Pounds, today', stepper('w', last, 0.5, 60, 500, 'Bodyweight in pounds')), 'Save',
+    f => { const snap = snapshot(); commit(S => { (S.weights ||= {})[today()] = +f.w; }); say(`Bodyweight: ${+f.w} lb.`, snap); });
 }
 
 // Editing the program closes out a finished session first, so the edit
@@ -664,6 +681,7 @@ const acts = {
   sync: syncSheet,
   sleep: sleepSheet,
   'add-food': foodSheet,
+  weigh: weighSheet,
   'close-sheet': closeSheet,
   tab: n => { ui.tab = n.dataset.day; drawLift(); },
   lift: n => liftSheet(n.dataset.id),
@@ -687,7 +705,7 @@ const acts = {
   usual: n => {
     const f = S.foods.find(x => x.id === n.dataset.id);
     closeCompose();
-    if (f) addFood({ name: f.name, protein: f.protein, calories: f.calories || 0, source: 'usual' });
+    if (f) addFood({ name: f.name, protein: f.protein, calories: f.calories || 0, carbs: f.carbs || 0, fat: f.fat || 0, source: 'usual' });
   },
   'del-food': n => {
     const snap = snapshot();
@@ -707,24 +725,58 @@ const acts = {
   },
 };
 
-// The camera opens straight away. The photo is shown once so you can say
-// what it was, then it is dropped. It is never saved on the phone or sent
-// anywhere until the AI is connected.
-el('cam').addEventListener('change', e => {
+// The camera opens straight away. The photo is shrunk, shown once, and sent to
+// be read if the AI is connected. It is never saved on the phone.
+const SOURCE = { label: 'From the label', published: 'Published numbers', matched: 'Matched online', estimate: 'Estimate' };
+
+function shrink(file) {
+  return new Promise((done, fail) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 1280 / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      done(c.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = fail;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// The sheet where a photo's numbers are checked before they are logged.
+function shotSheet(shot, v, line) {
+  openSheet(v ? 'Check it' : 'What was it',
+    `<img class="shot" src="${shot}" alt="The photo you just took"><p class="sub">${line}</p>` + foodFields(v || {}),
+    'Log it', f => addFood(foodFrom(f, v ? 'photo' : 'form')));
+}
+
+el('cam').addEventListener('change', async e => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file) return;
-  const url = URL.createObjectURL(file);
-  openSheet('What was it',
-    `<img class="shot" src="${url}" alt="The photo you just took">
-     <p class="sub">The AI will fill this in from the photo once it is connected. For now, enter it here.</p>` +
-    field('Name', '<input name="name" type="text" autocomplete="off" autocapitalize="sentences" maxlength="40" placeholder="Chicken bowl">') +
-    field('Protein, grams', stepper('protein', 30, 5, 0, 300, 'Protein in grams')) +
-    field('Calories', '<input name="calories" type="number" inputmode="numeric" min="0" max="5000" placeholder="Leave empty to skip">') +
-    '<label class="check"><input type="checkbox" name="keep" checked><span>Keep as a usual</span></label>',
-    'Log it',
-    f => addFood({ name: (f.name || '').trim(), protein: Math.round(+f.protein || 0), calories: +f.calories || 0, keep: !!f.keep, source: 'photo' }));
-  sheet.addEventListener('close', () => URL.revokeObjectURL(url), { once: true });
+  let shot;
+  try { shot = await shrink(file); } catch (err) { say('Could not open that photo.'); return; }
+  if (!Sync.connected()) { shotSheet(shot, null, 'The AI will fill this in from the photo once it is connected. For now, enter it here.'); return; }
+
+  // One optional line of context, then the lookup.
+  openSheet('Anything to add',
+    `<img class="shot" src="${shot}" alt="The photo you just took">` +
+    field('Where it is from or what you ordered', '<input name="note" type="text" autocomplete="off" autocapitalize="sentences" maxlength="120" placeholder="Chipotle, double chicken">', 'Leave it empty and the photo is read on its own.'),
+    'Read it',
+    async f => {
+      say('Reading the photo and looking it up.');
+      try {
+        const m = await Sync.see(shot.split(',')[1], (f.note || '').trim());
+        hideSay();
+        shotSheet(shot, m, `${SOURCE[m.source] || 'Estimate'}. ${esc(m.detail || '')}`);
+      } catch (err) {
+        const why = err instanceof TypeError || err?.name === 'TimeoutError' ? 'offline' : err.message;
+        hideSay();
+        shotSheet(shot, null, why === 'unreadable' ? 'Could not make that out. Enter it here.' : `${problem(why)} Enter it here for now.`);
+      }
+    });
 });
 
 // After the keyboard goes away an iPhone can leave the screen shifted up.
@@ -838,7 +890,7 @@ function act(r, t, day) {
     commit(S => { S.sleep[t] = r.hours; });
     msg = `Sleep: ${fmtH(r.hours)}.`;
   } else if (r.type === 'food') {
-    commit(S => E.logFood(S, { name: r.name, protein: r.protein, calories: r.calories, source: r.source, keep: false, ...now(), id: uid() }));
+    commit(S => E.logFood(S, { name: r.name, protein: r.protein, calories: r.calories, carbs: r.carbs || 0, fat: r.fat || 0, source: r.source, keep: false, ...now(), id: uid() }));
     const what = r.n === 0.5 ? 'Half a ' + r.name.toLowerCase() : (r.n !== 1 ? r.n + ' × ' : '') + (r.name || 'Protein');
     msg = `${what}, ${r.source === 'estimate' ? 'about ' : ''}${r.protein} g.`;
   } else if (r.type === 'done') {
@@ -871,7 +923,7 @@ function act(r, t, day) {
 
 // What the AI reader sends back, put into the shape the phone's own reader uses.
 function fromReader(a) {
-  if (a.type === 'food') return { type: 'food', name: a.name, protein: a.protein, calories: a.calories, n: 1, source: a.estimated ? 'estimate' : 'typed' };
+  if (a.type === 'food') return { type: 'food', name: a.name, protein: a.protein, calories: a.calories, carbs: a.carbs, fat: a.fat, n: 1, source: a.estimated ? 'estimate' : 'typed' };
   if (a.type === 'sleep') return { type: 'sleep', hours: a.hours };
   if (a.type === 'session_done') return { type: 'done' };
   if (a.type === 'skip_lift' && S.lifts[a.lift_id]) return { type: 'skip', id: a.lift_id };

@@ -15,13 +15,13 @@ let status = 'ok';
 export const connected = () => !!cfg.key;
 export const info = () => ({ on: !!cfg.key, at: cfg.at, error: status === 'ok' ? '' : status });
 
-async function call(path, method = 'GET', body, key = cfg.key) {
+async function call(path, method = 'GET', body, key = cfg.key, wait = 20000) {
   const r = await fetch('/api/plate/' + path, {
     method,
     headers: { 'Content-Type': 'application/json', 'X-Plate-Key': encodeURIComponent(key) },
     body: body ? JSON.stringify(body) : undefined,
     keepalive: document.visibilityState === 'hidden',
-    signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined,
+    signal: AbortSignal.timeout ? AbortSignal.timeout(wait) : undefined,
   });
   let json = null;
   try { json = await r.json(); } catch (e) { /* not JSON, e.g. a plain 404 page */ }
@@ -113,6 +113,14 @@ export function disconnect() {
 export async function ask(text, context) {
   const r = await call('read', 'POST', { text, context });
   if (r.status !== 200) throw new Error(code(r));
+  return r.json;
+}
+
+// Send one photo to be read. It takes a few seconds because the numbers are looked up online.
+export async function see(image, note) {
+  const r = await call('see', 'POST', { image, note }, cfg.key, 60000);
+  if (r.status !== 200) throw new Error(code(r));
+  if (r.json?.error) throw new Error(r.json.error);
   return r.json;
 }
 

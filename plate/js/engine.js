@@ -28,7 +28,7 @@ export function seed() {
   return {
     v: 1,
     setup: false,
-    profile: { protein: 180, calories: 0, sleep: 8, days: 5 },
+    profile: { protein: 180, calories: 0, carbs: 0, fat: 0, sleep: 8, days: 5 },
     rotation: [...DAYS],
     pointer: 0,
     lifts: Object.fromEntries(L.map(l => [l.id, l])),
@@ -42,6 +42,7 @@ export function seed() {
     foods: [],         // { id, name, protein, calories, uses, hours }
     foodLog: [],       // { id, date, time, name, protein, calories, source }
     sleep: {},         // date woke up -> hours
+    weights: {},       // date -> bodyweight in pounds
     messages: [],      // raw text typed or said
   };
 }
@@ -221,13 +222,20 @@ export function usuals(S, hour) {
   return [...S.foods].sort((a, b) => (near(b) * 3 + b.uses) - (near(a) * 3 + a.uses));
 }
 
-export function logFood(S, { name, protein, calories = 0, source, date, time, hour, id, keep }) {
-  S.foodLog.push({ id, date, time, name, protein, calories, source });
+// Everything eaten on a day, added up.
+export function totalsOn(S, date) {
+  const t = { protein: 0, calories: 0, carbs: 0, fat: 0 };
+  for (const f of S.foodLog) if (f.date === date) for (const k of Object.keys(t)) t[k] += f[k] || 0;
+  return t;
+}
+
+export function logFood(S, { name, protein, calories = 0, carbs = 0, fat = 0, source, date, time, hour, id, keep }) {
+  S.foodLog.push({ id, date, time, name, protein, calories, carbs, fat, source });
   if (!name) return;
   let f = S.foods.find(x => x.name.toLowerCase() === name.toLowerCase());
   if (!f) {
     if (!keep) return;
-    f = { id: 'f' + id, name, protein, calories, uses: 0, hours: {} };
+    f = { id: 'f' + id, name, protein, calories, carbs, fat, uses: 0, hours: {} };
     S.foods.push(f);
   }
   f.uses++;
