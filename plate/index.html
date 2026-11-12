@@ -126,15 +126,16 @@
 
     <!-- Typing. The box sits at the top so the keyboard never covers it. -->
     <div class="compose" id="compose" hidden>
-      <form id="dock" autocomplete="off">
-        <label class="vh" for="q">Tell it what you did</label>
-        <input id="q" name="q" type="text" enterkeyhint="send" autocapitalize="sentences" placeholder="What did you do?">
-        <button class="sq on" type="submit" aria-label="Send">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
-        </button>
-      </form>
-      <div class="hints" id="c-hints"></div>
-      <button class="link quiet" type="button" data-act="compose-close">Cancel</button>
+      <div class="cbox">
+        <form id="dock" autocomplete="off">
+          <label class="vh" for="q">Tell it what you did</label>
+          <input id="q" name="q" type="text" enterkeyhint="send" autocapitalize="sentences" placeholder="What did you do?">
+          <button class="sq on" type="submit" aria-label="Send">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+          </button>
+        </form>
+        <div class="hints" id="c-hints"></div>
+      </div>
     </div>
 
     <input id="cam" type="file" accept="image/*" capture="environment" hidden>

@@ -742,6 +742,7 @@ document.addEventListener('click', e => {
   const n = e.target.closest('[data-act]');
   if (n && acts[n.dataset.act]) { acts[n.dataset.act](n); return; }
   if (e.target === sheet) closeSheet();
+  if (e.target === el('compose')) closeCompose();   // a tap outside the box puts it away
 });
 
 document.addEventListener('submit', e => {
@@ -789,7 +790,7 @@ function openCompose(spoken) {
   patch(el('c-hints'),
     (spoken ? '<p class="sub">Tap the mic on your keyboard and talk. Hold-to-talk on the big button comes with the AI connection.</p>' : '') +
     (us.length ? `<p class="cap">One tap</p><div class="chips">${us.map(usualChip).join('')}</div>`
-      : spoken ? '' : '<p class="sub">Try "40g chicken", "slept 7.5" or "bench last set 6".</p>'));
+      : spoken ? '' : '<p class="sub">Like "40g chicken", "slept 7.5" or "bench last set 6".</p>'));
   el('compose').hidden = false;
   const q = el('q');
   q.value = '';
