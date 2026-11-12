@@ -630,7 +630,36 @@
 
     .cc-line { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
     .cc-num { font-size: 32px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
-    .cc-spark { grid-column: 2; grid-row: 1; display: flex; }
+    /* the card's trend graph: a compact sparkline on a phone, a long labeled
+       line on a wider screen, where the card has the room for it */
+    .cc-spark { grid-column: 2; grid-row: 1; position: relative; width: 84px; height: 34px; min-width: 0; }
+    .cc-spark svg { display: block; overflow: visible; }
+    .cc-axis { font-size: 12px; fill: var(--viz-ink-2); }
+
+    .cc-tip {
+      position: absolute;
+      top: -26px;
+      left: 0;
+      transform: translateX(-50%);
+      padding: 2px 8px;
+      border-radius: 7px;
+      background: #fff;
+      border: 1px solid var(--viz-grid);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--viz-ink);
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .cc-tip[hidden] { display: none; }
+
+    @media (min-width: 600px) {
+      .census-card { grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 22px; padding-top: 14px; }
+      .cc-spark { width: auto; height: 76px; justify-self: stretch; }
+    }
     .census-card .right { grid-column: 3; grid-row: 1; }
 
     .cc-sub {
@@ -1635,6 +1664,11 @@
         var changed = !census.latest || JSON.stringify(census.latest) !== JSON.stringify(j);
         census.latest = j;
         renderCensusCard(); // cheap, and its "no new report" line depends on today's date
+        // the card's 30-day graph reaches into the month before this one
+        var prev = shiftMonth(j.month, -1);
+        if (!census.cache[prev] && j.first && j.first < j.month + '-01') {
+          fetchCensus(prev).then(function () { if (census.latest === j) renderCensusCard(); }).catch(function () {});
+        }
         if (!changed || sheetItem !== 'census') return;
         // an open chart is only redrawn when its own numbers moved
         if (!census.view || census.view.month === j.month) { census.view = j; renderSheet(); }
@@ -1722,9 +1756,95 @@
         if (isNum(cur.snf)) parts.push(cur.snf + ' SNF');
         $('cc-sub').textContent = parts.join(' · ');
       }
-      $('cc-spark').innerHTML = sparkSvg(days.map(function (d) { return d.total; }), 84, 34);
-      card.hidden = false;
+      card.hidden = false; // before drawing: the graph is sized from the room it is given
+      drawCardTrend();
+      var t = cardTrend;
+      card.setAttribute('aria-label', 'Health Center census: ' + cur.total + ' on ' + shortDate(cur.date) +
+        (t ? '. Last ' + t.pts.length + ' days: low ' + t.lo + ', high ' + t.hi : '') + '. Open the chart.');
     }
+
+    function dayNum(iso) { var p = iso.split('-').map(Number); return Math.round(Date.UTC(p[0], p[1] - 1, p[2]) / 86400000); }
+    function isoFromDayNum(n) { return new Date(n * 86400000).toISOString().slice(0, 10); }
+
+    // The card's graph covers the last 30 days, not the month so far: on the
+    // 1st, the month so far is a single dot. That reaches into the month
+    // before the latest one; until that month arrives it draws what it has.
+    var TREND_DAYS = 30;
+    function trendDays() {
+      var j = census.latest;
+      if (!j || !j.days.length) return [];
+      var prev = census.cache[shiftMonth(j.month, -1)];
+      var days = (prev && prev.days ? prev.days : []).concat(j.days);
+      var cut = isoFromDayNum(dayNum(days[days.length - 1].date) - (TREND_DAYS - 1));
+      return days.filter(function (d) { return d.date >= cut && isNum(d.total); });
+    }
+
+    // One line in the series color with a light wash under it and the latest
+    // day marked. Given room (a wider screen) it also names its first and last
+    // day, so the span reads without a legend, and it answers the mouse with
+    // that day's count. Drawn at the size of its box, so call it again on resize.
+    var cardTrend = null;
+    function drawCardTrend() {
+      var box = $('cc-spark');
+      var w = Math.floor(box.clientWidth), h = Math.floor(box.clientHeight);
+      var pts = trendDays();
+      cardTrend = null;
+      if (pts.length < 2 || w < 40 || h < 20) { box.innerHTML = ''; return; }
+      var labels = w >= 220;
+      var padT = 6, padB = labels ? 21 : 5, padL = labels ? 1 : 3, padR = 7;
+      var t0 = dayNum(pts[0].date), t1 = dayNum(pts[pts.length - 1].date);
+      var vals = pts.map(function (d) { return d.total; });
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      var floor = lo - (hi - lo) * 0.3; // keeps the lowest day off the baseline
+      var base = h - padB;
+      var xs = pts.map(function (d) { return padL + (dayNum(d.date) - t0) * (w - padL - padR) / (t1 - t0 || 1); });
+      var ys = vals.map(function (v) { return hi === lo ? padT + (base - padT) / 2 : padT + (hi - v) * (base - padT) / (hi - floor); });
+      var line = xs.map(function (x, i) { return (i ? 'L' : 'M') + x.toFixed(1) + ' ' + ys[i].toFixed(1); }).join(' ');
+      var last = pts.length - 1;
+      var svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true">' +
+        '<path d="' + line + ' L' + xs[last].toFixed(1) + ' ' + base + ' L' + xs[0].toFixed(1) + ' ' + base + ' Z" fill="var(--series-1)" fill-opacity="0.1"/>' +
+        (labels ? '<line x1="0" x2="' + w + '" y1="' + (base + 0.5) + '" y2="' + (base + 0.5) + '" stroke="var(--viz-grid)"/>' : '') +
+        '<line id="cc-rule" x1="0" x2="0" y1="' + padT + '" y2="' + base + '" stroke="var(--viz-axis)" visibility="hidden"/>' +
+        '<path d="' + line + '" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+        '<circle cx="' + xs[last].toFixed(1) + '" cy="' + ys[last].toFixed(1) + '" r="4" fill="var(--series-1)" stroke="#fff" stroke-width="2"/>' +
+        '<circle id="cc-mark" r="4.5" fill="#fff" stroke="var(--series-1)" stroke-width="2" visibility="hidden"/>';
+      if (labels) {
+        svg += '<text class="cc-axis" x="0" y="' + (h - 4) + '">' + esc(shortDate(pts[0].date)) + '</text>' +
+          '<text class="cc-axis" x="' + w + '" y="' + (h - 4) + '" text-anchor="end">' + esc(shortDate(pts[last].date)) + '</text>';
+      }
+      box.innerHTML = svg + '</svg><span class="cc-tip" id="cc-tip" hidden></span>';
+      cardTrend = { pts: pts, xs: xs, ys: ys, w: w, lo: lo, hi: hi };
+    }
+
+    // the day nearest the mouse: a rule, a ring on the line, and its count
+    function showCardPoint(px) {
+      var t = cardTrend, tip = $('cc-tip'), rule = $('cc-rule'), mark = $('cc-mark');
+      if (!t || !tip || !rule || !mark) return;
+      var best = 0;
+      for (var i = 1; i < t.xs.length; i++) if (Math.abs(t.xs[i] - px) < Math.abs(t.xs[best] - px)) best = i;
+      rule.setAttribute('x1', t.xs[best]);
+      rule.setAttribute('x2', t.xs[best]);
+      rule.setAttribute('visibility', 'visible');
+      mark.setAttribute('cx', t.xs[best]);
+      mark.setAttribute('cy', t.ys[best]);
+      mark.setAttribute('visibility', 'visible');
+      tip.textContent = longDate(t.pts[best].date) + ' · ' + t.pts[best].total;
+      tip.hidden = false;
+      var half = tip.offsetWidth / 2;
+      tip.style.left = Math.max(half, Math.min(t.w - half, t.xs[best])) + 'px';
+    }
+
+    function hideCardPoint() {
+      var tip = $('cc-tip'), rule = $('cc-rule'), mark = $('cc-mark');
+      if (tip) tip.hidden = true;
+      if (rule) rule.setAttribute('visibility', 'hidden');
+      if (mark) mark.setAttribute('visibility', 'hidden');
+    }
+
+    $('cc-spark').addEventListener('pointermove', function (e) {
+      if (e.pointerType === 'mouse') showCardPoint(e.clientX - this.getBoundingClientRect().left);
+    });
+    $('cc-spark').addEventListener('pointerleave', hideCardPoint);
 
     function tileHtml(label, key, upIsGood, days, since) {
       var cur = days[days.length - 1][key];
@@ -1914,7 +2034,10 @@
     var resizeTimer = null;
     window.addEventListener('resize', function () {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(function () { if (sheetItem === 'census') renderSheet(); }, 150);
+      resizeTimer = setTimeout(function () {
+        if (!$('census-card').hidden) drawCardTrend(); // it is drawn to the width of its box
+        if (sheetItem === 'census') renderSheet();
+      }, 150);
     });
 
     // ---------- keep fresh ----------
