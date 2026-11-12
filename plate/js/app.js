@@ -939,7 +939,9 @@ async function sendTalk() {
 
 mic.addEventListener('pointerdown', e => {
   e.preventDefault();
-  if (!Sync.connected() || !navigator.mediaDevices || !window.MediaRecorder) { talk(); return; }
+  // Say plainly why voice is not available, so it is never a silent fallback.
+  if (!Sync.connected()) { say('Voice needs the connection first. Open Goals, then Sync and AI reader, and enter your passphrase.'); return; }
+  if (!navigator.mediaDevices || !window.MediaRecorder) { say('This phone is not letting the app record. Use the keyboard button instead.'); return; }
   mic.setPointerCapture(e.pointerId);
   startTalking();
 });
