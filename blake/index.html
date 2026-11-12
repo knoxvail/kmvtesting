@@ -1630,12 +1630,54 @@
     }
 
     function loadCensusLatest() {
-      fetchCensus('').then(function (j) {
+      return fetchCensus('').then(function (j) {
         if (!j.month || !j.days.length) return;
+        var changed = !census.latest || JSON.stringify(census.latest) !== JSON.stringify(j);
         census.latest = j;
-        renderCensusCard();
-        if (sheetItem === 'census' && (!census.view || census.view.month === j.month)) { census.view = j; renderSheet(); }
+        renderCensusCard(); // cheap, and its "no new report" line depends on today's date
+        if (!changed || sheetItem !== 'census') return;
+        // an open chart is only redrawn when its own numbers moved
+        if (!census.view || census.view.month === j.month) { census.view = j; renderSheet(); }
+        else { census.view.first = j.first; census.view.last = j.last; }
       }).catch(function () {});
+    }
+
+    // Ask the dashboard to look in Carmen's inbox for a newer report. It reads
+    // with its own saved login, answers with counts and dates only, and
+    // ignores asks that come less than five minutes apart, so this is cheap to
+    // call often. Resolves true when the log now runs past what is on screen.
+    var lastPoke = 0, pokeAfter = 0;
+    function pokeCensus() {
+      var now = Date.now();
+      if (now < pokeAfter || now - lastPoke < 60000) return Promise.resolve(false);
+      lastPoke = now;
+      return fetch(CENSUS_API + '/sync', { cache: 'no-store' })
+        .then(function (r) {
+          // 401 = Knox has the census job switched off; no point asking again for a while
+          if (r.status === 401) pokeAfter = Date.now() + 3600000;
+          return r.ok ? r.json() : null;
+        })
+        .then(function (j) {
+          if (!j) return false;
+          var days = census.latest ? census.latest.days : [];
+          var shown = days.length ? days[days.length - 1].date : '';
+          var moved = !!j.written || !!(j.through && j.through > shown);
+          if (moved) census.cache = {}; // a correction can reach back into an earlier month
+          return moved;
+        })
+        .catch(function () { return false; });
+    }
+
+    // check the inbox, then re-read the log (a moment later if something was
+    // just written: Notion's index trails a write)
+    function refreshCensus() {
+      pokeCensus().then(function (moved) { setTimeout(loadCensusLatest, moved ? 2500 : 0); });
+    }
+
+    // whole days between a logged date and today, on this device's calendar
+    function daysBehind(iso) {
+      var p = iso.split('-').map(Number), t = new Date();
+      return Math.round((new Date(t.getFullYear(), t.getMonth(), t.getDate()) - new Date(p[0], p[1] - 1, p[2])) / 86400000);
     }
 
     // "up 2 since Nov 1" with a triangle: the words and the mark carry the
@@ -1668,11 +1710,18 @@
       var days = j.days, cur = days[days.length - 1], first = days[0];
       $('cc-num').textContent = cur.total;
       $('cc-delta').innerHTML = days.length > 1 ? deltaHtml(cur.total, first.total, shortDate(first.date), true) : '';
-      var parts = [shortDate(cur.date)];
-      if (isNum(cur.private)) parts.push(cur.private + ' private');
-      if (isNum(cur.medicaid)) parts.push(cur.medicaid + ' Medicaid');
-      if (isNum(cur.snf)) parts.push(cur.snf + ' SNF');
-      $('cc-sub').textContent = parts.join(' · ');
+      // Carmen reports on weekdays and Monday's workbook fills in the weekend,
+      // so three days old is an ordinary Monday morning. Four or more means a
+      // report was missed: say that, instead of showing an old split as current.
+      if (daysBehind(cur.date) >= 4) {
+        $('cc-sub').textContent = 'No new report since ' + shortDate(cur.date);
+      } else {
+        var parts = [shortDate(cur.date)];
+        if (isNum(cur.private)) parts.push(cur.private + ' private');
+        if (isNum(cur.medicaid)) parts.push(cur.medicaid + ' Medicaid');
+        if (isNum(cur.snf)) parts.push(cur.snf + ' SNF');
+        $('cc-sub').textContent = parts.join(' · ');
+      }
       $('cc-spark').innerHTML = sparkSvg(days.map(function (d) { return d.total; }), 84, 34);
       card.hidden = false;
     }
@@ -1871,11 +1920,15 @@
     // ---------- keep fresh ----------
     load();
     checkVersion();
-    loadCensusLatest();
+    // census: show what is logged right away, then ask for a fresh look at the
+    // inbox, and keep asking every ten minutes while the page is on screen
+    loadCensusLatest().then(function () {
+      pokeCensus().then(function (moved) { if (moved) setTimeout(loadCensusLatest, 2500); });
+    });
     setInterval(checkVersion, 15000);
     setInterval(load, 300000);
-    setInterval(loadCensusLatest, 1800000);
-    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { load(); checkVersion(); loadCensusLatest(); } });
+    setInterval(function () { if (document.visibilityState === 'visible') refreshCensus(); }, 600000);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { load(); checkVersion(); refreshCensus(); } });
   </script>
 </body>
 </html>
