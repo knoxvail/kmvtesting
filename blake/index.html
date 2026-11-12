@@ -583,6 +583,176 @@
 
     .sheet .status { margin-top: 10px; }
 
+    /* ---------- census ---------- */
+    /* chart roles: one series hue, recessive grid and axes, text in ink tokens */
+    .viz {
+      --viz-grid: #e1e0d9;
+      --viz-axis: #c3c2b7;
+      --viz-muted: #898781;
+      --viz-ink: #0b0b0b;
+      --viz-ink-2: #52514e;
+      --series-1: #2a78d6;
+      --up: #006300;
+      --down: #d03b3b;
+    }
+
+    .census-card {
+      width: 100%;
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      column-gap: 12px;
+      row-gap: 3px;
+      align-items: center;
+      background: var(--card);
+      border: none;
+      border-radius: var(--radius);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      padding: 12px 14px 12px 16px;
+      font: inherit;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .census-card[hidden] { display: none; }
+    .census-card:hover { background: #FAFAFA; }
+    .census-card:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+    .cc-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .cc-line { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .cc-num { font-size: 32px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
+    .cc-spark { grid-column: 2; grid-row: 1; display: flex; }
+    .census-card .right { grid-column: 3; grid-row: 1; }
+
+    .cc-sub {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      font-size: 14.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cz-delta { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; font-weight: 600; color: var(--viz-ink-2); white-space: nowrap; }
+    .cz-delta.up { color: var(--up); }
+    .cz-delta.down { color: var(--down); }
+
+    /* the month arrows sit above everything they change */
+    .cz-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 14px;
+      background: #F2F2F7;
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .cz-month { font-weight: 700; font-size: 17px; }
+
+    .cz-arrow {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+
+    .cz-arrow:hover { background: #F7F7F9; }
+    .cz-arrow:disabled { opacity: 0.35; cursor: default; box-shadow: none; background: transparent; }
+
+    .cz-body { transition: opacity 150ms ease; }
+    .cz-body.loading { opacity: 0.5; }
+
+    .cz-hero { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+    .cz-hero-num { font-size: 56px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
+    .cz-hero-cap { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .cz-hero-cap strong { font-size: 17px; }
+    .cz-hero-cap > span { color: var(--viz-ink-2); font-size: 14.5px; }
+
+    .cz-chart { position: relative; margin: 18px 0 0; }
+
+    .cz-chart figcaption, .cz-h {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .cz-h { margin-top: 22px; }
+    .cz-chart:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; border-radius: 8px; }
+    .cz-plot svg { display: block; max-width: 100%; touch-action: pan-y; cursor: crosshair; }
+    .cz-tick { font-size: 11px; fill: var(--viz-muted); font-variant-numeric: tabular-nums; }
+    .cz-end { font-size: 12.5px; font-weight: 700; fill: var(--viz-ink); }
+
+    .cz-tip {
+      position: absolute;
+      z-index: 2;
+      min-width: 140px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      padding: 8px 10px;
+      font-size: 13px;
+      line-height: 1.35;
+      pointer-events: none;
+    }
+
+    .cz-tip[hidden] { display: none; }
+    .cz-tip-date { color: var(--viz-ink-2); font-size: 12px; margin-bottom: 3px; }
+    .cz-tip-row { display: flex; align-items: baseline; gap: 8px; }
+    .cz-tip-row strong { min-width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
+    .cz-tip-row span { color: var(--viz-ink-2); }
+    .cz-tip-row.main strong { font-size: 15px; }
+
+    .cz-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+
+    .cz-tile { background: #F7F7F9; border-radius: 12px; padding: 10px 12px; min-width: 0; }
+    .cz-tile-label { font-size: 13.5px; font-weight: 600; color: var(--viz-ink-2); }
+    .cz-tile-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .cz-tile-num { font-size: 26px; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
+    .cz-tile .cz-delta { font-size: 12.5px; white-space: normal; }
+
+    @media (max-width: 520px) {
+      .cz-tiles { grid-template-columns: 1fr; }
+      .cz-hero-num { font-size: 48px; }
+    }
+
+    .cz-table { width: 100%; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+    .cz-table th, .cz-table td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: right; }
+    .cz-table th:first-child { text-align: left; }
+    .cz-table tbody th { font-weight: 500; }
+    .cz-table td:nth-child(2) { font-weight: 700; }
+
+    .cz-table thead th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .cz-note { color: var(--muted); font-size: 13.5px; margin-top: 12px; }
+
     .lightbox {
       position: fixed;
       inset: 0;
@@ -624,6 +794,16 @@
   </header>
 
   <main class="wrap">
+    <button type="button" class="census-card viz" id="census-card" hidden aria-label="Health Center census. Open the chart.">
+      <span class="cc-top">
+        <span class="cc-label">Health Center census</span>
+        <span class="cc-line"><span class="cc-num" id="cc-num"></span><span id="cc-delta"></span></span>
+      </span>
+      <span class="cc-spark" id="cc-spark"></span>
+      <span class="right"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+      <span class="cc-sub" id="cc-sub"></span>
+    </button>
+
     <div class="banner" id="shelf-banner" hidden role="status">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
       <span class="txt" id="banner-text"></span>
@@ -961,7 +1141,8 @@
     function renderSheet() {
       if (!sheetItem) return;
       var draft = $('sheet-answer') ? $('sheet-answer').value : '';
-      $('sheet').innerHTML = sheetItem === 'files' ? shelfHtml() : sheetHtml(sheetItem);
+      $('sheet').innerHTML = sheetItem === 'files' ? shelfHtml() : sheetItem === 'census' ? censusHtml() : sheetHtml(sheetItem);
+      if (sheetItem === 'census') drawCensusChart();
       if ($('sheet-answer')) { $('sheet-answer').value = draft; renderSheetChips(); }
     }
 
@@ -973,13 +1154,14 @@
       }).join('');
     }
 
+    // the sheet shows an ask (an object), the shelf ('files'), or the census ('census')
     function openSheet(target) {
       sheetItem = target;
       sheetQueue = [];
-      if (target !== 'files') { markSeen(target); render(); }
-      renderSheet();
+      if (typeof target === 'object') { markSeen(target); render(); }
       $('scrim').classList.add('show');
       $('sheet').classList.add('show');
+      renderSheet(); // after it is on screen, so the chart can measure its width
       $('sheet').scrollTop = 0;
       var c = $('sheet').querySelector('[data-close]');
       if (c) c.focus();
@@ -1029,7 +1211,7 @@
           });
           render();
           // keep an open sheet pointed at the fresh copy of its item
-          if (sheetItem && sheetItem !== 'files') {
+          if (sheetItem && typeof sheetItem === 'object') {
             var fresh = byId(sheetItem.id);
             if (fresh && (fresh.done !== sheetItem.done || fresh.response !== sheetItem.response || (fresh.responseFiles || []).length !== (sheetItem.responseFiles || []).length || (fresh.files || []).length !== (sheetItem.files || []).length)) {
               sheetItem = fresh; renderSheet();
@@ -1252,7 +1434,7 @@
     function showOverlay() {
       if (dragActive) return;
       dragActive = true;
-      var answering = sheetItem && sheetItem !== 'files' && kindOf(sheetItem) === 'needs';
+      var answering = sheetItem && typeof sheetItem === 'object' && kindOf(sheetItem) === 'needs';
       $('drop-text').textContent = answering ? 'Drop to add to your answer' : 'Drop to send to Knox';
       document.body.classList.add('dragging');
       $('drop-overlay').classList.add('show');
@@ -1265,7 +1447,7 @@
       $('drop-overlay').classList.remove('show');
     }
     function routeDrop(fileList, links) {
-      var answering = sheetItem && sheetItem !== 'files' && kindOf(sheetItem) === 'needs';
+      var answering = sheetItem && typeof sheetItem === 'object' && kindOf(sheetItem) === 'needs';
       var tooBig = [];
       var accepted = [];
       Array.prototype.forEach.call(fileList, function (f) { if (f.size <= MAX_BYTES) accepted.push(f); else tooBig.push(f.name); });
@@ -1327,8 +1509,10 @@
       if (e.target.closest('[data-close]')) { closeSheet(); return; }
       var unq = e.target.closest('[data-sheet-unqueue]');
       if (unq) { sheetQueue.splice(Number(unq.getAttribute('data-sheet-unqueue')), 1); renderSheetChips(); return; }
+      var cz = e.target.closest('[data-cz]');
+      if (cz && sheetItem === 'census') { goCensusMonth(cz.getAttribute('data-cz') === 'prev' ? -1 : 1); return; }
       var btn = e.target.closest('[data-act]');
-      if (!btn || !sheetItem || sheetItem === 'files') return;
+      if (!btn || !sheetItem || typeof sheetItem !== 'object') return;
       var it = sheetItem;
       var act = btn.getAttribute('data-act');
 
@@ -1415,12 +1599,283 @@
     function closeLightbox() { $('lightbox').classList.remove('show'); $('lightbox-img').src = ''; }
     $('lightbox').addEventListener('click', closeLightbox);
 
+    // ---------- census ----------
+    // Daily Health Center totals from Carmen's report, logged by the dashboard:
+    // how many residents, and how many in each payer group. Counts only.
+    var CENSUS_API = API.replace(/\/blake$/, '/census');
+    var census = { latest: null, view: null, cache: {}, loading: false };
+    var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var CHEV_L = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
+    var TRI_UP = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8.5H1z" fill="currentColor"/></svg>';
+    var TRI_DOWN = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5 1 1.5h8z" fill="currentColor"/></svg>';
+
+    function dayOf(iso) { return Number(iso.slice(8, 10)); }
+    function ym(month) { return month.split('-').map(Number); }
+    function daysIn(month) { var p = ym(month); return new Date(p[0], p[1], 0).getDate(); }
+    function monthLabel(month) { var p = ym(month); return MONTH_NAMES[p[1] - 1] + ' ' + p[0]; }
+    function shortDate(iso) { var p = iso.split('-').map(Number); return MON[p[1] - 1] + ' ' + p[2]; }
+    function longDate(iso) { return new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); }
+    function shiftMonth(month, by) {
+      var p = ym(month);
+      var d = new Date(p[0], p[1] - 1 + by, 1);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+    function isNum(v) { return typeof v === 'number'; }
+
+    function fetchCensus(month) {
+      return fetch(CENSUS_API + (month ? '?month=' + month : ''), { cache: 'no-store' })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (j) { if (j.month) census.cache[j.month] = j; return j; });
+    }
+
+    function loadCensusLatest() {
+      fetchCensus('').then(function (j) {
+        if (!j.month || !j.days.length) return;
+        census.latest = j;
+        renderCensusCard();
+        if (sheetItem === 'census' && (!census.view || census.view.month === j.month)) { census.view = j; renderSheet(); }
+      }).catch(function () {});
+    }
+
+    // "up 2 since Nov 1" with a triangle: the words and the mark carry the
+    // direction, the color only agrees with them. upIsGood null = no judgment.
+    function deltaHtml(cur, base, since, upIsGood) {
+      if (!isNum(cur) || !isNum(base)) return '';
+      var diff = cur - base;
+      if (!diff) return '<span class="cz-delta">no change since ' + esc(since) + '</span>';
+      var cls = upIsGood === null ? '' : ((diff > 0) === upIsGood ? ' up' : ' down');
+      return '<span class="cz-delta' + cls + '">' + (diff > 0 ? TRI_UP : TRI_DOWN) + '<span>' + (diff > 0 ? 'up ' : 'down ') + Math.abs(diff) + ' since ' + esc(since) + '</span></span>';
+    }
+
+    // a small trend line: quiet gray, the latest point in the series color
+    function sparkSvg(values, w, h) {
+      var pts = values.filter(isNum);
+      if (pts.length < 2) return '';
+      var lo = Math.min.apply(null, pts), hi = Math.max.apply(null, pts), pad = 4;
+      var x = function (i) { return pad + i * (w - 2 * pad) / (pts.length - 1); };
+      var y = function (v) { return hi === lo ? h / 2 : h - pad - (v - lo) * (h - 2 * pad) / (hi - lo); };
+      var d = pts.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(' ');
+      var last = pts.length - 1;
+      return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true">' +
+        '<path d="' + d + '" fill="none" stroke="var(--viz-muted)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+        '<circle cx="' + x(last).toFixed(1) + '" cy="' + y(pts[last]).toFixed(1) + '" r="3.5" fill="var(--series-1)" stroke="#fff" stroke-width="1.5"/></svg>';
+    }
+
+    function renderCensusCard() {
+      var j = census.latest, card = $('census-card');
+      if (!j || !j.days.length) { card.hidden = true; return; }
+      var days = j.days, cur = days[days.length - 1], first = days[0];
+      $('cc-num').textContent = cur.total;
+      $('cc-delta').innerHTML = days.length > 1 ? deltaHtml(cur.total, first.total, shortDate(first.date), true) : '';
+      var parts = [shortDate(cur.date)];
+      if (isNum(cur.private)) parts.push(cur.private + ' private');
+      if (isNum(cur.medicaid)) parts.push(cur.medicaid + ' Medicaid');
+      if (isNum(cur.snf)) parts.push(cur.snf + ' SNF');
+      $('cc-sub').textContent = parts.join(' · ');
+      $('cc-spark').innerHTML = sparkSvg(days.map(function (d) { return d.total; }), 84, 34);
+      card.hidden = false;
+    }
+
+    function tileHtml(label, key, upIsGood, days, since) {
+      var cur = days[days.length - 1][key];
+      if (!isNum(cur)) return '';
+      return '<div class="cz-tile"><div class="cz-tile-label">' + esc(label) + '</div>' +
+        '<div class="cz-tile-row"><div class="cz-tile-num">' + cur + '</div>' + sparkSvg(days.map(function (d) { return d[key]; }), 88, 30) + '</div>' +
+        (days.length > 1 ? deltaHtml(cur, days[0][key], since, upIsGood) : '') + '</div>';
+    }
+
+    function censusHtml() {
+      var v = census.view;
+      var h = '<div class="grab" aria-hidden="true"></div>' +
+        '<div class="head"><h3 id="sheet-title">Health Center census</h3><button type="button" class="close" data-close aria-label="Close">' + X_ICON + '</button></div>';
+      if (!v) return h + '<div class="block"><div class="answer none">Loading the census…</div></div>';
+
+      var month = v.month, days = v.days;
+      var canPrev = v.first && month > v.first.slice(0, 7), canNext = v.last && month < v.last.slice(0, 7);
+      h += '<div class="viz">' +
+        '<div class="cz-nav">' +
+          '<button type="button" class="cz-arrow" data-cz="prev"' + (canPrev ? '' : ' disabled') + ' aria-label="Previous month">' + CHEV_L + '</button>' +
+          '<div class="cz-month" aria-live="polite">' + esc(monthLabel(month)) + '</div>' +
+          '<button type="button" class="cz-arrow" data-cz="next"' + (canNext ? '' : ' disabled') + ' aria-label="Next month">' + CHEV + '</button>' +
+        '</div>' +
+        '<div class="cz-body' + (census.loading ? ' loading' : '') + '" id="cz-body">';
+      if (!days.length) return h + '<div class="block"><div class="answer none">No census logged for ' + esc(monthLabel(month)) + '.</div></div></div></div>';
+
+      var cur = days[days.length - 1], first = days[0], since = shortDate(first.date);
+      var vals = days.map(function (d) { return d.total; });
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      var summary = 'Total census by day, ' + monthLabel(month) + ': ' + first.total + ' on ' + shortDate(first.date) + ', ' + cur.total + ' on ' + shortDate(cur.date) + '. Low ' + lo + ', high ' + hi + '. Use the arrow keys to read each day.';
+      var n = function (x) { return isNum(x) ? x : ''; };
+
+      h += '<div class="cz-hero"><div class="cz-hero-num">' + cur.total + '</div>' +
+          '<div class="cz-hero-cap"><strong>in the Health Center</strong><span>as of ' + esc(longDate(cur.date)) + '</span>' + (days.length > 1 ? deltaHtml(cur.total, first.total, since, true) : '') + '</div></div>' +
+        '<figure class="cz-chart" id="cz-chart" tabindex="0" aria-label="' + esc(summary) + '">' +
+          '<figcaption>Total census by day</figcaption>' +
+          '<div class="cz-plot" id="cz-plot"></div>' +
+          '<div class="cz-tip" id="cz-tip" role="status" aria-live="polite" hidden></div>' +
+        '</figure>' +
+        '<div class="cz-tiles">' +
+          tileHtml('Private pay', 'private', true, days, since) +
+          tileHtml('Medicaid', 'medicaid', null, days, since) +
+          tileHtml('Skilled (SNF)', 'snf', true, days, since) +
+        '</div>' +
+        '<h4 class="cz-h">Daily log</h4>' +
+        '<table class="cz-table"><thead><tr><th scope="col">Day</th><th scope="col">Total</th><th scope="col">Private</th><th scope="col">Medicaid</th><th scope="col">SNF</th></tr></thead><tbody>' +
+          days.slice().reverse().map(function (d) {
+            return '<tr><th scope="row">' + esc(longDate(d.date)) + '</th><td>' + d.total + '</td><td>' + n(d.private) + '</td><td>' + n(d.medicaid) + '</td><td>' + n(d.snf) + '</td></tr>';
+          }).join('') +
+        '</tbody></table>' +
+        '<p class="cz-note">From Carmen Tyler\'s daily HC census report. Days after the latest report are left out.</p>' +
+        '</div></div>';
+      return h;
+    }
+
+    // The line itself. One series, so no legend: the caption names it. The
+    // grid and axis stay quiet, the endpoint alone gets a label, and a
+    // crosshair reads any day (pointer, touch, or arrow keys).
+    function drawCensusChart() {
+      var plot = $('cz-plot'), v = census.view;
+      if (!plot || !v || !v.days.length) return;
+      var days = v.days, N = daysIn(v.month);
+      var W = Math.max(280, plot.clientWidth), H = 220;
+      var m = { l: 30, r: 32, t: 14, b: 26 };
+      var pw = W - m.l - m.r, ph = H - m.t - m.b;
+
+      var vals = days.map(function (d) { return d.total; });
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      var step = hi - lo <= 6 ? 2 : hi - lo <= 14 ? 5 : 10;
+      var y0 = Math.floor((lo - 1) / step) * step, y1 = Math.ceil((hi + 1) / step) * step;
+      if (y1 - y0 < step * 2) y1 = y0 + step * 2;
+      var x = function (day) { return m.l + (N === 1 ? pw / 2 : (day - 1) * pw / (N - 1)); };
+      var y = function (val) { return m.t + ph - (val - y0) * ph / (y1 - y0); };
+      var f = function (num) { return num.toFixed(1); };
+
+      var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="presentation">';
+      for (var t = y0; t <= y1; t += step) {
+        svg += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + f(y(t)) + '" y2="' + f(y(t)) + '" stroke="var(' + (t === y0 ? '--viz-axis' : '--viz-grid') + ')" stroke-width="1"/>' +
+          '<text x="' + (m.l - 8) + '" y="' + f(y(t) + 4) + '" text-anchor="end" class="cz-tick">' + t + '</text>';
+      }
+      [1, 5, 10, 15, 20, 25, 30].forEach(function (d) {
+        if (d <= N) svg += '<text x="' + f(x(d)) + '" y="' + (H - 8) + '" text-anchor="middle" class="cz-tick">' + d + '</text>';
+      });
+
+      var pts = days.map(function (d) { return [x(dayOf(d.date)), y(d.total)]; });
+      var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + f(p[0]) + ' ' + f(p[1]); }).join(' ');
+      var base = y(y0), end = pts[pts.length - 1];
+      if (pts.length > 1) {
+        svg += '<path d="' + line + ' L' + f(end[0]) + ' ' + f(base) + ' L' + f(pts[0][0]) + ' ' + f(base) + ' Z" fill="var(--series-1)" opacity="0.1"/>' +
+          '<path d="' + line + '" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+      }
+      svg += '<line id="cz-cross" x1="0" x2="0" y1="' + m.t + '" y2="' + f(base) + '" stroke="var(--viz-axis)" stroke-width="1" visibility="hidden"/>' +
+        '<circle cx="' + f(end[0]) + '" cy="' + f(end[1]) + '" r="4.5" fill="var(--series-1)" stroke="#fff" stroke-width="2"/>' +
+        '<text id="cz-endlabel" x="' + f(end[0] + 9) + '" y="' + f(end[1] + 4) + '" class="cz-end">' + days[days.length - 1].total + '</text>' +
+        '<circle id="cz-hover" cx="0" cy="0" r="4.5" fill="var(--series-1)" stroke="#fff" stroke-width="2" visibility="hidden"/>' +
+        '</svg>';
+      plot.innerHTML = svg;
+
+      var svgEl = plot.querySelector('svg'), cross = plot.querySelector('#cz-cross'), hov = plot.querySelector('#cz-hover');
+      var endLabel = plot.querySelector('#cz-endlabel'), tip = $('cz-tip'), fig = $('cz-chart');
+      var active = -1;
+
+      function showAt(i) {
+        i = Math.max(0, Math.min(days.length - 1, i));
+        active = i;
+        var p = pts[i], d = days[i];
+        cross.setAttribute('x1', f(p[0])); cross.setAttribute('x2', f(p[0])); cross.setAttribute('visibility', 'visible');
+        hov.setAttribute('cx', f(p[0])); hov.setAttribute('cy', f(p[1])); hov.setAttribute('visibility', 'visible');
+        endLabel.setAttribute('visibility', i === days.length - 1 ? 'visible' : 'hidden');
+        // values lead, labels follow; built with textContent
+        tip.textContent = '';
+        var head = document.createElement('div');
+        head.className = 'cz-tip-date';
+        head.textContent = longDate(d.date);
+        tip.appendChild(head);
+        [['Total', d.total, true], ['Private pay', d.private], ['Medicaid', d.medicaid], ['Skilled (SNF)', d.snf]].forEach(function (r) {
+          if (!isNum(r[1])) return;
+          var row = document.createElement('div');
+          row.className = 'cz-tip-row' + (r[2] ? ' main' : '');
+          var val = document.createElement('strong');
+          val.textContent = r[1];
+          var lab = document.createElement('span');
+          lab.textContent = r[0];
+          row.appendChild(val); row.appendChild(lab);
+          tip.appendChild(row);
+        });
+        tip.hidden = false;
+        var scale = svgEl.getBoundingClientRect().width / W;
+        var px = p[0] * scale, tw = tip.offsetWidth, full = W * scale;
+        var left = px < full / 2 ? px + 12 : px - tw - 12;
+        tip.style.left = Math.max(0, Math.min(full - tw, left)) + 'px';
+        tip.style.top = (plot.offsetTop + m.t) + 'px';
+      }
+
+      function hide() {
+        active = -1;
+        cross.setAttribute('visibility', 'hidden');
+        hov.setAttribute('visibility', 'hidden');
+        endLabel.setAttribute('visibility', 'visible');
+        tip.hidden = true;
+      }
+
+      // the pointer only has to be nearest a day, never on the 2px line
+      function nearest(clientX) {
+        var r = svgEl.getBoundingClientRect();
+        var px = (clientX - r.left) * (W / r.width), best = 0, bd = Infinity;
+        pts.forEach(function (p, i) { var dd = Math.abs(p[0] - px); if (dd < bd) { bd = dd; best = i; } });
+        return best;
+      }
+
+      svgEl.addEventListener('pointermove', function (e) { showAt(nearest(e.clientX)); });
+      svgEl.addEventListener('pointerdown', function (e) { showAt(nearest(e.clientX)); });
+      svgEl.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') hide(); });
+      fig.onkeydown = function (e) {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); showAt((active < 0 ? days.length : active) - 1); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); showAt(active < 0 ? 0 : active + 1); }
+        else if (e.key === 'Home') { e.preventDefault(); showAt(0); }
+        else if (e.key === 'End') { e.preventDefault(); showAt(days.length - 1); }
+        else if (e.key === 'Escape' && active >= 0) { e.stopPropagation(); hide(); }
+      };
+      fig.onfocus = function () { if (active < 0) showAt(days.length - 1); };
+      fig.onblur = hide;
+    }
+
+    function goCensusMonth(by) {
+      var v = census.view;
+      if (!v || census.loading) return;
+      var target = shiftMonth(v.month, by);
+      var latestMonth = (v.last || '').slice(0, 7);
+      // past months do not change; only the current one is re-read
+      if (census.cache[target] && target !== latestMonth) { census.view = census.cache[target]; renderSheet(); return; }
+      census.loading = true;
+      var body = $('cz-body');
+      if (body) body.classList.add('loading'); // hold the frame while it loads
+      fetchCensus(target)
+        .then(function (j) { census.view = j.month ? j : { month: target, days: [], first: v.first, last: v.last }; })
+        .catch(function () {})
+        .then(function () { census.loading = false; if (sheetItem === 'census') renderSheet(); });
+    }
+
+    $('census-card').addEventListener('click', function () {
+      census.view = census.latest;
+      openSheet('census');
+      if (!census.latest) loadCensusLatest();
+    });
+
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { if (sheetItem === 'census') renderSheet(); }, 150);
+    });
+
     // ---------- keep fresh ----------
     load();
     checkVersion();
+    loadCensusLatest();
     setInterval(checkVersion, 15000);
     setInterval(load, 300000);
-    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { load(); checkVersion(); } });
+    setInterval(loadCensusLatest, 1800000);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { load(); checkVersion(); loadCensusLatest(); } });
   </script>
 </body>
 </html>
