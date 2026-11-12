@@ -1,48 +1,85 @@
 import { S, commit, save, today, weekOf, snapshot, restore, subscribe, uid } from './store.js';
 import * as E from './engine.js';
 import { read } from './parse.js';
-import { rig, plateRing, icon } from './draw.js';
+import { rig, icon } from './draw.js';
+import * as Sync from './sync.js';
 
-const $ = (s, r = document) => r.querySelector(s);
-const view = $('#view');
-const sheet = $('#sheet');
+// The app is one fixed screen. Nothing on it scrolls. Lift, Food and lifting
+// mode are panels that slide up over it, and small forms come up as sheets.
+// Each part of the screen is redrawn only when what it shows has changed.
+
+const el = id => document.getElementById(id);
+const sheet = el('sheet');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const cap = s => s[0].toUpperCase() + s.slice(1);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const route = () => location.hash.replace(/^#/, '') || '/';
-
+const num = n => n.toLocaleString('en-US');
 const fmtH = h => {
   const whole = Math.floor(h), m = Math.round((h - whole) * 60);
   return !whole && m ? `${m}m` : m ? `${whole}h ${m}m` : `${whole}h`;
 };
-const num = n => n.toLocaleString('en-US');
 const mmss = ms => {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-let lastRig = '';    // the bar only loads itself when the lift or weight changes
+const ui = { panel: null, tab: null, go: null };
+
+/* ---------- Changing only what changed ---------- */
+
+function patch(node, html) {
+  if (node.__h === html) return false;
+  node.__h = html;
+  node.innerHTML = html;
+  return true;
+}
+function text(node, s) {
+  s = String(s);
+  if (node.__t !== s) { node.__t = s; node.textContent = s; }
+}
+const fill = (node, p) => node.style.setProperty('--p', Math.max(0, Math.min(1, p || 0)));
+
+// A number whose digits roll to their new value. Each digit keeps its own width.
+const STRIP = '0<br>1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9';
+const isDigit = ch => ch >= '0' && ch <= '9';
+function roll(node, value) {
+  const s = String(value);
+  if (node.__t === s) return;
+  const prev = node.__t;
+  node.__t = s;
+  node.setAttribute('aria-label', s);
+  if (prev != null && prev.length === s.length && [...s].every((ch, i) => isDigit(ch) === isDigit(prev[i]))) {
+    [...node.children].forEach((c, i) => {
+      if (isDigit(s[i])) { c.style.setProperty('--d', s[i]); c.firstElementChild.textContent = s[i]; }
+      else c.textContent = s[i];
+    });
+    return;
+  }
+  node.innerHTML = [...s].map(ch => (isDigit(ch)
+    ? `<span class="dg" aria-hidden="true" style="--d:${ch}"><em>${ch}</em><span>${STRIP}</span></span>`
+    : `<span aria-hidden="true">${esc(ch)}</span>`)).join('');
+}
 
 /* ---------- Home ---------- */
 
-function homeView() {
+function drawHome() {
   const t = today();
   const V = E.project(S);
   const done = E.sessionOn(V, t);
   const d = V.draft;
   const day = d?.day ?? V.rotation[V.pointer];
   const ids = S.order[day];
-  const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  text(el('h-date'), new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }));
 
   let title = day, sub, actions;
   if (done) {
     title = done.day;
     sub = `Done. ${cap(V.rotation[V.pointer])} is next.`;
-    actions = `<a class="link" href="#/lift">See where each lift stands</a>`;
+    actions = `<button class="link" type="button" data-act="go">See next time's plan</button>`;
+    if (!S.draft) actions = `<button class="link" type="button" data-act="open" data-panel="lift">See where each lift stands</button>`;
   } else if (!ids.length) {
     sub = 'No lifts on this day yet.';
-    actions = `<a class="btn" href="#/lift">Add lifts</a>`;
+    actions = `<button class="btn" type="button" data-act="open" data-panel="lift">Add lifts</button>`;
   } else {
     const going = E.draftActive(d);
     const at = going ? E.cursor(S) : null;
@@ -50,181 +87,264 @@ function homeView() {
     sub = going
       ? (at ? `${first.name} is next.` : 'Every set is in.')
       : `${plural(ids.length, 'lift')}. ${first.name}${first.weight != null ? ' at ' + E.fmtW(first.weight) : ''} first.`;
-    actions = `<a class="btn" href="#/go">${going ? (at ? 'Keep lifting' : 'Finish up') : 'Start lifting'}${icon.go}</a>` +
-      (E.canAssume(S, day) ? `<button class="link" data-act="as-written">Did it as written</button>` : '');
+    actions = `<button class="btn" type="button" data-act="go">${going ? (at ? 'Keep lifting' : 'Finish up') : 'Start lifting'}${icon.go}</button>` +
+      (E.canAssume(S, day) ? `<button class="link" type="button" data-act="as-written">Did it as written</button>` : '');
   }
+  patch(el('h-hero'), `<h1 class="day">${title}</h1><p class="sub">${sub}</p><div class="acts">${actions}</div>`);
 
   const week = weekOf(t);
   const lifted = V.sessions.filter(s => week.includes(s.date)).length;
-  const goalDays = S.profile.days;
+  const goalDays = S.profile.days, leftDays = Math.max(0, goalDays - lifted);
+  roll(el('m-lift'), lifted);
+  text(el('m-lift-of'), `of ${goalDays}`);
+  text(el('m-lift-note'), leftDays ? `${leftDays} to go this week` : 'Week done');
+  fill(el('m-lift-bar'), lifted / goalDays);
+
   const p = E.proteinOn(S, t), pGoal = S.profile.protein;
+  roll(el('m-food'), p);
+  text(el('m-food-of'), `of ${pGoal} g`);
+  text(el('m-food-note'), p >= pGoal ? 'Protein goal met' : `${pGoal - p} g of protein to go`);
+  fill(el('m-food-bar'), p / pGoal);
+
   const slept = S.sleep[t], sGoal = S.profile.sleep;
+  roll(el('m-sleep'), slept != null ? fmtH(slept) : '–');
+  text(el('m-sleep-of'), `of ${fmtH(sGoal)}`);
+  text(el('m-sleep-note'), slept != null ? (slept >= sGoal ? 'Goal met' : `${fmtH(sGoal - slept)} short`) : 'Tap to log last night');
+  fill(el('m-sleep-bar'), (slept || 0) / sGoal);
 
-  const meter = (key, label, big, small, frac, note, attrs) => `
-    <${attrs.tag} class="meter" ${attrs.at}>
-      <span class="cap" ${attrs.vt ? `style="view-transition-name:${attrs.vt}"` : ''}>${label}</span>
-      <span class="note">${note}${icon.go}</span>
-      <span class="num"><b data-roll="${key}">${big}</b><i>${small}</i></span>
-      <span class="bar"><i data-bar="${key}" style="--p:${Math.min(1, frac)}"></i></span>
-    </${attrs.tag}>`;
-
-  const leftDays = Math.max(0, goalDays - lifted);
-  const meters =
-    meter('lift', 'Lift', lifted, ` of ${goalDays} this week`, lifted / goalDays,
-      leftDays ? `${leftDays} to go` : 'Week done', { tag: 'a', at: 'href="#/lift"', vt: 't-lift' }) +
-    meter('food', 'Food', p, ` of ${pGoal} g protein`, p / pGoal,
-      p >= pGoal ? 'Goal met' : `${pGoal - p} g to go`, { tag: 'a', at: 'href="#/food"', vt: 't-food' }) +
-    meter('sleep', 'Sleep', slept != null ? fmtH(slept) : '–', ` of ${fmtH(sGoal)}`, (slept || 0) / sGoal,
-      slept != null ? (slept >= sGoal ? 'Goal met' : `${fmtH(sGoal - slept)} short`) : 'Log last night',
-      { tag: 'button', at: 'data-act="sleep" type="button"' });
-
-  const cell = (state, label) => `<i class="cell ${state}" role="img" aria-label="${label}"></i>`;
   const rows = [
     ['Lift', k => (V.sessions.some(s => s.date === k) ? 'hit' : '')],
     ['Food', k => { const v = E.proteinOn(S, k); return v >= pGoal ? 'hit' : v > 0 ? 'some' : ''; }],
     ['Sleep', k => { const v = S.sleep[k]; return v == null ? '' : v >= sGoal ? 'hit' : 'some'; }],
   ];
   const names = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const grid = `
+  patch(el('h-week'), `
     <div class="wk-head"><span></span>${week.map((k, i) => `<span class="cap ${k === t ? 'now' : ''}">${names[i]}</span>`).join('')}</div>
     ${rows.map(([name, f]) => `<div class="wk-row"><span class="cap">${name}</span>${week.map(k => {
       const st = k > t ? 'later' : f(k);
       const word = st === 'hit' ? 'goal met' : st === 'some' ? 'logged, under goal' : st === 'later' ? 'not yet' : 'nothing logged';
-      return cell(st, `${name} ${k}: ${word}`);
-    }).join('')}</div>`).join('')}`;
+      return `<i class="cell ${st}" role="img" aria-label="${name} ${k}: ${word}"></i>`;
+    }).join('')}</div>`).join('')}
+    <p class="key"><i class="cell hit"></i>Goal met<i class="cell some"></i>Logged, under goal</p>`);
+}
 
-  return `
-    <header class="top">
-      <p class="cap">${date}</p>
-      <button class="link quiet" data-act="goals" type="button">Goals</button>
-    </header>
-    <section class="hero">
-      <h1 class="day" style="view-transition-name:t-day">${title}</h1>
-      <p class="sub">${sub}</p>
-      <div class="acts">${actions}</div>
-    </section>
-    <section class="meters">${meters}</section>
-    <section class="week" aria-label="This week">
-      ${grid}
-      <p class="key"><i class="cell hit"></i>Goal met<i class="cell some"></i>Logged, under goal</p>
-    </section>`;
+/* ---------- Panels ---------- */
+
+const panels = { lift: el('p-lift'), food: el('p-food'), go: el('p-go') };
+const draw = { lift: drawLift, food: drawFood, go: drawGo };
+
+function openPanel(name) {
+  if (name === 'go' && !S.draft && !E.sessionOn(S, today())) { E.ensureDraft(S, today()); save(); }
+  if (name === 'go' && !S.draft) name = 'lift';
+  if (name === 'lift') ui.tab = null;
+  if (name === 'go') ui.go = null;
+  for (const [k, p] of Object.entries(panels)) if (k !== name) p.classList.remove('open');
+  ui.panel = name;
+  hideSay();
+  draw[name]();
+  panels[name].classList.add('open');
+  shell();
+}
+
+function closePanel() {
+  if (!ui.panel) return;
+  panels[ui.panel].classList.remove('open');
+  ui.panel = null;
+  shell();
+}
+
+// Things that follow from which panel is up.
+function shell() {
+  document.body.dataset.panel = ui.panel || '';
+  el('home').inert = !!ui.panel;
+  keepAwake(ui.panel === 'go' && !S.draft?.done);
+}
+
+// Pull a panel down by its top bar to close it.
+for (const panel of Object.values(panels)) {
+  const head = panel.querySelector('.top');
+  let y0 = null, dy = 0, t0 = 0;
+  head.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    y0 = e.clientY; dy = 0; t0 = e.timeStamp;
+    head.setPointerCapture(e.pointerId);
+    panel.style.transition = 'none';
+  });
+  head.addEventListener('pointermove', e => {
+    if (y0 == null) return;
+    dy = Math.max(0, e.clientY - y0);
+    panel.style.transform = `translate3d(0, ${dy}px, 0)`;
+  });
+  const end = e => {
+    if (y0 == null) return;
+    const fast = dy / Math.max(1, e.timeStamp - t0) > 0.5;
+    y0 = null;
+    panel.style.transition = '';
+    panel.style.transform = '';
+    if (dy > 110 || (fast && dy > 30)) closePanel();
+  };
+  head.addEventListener('pointerup', end);
+  head.addEventListener('pointercancel', end);
 }
 
 /* ---------- Lift ---------- */
 
-function liftView() {
-  const V = E.project(S);
-  const next = V.draft?.day ?? V.rotation[V.pointer];
-  const active = Object.values(V.order).flat().map(id => V.lifts[id]);
-  const count = k => active.filter(l => E.status(l).k === k).length;
-  const short = count('short') + count('drop');
-  const tally = [[count('up'), 'Climbing', ''], [count('flat'), 'Stalled', ''], [short, 'Short', short ? 'bad' : ''], [count('learning') + count('new'), 'Learning', '']]
-    .map(([n, w, c]) => `<div class="${n ? c : 'none'}"><b>${n}</b><span class="cap">${w}</span></div>`).join('');
-  const started = active.some(l => l.weight != null);
-
-  const row = l => {
-    const s = E.status(l);
-    const plan = l.weight == null ? '<i>no weight yet</i>'
-      : l.targets ? `${E.fmtW(l.weight)}<i> × </i>${E.fmtReps(l.targets)}`
-      : `${E.fmtW(l.weight)}<i> × ${l.lo}–${l.hi}</i>`;
-    const say = s.k === 'up' ? '' : E.advice(l);
-    return `<button class="lift" type="button" data-act="lift" data-id="${l.id}">
+function liftRow(l, tag = 'button') {
+  const s = E.status(l);
+  const plan = l.weight == null ? '<i>no weight yet</i>'
+    : l.targets ? `${E.fmtW(l.weight)}<i> × </i>${E.fmtReps(l.targets)}`
+    : `${E.fmtW(l.weight)}<i> × ${l.lo}–${l.hi}</i>`;
+  return `<button class="lift" type="button" data-act="lift" data-id="${l.id}">
       <span class="ln">${esc(l.name)}</span>
       <span class="lw">${plan}</span>
       <span class="ls cap k-${s.k}">${s.label}</span>
-      ${say ? `<span class="la">${say}</span>` : ''}
     </button>`;
-  };
+}
 
-  const days = S.rotation.map(day => `
-    <section class="daygroup">
-      <h2 class="dayname">${day}${day === next ? '<span class="cap">Next up</span>' : ''}</h2>
-      ${V.order[day].map(id => row(V.lifts[id])).join('') || '<p class="empty">No lifts here yet.</p>'}
-      <button class="link quiet" type="button" data-act="add-lift" data-day="${day}">Add a lift</button>
-    </section>`).join('');
+function drawLift() {
+  const V = E.project(S);
+  if (!ui.tab || !V.rotation.includes(ui.tab)) ui.tab = V.draft?.day ?? V.rotation[V.pointer];
+  const all = Object.values(V.order).flat().map(id => V.lifts[id]);
+  const count = k => all.filter(l => E.status(l).k === k).length;
+  const short = count('short') + count('drop');
+  patch(el('l-tally'), [[count('up'), 'Climbing', ''], [count('flat'), 'Stalled', ''], [short, 'Short', short ? 'bad' : ''], [count('learning') + count('new'), 'Learning', '']]
+    .map(([n, w, c]) => `<div class="${n ? c : 'none'}"><b>${n}</b><span class="cap">${w}</span></div>`).join(''));
+  patch(el('l-tabs'), V.rotation.map(day =>
+    `<button class="tab${day === ui.tab ? ' on' : ''}" type="button" data-act="tab" data-day="${day}" aria-pressed="${day === ui.tab}">${day}</button>`).join(''));
+  patch(el('l-rows'), V.order[ui.tab].map(id => liftRow(V.lifts[id])).join('') || '<p class="empty">No lifts on this day yet.</p>');
+  patch(el('l-foot'), `<button class="link quiet" type="button" data-act="add-lift" data-day="${ui.tab}">Add a lift to ${ui.tab} day</button>`);
+}
 
-  return `
-    <header class="top">
-      <a class="iconbtn" href="#/" aria-label="Back to home">${icon.back}</a>
-      <p class="cap" style="view-transition-name:t-lift">Lift</p>
-      <span></span>
-    </header>
-    <section class="lede">
-      <div class="tally">${tally}</div>
-      ${started ? '' : '<p class="sub">Your first two sessions on each lift set its plan. After that you only log what falls short.</p>'}
-    </section>
-    ${days}`;
+/* ---------- Food ---------- */
+
+const usualChip = f => `<button class="chip food" type="button" data-act="usual" data-id="${f.id}">${esc(f.name)}<b>${f.protein}</b></button>`;
+
+function drawFood() {
+  const t = today();
+  const p = E.proteinOn(S, t), goal = S.profile.protein;
+  const cals = E.caloriesOn(S, t), cGoal = S.profile.calories;
+  roll(el('f-big'), p);
+  text(el('f-of'), `of ${goal} g protein`);
+  fill(el('f-arc'), p / goal);
+  text(el('f-note'), [p >= goal ? 'Protein goal met' : `${goal - p} g to go`, cGoal ? `${num(cals)} of ${num(cGoal)} calories` : ''].filter(Boolean).join(' · '));
+  const us = E.usuals(S, new Date().getHours()).slice(0, 7);
+  patch(el('f-usuals'), `<button class="chip add" type="button" data-act="add-food">Add food</button>${us.map(usualChip).join('')}`);
+  const list = S.foodLog.filter(f => f.date === t).reverse();
+  patch(el('f-list'), list.length ? `<ul class="eaten">${list.map(f => `<li>
+      <span class="when">${esc(f.time)}</span>
+      <span class="what">${esc(f.name || 'Protein')}</span>
+      <b>${f.protein} g</b>
+      <button class="iconbtn sm" type="button" data-act="del-food" data-id="${f.id}" aria-label="Remove ${esc(f.name || 'entry')}">${icon.close}</button>
+    </li>`).join('')}</ul>` : '<p class="empty">Nothing eaten yet today.</p>');
 }
 
 /* ---------- Lifting mode ---------- */
 
-function goTop(d, l) {
-  const ids = S.order[d.day];
-  const where = l ? `${d.day} · lift ${ids.indexOf(l.id) + 1} of ${ids.length}` : d.day;
-  return `<header class="top">
-      <a class="iconbtn" href="#/" aria-label="Leave lifting mode">${icon.close}</a>
-      <p class="cap">${where}</p>
-      ${l ? `<button class="link quiet" type="button" data-act="skip-lift" data-id="${l.id}">Skip</button>` : '<span></span>'}
-    </header>`;
-}
+const firstOpen = id => {
+  const l = S.lifts[id], g = S.draft.log[id];
+  for (let i = 0; i < l.sets; i++) if (g?.reps[i] == null) return i;
+  return null;
+};
 
-function setMarks(l, g, at) {
-  return Array.from({ length: l.sets }, (_, i) => {
-    const v = g?.reps[i], plan = l.targets?.[i];
-    if (v != null) return plan != null && v < plan ? `<span class="mk short"><s>${plan}</s>${v}</span>` : `<span class="mk">${v}</span>`;
-    return `<span class="mk ${i === at ? 'now' : 'todo'}">${plan ?? '·'}</span>`;
-  }).join('');
-}
-
-function goView() {
-  const d = S.draft;
-  if (!d) return homeView();
-  if (d.done) return summaryView();
+// The lift and set the buttons act on. Follows the next unlogged set unless
+// you picked something yourself.
+function selected() {
+  const d = S.draft, ids = S.order[d.day];
+  const g = ui.go;
+  if (g && ids.includes(g.id) && !d.log[g.id]?.skip) return g;
   const c = E.cursor(S);
-  if (!c) return closeView(d);
-  const l = S.lifts[c.id], g = d.log[c.id];
-  const w = g?.w ?? l.weight;
+  if (c) return (ui.go = { id: c.id, set: c.set });
+  return (ui.go = { id: ids.find(id => !d.log[id]?.skip) ?? ids[0], set: null });
+}
 
-  if (d.rest && d.rest.until > Date.now()) {
-    const target = l.targets?.[c.set];
-    const nextLine = w == null ? esc(l.name)
-      : `${esc(l.name)}, set ${c.set + 1} of ${l.sets}. ${E.fmtW(w)} × ${target ?? `${l.lo}–${l.hi}`}`;
-    return `${goTop(d, l)}
-      <section class="go rest">
-        <p class="cap">Rest</p>
-        <p class="clock" id="clock" style="--n:${mmss(d.rest.until - Date.now()).length}">${mmss(d.rest.until - Date.now())}</p>
-        <span class="bar"><i id="restbar" style="--p:${(d.rest.until - Date.now()) / (d.rest.total * 1000)}"></i></span>
-        <p class="sub">Next: ${nextLine}</p>
-      </section>
-      <footer class="ctl two">
-        <button class="btn line" type="button" data-act="rest-add">+15 s</button>
-        <button class="btn" type="button" data-act="rest-skip">Go now</button>
-      </footer>`;
+function closeLine(d) {
+  let sets = 0, short = 0, skipped = 0;
+  for (const id of S.order[d.day]) {
+    const l = S.lifts[id], g = d.log[id];
+    if (g?.skip) { skipped++; continue; }
+    for (let i = 0; i < l.sets; i++) {
+      sets++;
+      if (l.targets && g?.reps[i] != null && g.reps[i] < l.targets[i]) short++;
+    }
   }
+  return [plural(sets, 'set'), short ? `${short} short` : 'none short', skipped ? `${plural(skipped, 'lift')} skipped` : ''].filter(Boolean).join(', ') + '.';
+}
 
+const REST = `<span class="cap">Rest</span><b id="clock"></b><span class="bar"><i id="restbar"></i></span>
+  <button class="chip" type="button" data-act="rest-add">+15 s</button><button class="chip" type="button" data-act="rest-skip">Skip</button>`;
+
+function drawRest() {
+  const r = S.draft?.rest;
+  const on = !!r && r.until > Date.now();
+  patch(el('g-rest'), on ? REST : '');
+  if (on) { text(el('clock'), mmss(r.until - Date.now())); fill(el('restbar'), (r.until - Date.now()) / (r.total * 1000)); }
+}
+
+function drawGo() {
+  const d = S.draft;
+  if (!d) { closePanel(); return; }
+  const run = el('g-run'), sum = el('g-sum');
+  run.hidden = !!d.done;
+  sum.hidden = !d.done;
+  if (d.done) { drawSummary(); return; }
+
+  const ids = S.order[d.day];
+  const g = selected();
+  const l = S.lifts[g.id], log = d.log[g.id], w = log?.w ?? l.weight;
+
+  patch(el('g-top'), `
+    <button class="iconbtn" type="button" data-act="close" aria-label="Leave lifting mode">${icon.down}</button>
+    <button class="where cap" type="button" data-act="go-pick">${d.day} · ${ids.indexOf(g.id) + 1} of ${ids.length}</button>
+    <span class="pair">
+      <button class="iconbtn" type="button" data-act="go-step" data-dir="-1" aria-label="Previous lift">${icon.prev}</button>
+      <button class="iconbtn" type="button" data-act="go-step" data-dir="1" aria-label="Next lift">${icon.next}</button>
+    </span>`);
+  text(el('g-name'), l.name);
+
+  // A lift nobody has done yet needs its weight first.
   if (w == null) {
     const ask = { barbell: 'What is on the bar, plates and bar together?', dumbbell: 'How heavy is each dumbbell?', stack: 'Where is the pin?' }[l.kind] || 'What weight?';
     const start = { barbell: 135, dumbbell: 25, stack: 50 }[l.kind] || 50;
-    return `${goTop(d, l)}
-      <section class="go">
-        <h1 class="liftname">${esc(l.name)}</h1>
+    patch(el('g-load'), `<form class="ask" data-form="first-weight" data-id="${l.id}">
         <p class="sub">${ask}</p>
-        <form class="ask" data-form="first-weight" data-id="${l.id}">
-          ${stepper('w', start, l.jump, 0, 1000, 'Weight in pounds')}
-          <button class="btn big">Set weight</button>
-        </form>
-      </section>`;
+        ${stepper('w', start, l.jump, 0, 1000, 'Weight in pounds')}
+        <button class="btn big">Set weight</button>
+      </form>`);
+    for (const id of ['g-rig', 'g-sets', 'g-rest', 'g-ctl']) patch(el(id), '');
+    text(el('g-last'), '');
+    return;
   }
 
-  const target = l.targets?.[c.set];
+  const shown = g.set ?? l.sets - 1;
+  const target = l.targets?.[shown];
   const repText = target ?? `${l.lo}–${l.hi}`;
-  const rigKey = l.id + ':' + w;
-  const fresh = rigKey !== lastRig;
-  lastRig = rigKey;
-  const glyphs = E.fmtW(w).length + String(repText).length + 1.4;
+  if (patch(el('g-load'), `<button class="load" type="button" data-act="weight" data-id="${l.id}" aria-label="${E.fmtW(w)} pounds for ${repText} reps. Change the weight.">
+      <span class="row"><span>${E.fmtW(w)}</span><i>×</i><span>${repText}</span></span>
+    </button>`)) fitLoad();
+  patch(el('g-rig'), rig(l, w));
+
+  // Every set of this lift, all at once. Tap one to log it or change it.
+  patch(el('g-sets'), `<span class="cap">Sets</span>` + Array.from({ length: l.sets }, (_, i) => {
+    const v = log?.reps[i], plan = l.targets?.[i];
+    const short = v != null && plan != null && v < plan;
+    const cls = ['set', v != null ? 'in' : 'todo', short ? 'short' : '', i === g.set ? 'on' : ''].filter(Boolean).join(' ');
+    const inner = v != null ? (short ? `<s>${plan}</s>${v}` : v) : (plan ?? '·');
+    return `<button class="${cls}" type="button" data-act="pick-set" data-i="${i}" aria-pressed="${i === g.set}" aria-label="Set ${i + 1}${v != null ? ', got ' + v : ''}">${inner}</button>`;
+  }).join(''));
+
   const last = l.history[l.history.length - 1];
+  text(el('g-last'), last ? `Last time ${E.fmtW(last.w)}: ${last.reps.join(' · ')}` : '');
+  drawRest();
+
+  const c = E.cursor(S);
   let ctl;
-  if (target != null) {
+  if (g.set == null) {
+    ctl = c
+      ? `<p class="sub">This lift is in. Tap a set to change it.</p>
+         <button class="btn big" type="button" data-act="go-next">Next: ${esc(S.lifts[c.id].name)}</button>`
+      : `<p class="sub">Every set is in. ${closeLine(d)}</p>
+         <button class="btn big" type="button" data-act="finish">Finish ${d.day}</button>`;
+  } else if (target != null) {
     const lows = [1, 2, 3, 4].map(n => target - n).filter(n => n >= 0);
     ctl = `<div class="shorts">
         <span class="cap">Fell short? Tap what you got</span>
@@ -243,103 +363,84 @@ function goView() {
         <button class="chip" type="button" data-act="other-reps">Other</button>
       </div>`;
   }
-
-  return `${goTop(d, l)}
-    <section class="go">
-      <h1 class="liftname">${esc(l.name)}</h1>
-      <button class="load" type="button" data-act="weight" data-id="${l.id}" style="--n:${glyphs}" aria-label="${E.fmtW(w)} pounds for ${repText} reps. Change the weight.">
-        <span class="row"><span>${E.fmtW(w)}</span><i>×</i><span>${repText}</span></span>
-      </button>
-      ${rig(l, w, fresh)}
-      <p class="marks" aria-label="Set ${c.set + 1} of ${l.sets}"><span class="cap">Set ${c.set + 1} of ${l.sets}</span>${setMarks(l, g, c.set)}</p>
-      ${last ? `<p class="last">Last time ${E.fmtW(last.w)}: ${last.reps.join(' · ')}</p>` : ''}
-    </section>
-    <footer class="ctl">${ctl}</footer>`;
-}
-
-function closeView(d) {
-  const ids = S.order[d.day];
-  let sets = 0, short = 0, skipped = 0;
-  for (const id of ids) {
-    const l = S.lifts[id], g = d.log[id];
-    if (g?.skip) { skipped++; continue; }
-    for (let i = 0; i < l.sets; i++) {
-      sets++;
-      if (l.targets && g?.reps[i] != null && g.reps[i] < l.targets[i]) short++;
-    }
-  }
-  const line = [plural(sets, 'set'), short ? `${short} short` : 'none short', skipped ? `${plural(skipped, 'lift')} skipped` : ''].filter(Boolean).join(', ');
-  return `${goTop(d, null)}
-    <section class="go">
-      <h1 class="headline">Every set is in.</h1>
-      <p class="sub">${line}.</p>
-    </section>
-    <footer class="ctl"><button class="btn big" type="button" data-act="finish">Finish ${d.day}</button></footer>`;
+  patch(el('g-ctl'), ctl);
 }
 
 const KIND = { jump: 'Weight goes up', hit: 'One more rep', short: 'Same again', ahead: 'New weight', learned: 'Plan set', learning: 'Learning', skipped: 'Skipped' };
 
-function summaryView() {
+function drawSummary() {
   const V = E.project(S);
-  const summary = V.sessions[V.sessions.length - 1];
-  const rows = summary.notes.map(n => {
+  const done = V.sessions[V.sessions.length - 1];
+  patch(el('g-top'), `<span></span><p class="cap">${done.day} logged</p><span></span>`);
+  const rows = done.notes.map(n => {
     const next = n.next ? `${E.fmtW(n.next.w)}<i> × </i>${E.fmtReps(n.next.reps)}` : '';
-    const did = n.reps ? n.reps.map((r, i) => (n.plan && r < n.plan[i] ? `<span class="mk short"><s>${n.plan[i]}</s>${r}</span>` : `<span class="mk">${r}</span>`)).join('') : '';
     return `<div class="lift flat">
       <span class="ln">${esc(n.name)}</span>
       <span class="lw">${next}</span>
       <span class="ls cap k-${n.kind}">${KIND[n.kind]}</span>
-      ${did ? `<span class="la marks">${did}</span>` : ''}
     </div>`;
   }).join('');
-  return `<header class="top"><span></span><p class="cap">${summary.day} logged</p><span></span></header>
-    <section class="lede">
+  patch(el('g-sum'), `
+    <div class="lede">
       <h1 class="headline">Next time.</h1>
-      <p class="sub">${cap(V.rotation[V.pointer])} is up next. If a set went differently, type it on the home screen any time today.</p>
-    </section>
-    <section class="daygroup">${rows || '<p class="empty">Nothing was logged.</p>'}</section>
-    <footer class="ctl"><button class="btn big" type="button" data-act="summary-done">Done</button></footer>`;
+      <p class="sub">${cap(V.rotation[V.pointer])} is up next. If a set went differently, say so any time today.</p>
+    </div>
+    <div class="rows">${rows || '<p class="empty">Nothing was logged.</p>'}</div>
+    <footer class="ctl"><button class="btn big" type="button" data-act="close">Done</button></footer>`);
 }
 
-/* ---------- Food ---------- */
+// Size the big lifting numbers so they span the screen, whatever the digits.
+function fitLoad() {
+  const b = el('g-load').querySelector('.load');
+  if (!b) return;
+  b.style.fontSize = '100px';
+  const w = b.firstElementChild.getBoundingClientRect().width;
+  if (w) b.style.fontSize = Math.min(150, Math.floor(100 * b.clientWidth / w)) + 'px';
+}
+document.fonts?.ready.then(fitLoad);
+addEventListener('resize', fitLoad);
 
-function foodView() {
-  const t = today();
-  const p = E.proteinOn(S, t), goal = S.profile.protein;
-  const cals = E.caloriesOn(S, t), cGoal = S.profile.calories;
-  const list = S.foodLog.filter(f => f.date === t).reverse();
-  const us = E.usuals(S, new Date().getHours()).slice(0, 12);
-  return `
-    <header class="top">
-      <a class="iconbtn" href="#/" aria-label="Back to home">${icon.back}</a>
-      <p class="cap" style="view-transition-name:t-food">Food</p>
-      <span></span>
-    </header>
-    <figure class="plate">
-      ${plateRing(p / goal, `${goal} g protein`)}
-      <figcaption>
-        <b class="big" data-roll="food-big">${p}</b>
-        <span class="cap">${p >= goal ? 'Goal met' : `${goal - p} g to go`}</span>
-      </figcaption>
-    </figure>
-    ${cGoal ? `<p class="cals"><b>${num(cals)}</b> of ${num(cGoal)} calories</p>` : ''}
-    <section class="block">
-      <h2 class="cap">Usuals</h2>
-      <div class="chips">
-        ${us.map(f => `<button class="chip food" type="button" data-act="usual" data-id="${f.id}">${esc(f.name)}<b>${f.protein}</b></button>`).join('')}
-        <button class="chip add" type="button" data-act="add-food">Add food</button>
-      </div>
-      ${us.length ? '' : '<p class="empty">Add what you eat most. After that each one is a single tap.</p>'}
-    </section>
-    <section class="block">
-      <h2 class="cap">Today</h2>
-      ${list.length ? `<ul class="eaten">${list.map(f => `<li>
-          <span class="when">${esc(f.time)}</span>
-          <span class="what">${esc(f.name || 'Protein')}</span>
-          <b>${f.protein} g</b>
-          <button class="iconbtn sm" type="button" data-act="del-food" data-id="${f.id}" aria-label="Remove ${esc(f.name || 'entry')}">${icon.close}</button>
-        </li>`).join('')}</ul>` : '<p class="empty">Nothing eaten yet today.</p>'}
-    </section>`;
+function logSet(n) {
+  const g = ui.go;
+  if (!g || g.set == null || !S.draft) return;
+  const fixing = S.draft.log[g.id]?.reps[g.set] != null;
+  commit(S => {
+    const l = S.lifts[g.id];
+    E.entry(S.draft, g.id).reps[g.set] = n;
+    const here = firstOpen(g.id), c = E.cursor(S);
+    ui.go = here != null ? { id: g.id, set: here } : c ? { id: c.id, set: c.set } : { id: g.id, set: null };
+    // A fresh set starts the rest clock. Correcting an old one does not.
+    if (!fixing) S.draft.rest = c ? { until: Date.now() + l.rest * 1000, total: l.rest } : null;
+  });
+}
+
+function stepLift(dir) {
+  const d = S.draft, live = S.order[d.day].filter(id => !d.log[id]?.skip);
+  if (!live.length) return;
+  const at = live.indexOf(ui.go?.id);
+  const id = live[(at + dir + live.length) % live.length];
+  ui.go = { id, set: firstOpen(id) };
+  drawGo();
+}
+
+function pickSheet() {
+  const d = S.draft;
+  const rows = S.order[d.day].map(id => {
+    const l = S.lifts[id], g = d.log[id];
+    const n = (g?.reps || []).filter(x => x != null).length;
+    return `<div class="pick">
+        <button class="lift" name="do" value="jump:${id}" ${g?.skip ? 'disabled' : ''}>
+          <span class="ln">${esc(l.name)}</span>
+          <span class="lw"><i>${g?.skip ? 'Skipped' : `${n} of ${l.sets} sets`}</i></span>
+        </button>
+        <button class="link quiet" name="do" value="skip:${id}">${g?.skip ? 'Bring back' : 'Skip'}</button>
+      </div>`;
+  }).join('');
+  openSheet(`${cap(d.day)} day`, `<p class="sub">Do them in any order. Tap one to go to it.</p>${rows}`, 'Close', (f, act) => {
+    const [what, id] = String(act || '').split(':');
+    if (what === 'jump') { ui.go = { id, set: firstOpen(id) }; drawGo(); }
+    if (what === 'skip') commit(S => { const g = E.entry(S.draft, id); g.skip = !g.skip; if (ui.go?.id === id) ui.go = null; });
+  });
 }
 
 /* ---------- Sheets ---------- */
@@ -352,16 +453,27 @@ function stepper(name, value, step, min, max, label) {
   </div>`;
 }
 
-let onSheet = null;
+let onSheet = null, onClose = null;
+
+// Close the sheet without saving, and run anything waiting on that.
+function closeSheet() {
+  sheet.close();
+  const f = onClose;
+  onClose = null;
+  if (f) f();
+}
+
 function openSheet(title, body, submit, handler) {
   onSheet = handler;
+  onClose = null;
   sheet.innerHTML = `<form method="dialog" class="sheetform">
       <header><h2 class="headline sm">${title}</h2>
         <button class="iconbtn" type="button" data-act="close-sheet" aria-label="Close">${icon.close}</button></header>
       ${body}
       <button class="btn big" value="save">${submit}</button>
     </form>`;
-  sheet.showModal();
+  if (!sheet.open) sheet.showModal();
+  sheet.scrollTop = 0;
 }
 
 const field = (label, inner, hint = '') => `<label class="field"><span class="cap">${label}</span>${inner}${hint ? `<small>${hint}</small>` : ''}</label>`;
@@ -373,12 +485,67 @@ function goalsSheet(first) {
     field('Protein per day, grams', stepper('protein', p.protein, 5, 20, 400, 'Protein goal in grams')) +
     field('Lifting days per week', stepper('days', p.days, 1, 1, 7, 'Lifting days per week')) +
     field('Sleep per night, hours', stepper('sleep', p.sleep, 0.25, 4, 12, 'Sleep goal in hours')) +
-    field('Calories per day', `<input name="calories" type="number" inputmode="numeric" min="0" max="9000" value="${p.calories || ''}" placeholder="Leave empty to skip">`),
+    field('Calories per day', `<input name="calories" type="number" inputmode="numeric" min="0" max="9000" value="${p.calories || ''}" placeholder="Leave empty to skip">`) +
+    (first ? '' : `<button class="link quiet" type="button" data-act="sync">${Sync.connected() ? 'Sync is on' : 'Sync and AI reader'}</button>`),
     first ? 'Start' : 'Save',
     f => commit(S => {
       S.profile = { protein: +f.protein || 180, days: Math.min(7, Math.max(1, +f.days || 5)), sleep: +f.sleep || 8, calories: +f.calories || 0 };
       S.setup = true;
     }));
+  // Closing the first-run sheet any other way keeps the defaults. Either
+  // way it is done, so it never comes back on the next open.
+  if (first) {
+    onClose = () => { if (!S.setup) commit(S => { S.setup = true; }); };
+    sheet.addEventListener('close', () => { const f = onClose; onClose = null; if (f) f(); }, { once: true });
+  }
+}
+
+const PROBLEM = {
+  wrong_key: 'That passphrase is not right.',
+  not_set_up: 'The server is not set up yet.',
+  offline: 'No connection right now.',
+  bad_ai_key: 'The AI key on the server is not working.',
+  busy: 'The AI is busy. Try again in a minute.',
+  too_big: 'There is too much data to save in one go.',
+};
+const problem = code => PROBLEM[code] || 'Could not reach the server.';
+const stamp = t => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+function syncSheet() {
+  const i = Sync.info();
+  if (!i.on) {
+    openSheet('Sync and AI reader',
+      '<p class="sub">Keeps a copy of everything in your database, and lets the AI read messages this phone cannot. Enter the passphrase you set on the server.</p>' +
+      field('Passphrase', '<input name="key" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required>'),
+      'Connect',
+      f => connectWith(f.key));
+    return;
+  }
+  openSheet('Sync is on',
+    `<p class="sub">${i.error ? problem(i.error) : i.at ? `Last saved ${stamp(i.at)}.` : 'Saving now.'}</p>
+     <button class="link quiet" name="do" value="off">Turn sync off on this phone</button>`,
+    'Save now',
+    async (f, act) => {
+      if (act === 'off') { Sync.disconnect(); say('Sync is off on this phone. Nothing was deleted.'); return; }
+      const r = await Sync.sync();
+      say(r === 'ok' ? 'Saved.' : problem(r));
+    });
+}
+
+async function connectWith(key, prefer) {
+  say('Connecting.');
+  const r = await Sync.connect(key, prefer);
+  if (r.ask) {
+    // Both places hold entries. Nothing has changed yet: ask which to keep.
+    openSheet('Two copies',
+      `<p class="sub">Your database already holds a copy saved ${stamp(r.savedAt)}. This phone has entries too. Only one can be kept.</p>
+       <button class="btn line" name="do" value="saved">Use the saved copy</button>`,
+      'Keep what is on this phone',
+      (f, act) => connectWith(key, act === 'saved' ? 'saved' : 'phone'));
+    hideSay();
+    return;
+  }
+  say(r.ok ? (r.took === 'saved' ? 'Connected. Your saved copy is on this phone now.' : 'Connected. This phone is saved.') : problem(r.error));
 }
 
 function sleepSheet() {
@@ -396,6 +563,10 @@ function foodSheet() {
     f => addFood({ name: (f.name || '').trim(), protein: Math.round(+f.protein || 0), calories: +f.calories || 0, keep: !!f.keep, source: 'form' }));
 }
 
+// Editing the program closes out a finished session first, so the edit
+// lands on next time's plan and not on today's record.
+const settle = S => { if (S.draft?.done) E.finalize(S); };
+
 function liftSheet(id) {
   const l = S.lifts[id], s = E.status(l);
   const hist = l.history.slice(-5).reverse().map(e => `<li><span class="when">${new Date(e.d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
@@ -405,13 +576,13 @@ function liftSheet(id) {
   openSheet(esc(l.name),
     `<p class="sub">${E.advice(l)}</p>` +
     (s.k === 'drop' ? `<button class="btn line" name="do" value="drop">${E.easeOff(l).button}</button>` : '') +
+    (hist ? `<h3 class="cap">Last sessions</h3><ul class="eaten hist">${hist}</ul>` : '') +
     field('Weight, pounds', stepper('weight', l.weight ?? '', l.jump, 0, 1000, 'Weight in pounds').replace(' required', '')) +
     `<div class="pair">${field('Sets', stepper('sets', l.sets, 1, 1, 8, 'Sets'))}${field('Add when earned', stepper('jump', l.jump, 2.5, 1, 50, 'Pounds to add'))}</div>` +
     `<div class="pair">${field('Reps from', stepper('lo', l.lo, 1, 1, 50, 'Lowest reps'))}${field('Reps to', stepper('hi', l.hi, 1, 1, 50, 'Highest reps'))}</div>` +
     field('Rest between sets, seconds', stepper('rest', l.rest, 15, 15, 600, 'Rest in seconds')) +
     field('Equipment', `<select name="kind">${kinds.map(([v, n]) => `<option value="${v}" ${l.kind === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`) +
-    (hist ? `<h3 class="cap">Last sessions</h3><ul class="eaten hist">${hist}</ul>` : '') +
-    `<button class="link quiet danger" name="do" value="retire">Take this lift out of the program</button>`,
+    `<button class="link quiet" name="do" value="retire">Take this lift out of the program</button>`,
     'Save',
     (f, act) => commit(S => {
       settle(S);
@@ -476,56 +647,49 @@ function addFood(f) {
   say(`${f.name || 'Protein'}, ${f.protein} g.`, snap);
 }
 
-function logSet(n) {
-  const c = E.cursor(S);
-  if (!c) return;
-  commit(S => {
-    const l = S.lifts[c.id];
-    E.entry(S.draft, c.id).reps[c.set] = n;
-    S.draft.rest = E.cursor(S) ? { until: Date.now() + l.rest * 1000, total: l.rest } : null;
-  });
-}
-
-function finish() {
-  commit(S => { S.draft.done = true; S.draft.rest = null; });
-  scrollTo(0, 0);
-}
-
-// Editing the program closes out a finished session first, so the edit
-// lands on next time's plan and not on today's record.
-const settle = S => { if (S.draft?.done) E.finalize(S); };
-
 const acts = {
+  open: n => openPanel(n.dataset.panel),
+  close: closePanel,
+  go: () => openPanel('go'),
   goals: () => goalsSheet(false),
+  sync: syncSheet,
   sleep: sleepSheet,
   'add-food': foodSheet,
-  'close-sheet': () => sheet.close(),
-  lift: el => liftSheet(el.dataset.id),
-  'add-lift': el => addLiftSheet(el.dataset.day),
-  weight: el => weightSheet(el.dataset.id),
+  'close-sheet': closeSheet,
+  tab: n => { ui.tab = n.dataset.day; drawLift(); },
+  lift: n => liftSheet(n.dataset.id),
+  'add-lift': n => addLiftSheet(n.dataset.day),
+  weight: n => weightSheet(n.dataset.id),
   'other-reps': repsSheet,
-  reps: el => logSet(+el.dataset.n),
-  'skip-lift': el => commit(S => { E.entry(S.draft, el.dataset.id).skip = true; S.draft.rest = null; }),
+  reps: n => logSet(+n.dataset.n),
+  'pick-set': n => { ui.go = { id: ui.go.id, set: +n.dataset.i }; drawGo(); },
+  'go-step': n => stepLift(+n.dataset.dir),
+  'go-next': () => { ui.go = null; drawGo(); },
+  'go-pick': pickSheet,
   'rest-add': () => commit(S => { S.draft.rest.until += 15000; S.draft.rest.total += 15; }),
   'rest-skip': () => commit(S => { S.draft.rest = null; }),
-  finish,
-  'summary-done': () => { location.hash = '#/'; },
+  finish: () => commit(S => { S.draft.done = true; S.draft.rest = null; }),
   'as-written': () => {
     const snap = snapshot();
     const day = S.draft?.day ?? S.rotation[S.pointer];
     commit(S => { E.ensureDraft(S, today()).done = true; });
     say(`${cap(day)} logged as written.`, snap);
   },
-  usual: el => {
-    const f = S.foods.find(x => x.id === el.dataset.id);
+  usual: n => {
+    const f = S.foods.find(x => x.id === n.dataset.id);
+    closeCompose();
     if (f) addFood({ name: f.name, protein: f.protein, calories: f.calories || 0, source: 'usual' });
   },
-  'del-food': el => {
+  'del-food': n => {
     const snap = snapshot();
-    commit(S => { S.foodLog = S.foodLog.filter(x => x.id !== el.dataset.id); });
+    commit(S => { S.foodLog = S.foodLog.filter(x => x.id !== n.dataset.id); });
     say('Removed.', snap);
   },
   undo: () => { if (undoSnap) { restore(undoSnap); hideSay(); } },
+  compose: () => openCompose(false),
+  'compose-close': closeCompose,
+  mic: talk,
+  photo: () => say('Photos need the AI connection, which is not set up yet.'),
 };
 
 document.addEventListener('click', e => {
@@ -536,9 +700,9 @@ document.addEventListener('click', e => {
     inp.value = +Math.min(+inp.max, Math.max(+inp.min, v)).toFixed(2);
     return;
   }
-  const el = e.target.closest('[data-act]');
-  if (el && acts[el.dataset.act]) { acts[el.dataset.act](el); return; }
-  if (e.target === sheet) sheet.close();
+  const n = e.target.closest('[data-act]');
+  if (n && acts[n.dataset.act]) { acts[n.dataset.act](n); return; }
+  if (e.target === sheet) closeSheet();
 });
 
 document.addEventListener('submit', e => {
@@ -547,6 +711,7 @@ document.addEventListener('submit', e => {
     const data = Object.fromEntries(new FormData(form));
     const h = onSheet;
     onSheet = null;
+    onClose = null;
     if (h) h(data, e.submitter?.value);
     return; // method="dialog" closes the sheet
   }
@@ -555,34 +720,77 @@ document.addEventListener('submit', e => {
     const w = +new FormData(form).get('w');
     commit(S => { S.lifts[form.dataset.id].weight = w; });
   } else if (form.id === 'dock') {
-    const q = $('#q');
-    const text = q.value.trim();
-    q.value = '';
-    dock.classList.remove('typing');
-    if (text) handleText(text);
+    const words = el('q').value.trim();
+    closeCompose();
+    if (words) handleText(words);
   }
 });
 
-/* ---------- The text box ---------- */
+// iPhones only show a pressed state when something is listening for touches.
+document.addEventListener('touchstart', () => {}, { passive: true });
+// No pinch zoom: this is an app screen, not a page.
+document.addEventListener('gesturestart', e => e.preventDefault());
 
-const dock = $('#dock');
+/* ---------- Typing and talking ---------- */
+
 let undoSnap = null, sayTimer = 0;
 
-function say(text, snap) {
-  const el = $('#say');
+function say(words, snap) {
+  const node = el('say');
   undoSnap = snap || null;
-  el.innerHTML = `<span>${esc(text)}</span>${snap ? '<button class="link" type="button" data-act="undo">Undo</button>' : ''}`;
-  el.hidden = false;
+  node.innerHTML = `<span>${esc(words)}</span>${snap ? '<button class="link" type="button" data-act="undo">Undo</button>' : ''}`;
+  node.hidden = false;
   clearTimeout(sayTimer);
   sayTimer = setTimeout(hideSay, snap ? 7000 : 9000);
 }
-function hideSay() { $('#say').hidden = true; undoSnap = null; }
+function hideSay() { el('say').hidden = true; undoSnap = null; }
 
-function handleText(raw) {
-  const t = today();
-  const day = S.draft?.day ?? S.rotation[S.pointer];
-  const r = read(S, raw, S.order[day]);
-  const snap = snapshot();
+function openCompose(spoken) {
+  const us = E.usuals(S, new Date().getHours()).slice(0, 8);
+  patch(el('c-hints'),
+    (spoken ? '<p class="sub">Tap the mic on your keyboard and talk. Hold-to-talk on the big button comes with the AI connection.</p>' : '') +
+    (us.length ? `<p class="cap">One tap</p><div class="chips">${us.map(usualChip).join('')}</div>`
+      : spoken ? '' : '<p class="sub">Try "40g chicken", "slept 7.5" or "bench last set 6".</p>'));
+  el('compose').hidden = false;
+  const q = el('q');
+  q.value = '';
+  q.focus();
+}
+
+function closeCompose() {
+  if (el('compose').hidden) return;
+  if (rec) rec.stop();
+  el('q').blur();
+  el('compose').hidden = true;
+}
+
+// Where the browser can listen by itself it does. An iPhone home-screen app
+// cannot, so there the keyboard's own dictation key does the listening.
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const homeScreen = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+let rec = null;
+
+function talk() {
+  if (!SR || (iOS && homeScreen)) { openCompose(true); return; }
+  openCompose(false);
+  const q = el('q');
+  q.placeholder = 'Listening';
+  rec = new SR();
+  rec.lang = 'en-US';
+  rec.interimResults = true;
+  rec.onresult = ev => { q.value = [...ev.results].map(r => r[0].transcript).join(''); };
+  rec.onend = () => {
+    rec = null;
+    q.placeholder = 'What did you do?';
+    if (!el('compose').hidden && q.value.trim()) el('dock').requestSubmit();
+  };
+  rec.onerror = () => {};
+  rec.start();
+}
+
+// Put one reading into the log. Returns the line to show and whether it can be undone.
+function act(r, t, day) {
   const closed = !S.draft && E.sessionOn(S, t);
   let msg, undo = true;
 
@@ -591,7 +799,8 @@ function handleText(raw) {
     msg = `Sleep: ${fmtH(r.hours)}.`;
   } else if (r.type === 'food') {
     commit(S => E.logFood(S, { name: r.name, protein: r.protein, calories: r.calories, source: r.source, keep: false, ...now(), id: uid() }));
-    msg = `${r.n === 0.5 ? 'Half a ' + r.name.toLowerCase() : (r.n !== 1 ? r.n + ' × ' : '') + (r.name || 'Protein')}, ${r.protein} g.`;
+    const what = r.n === 0.5 ? 'Half a ' + r.name.toLowerCase() : (r.n !== 1 ? r.n + ' × ' : '') + (r.name || 'Protein');
+    msg = `${what}, ${r.source === 'estimate' ? 'about ' : ''}${r.protein} g.`;
   } else if (r.type === 'done') {
     if (closed || S.draft?.done) { msg = 'Today is already logged.'; undo = false; }
     else if (!E.canAssume(S, day) && !E.draftActive(S.draft)) { msg = `${cap(day)} is still learning your numbers. Log the sets in lifting mode.`; undo = false; }
@@ -617,85 +826,64 @@ function handleText(raw) {
     msg = 'Could not read that. Try "shake", "40g chicken", "slept 7.5" or "bench last set 6".';
     undo = false;
   }
-  commit(S => { S.messages.push({ at: Date.now(), text: raw, type: r.type }); if (S.messages.length > 300) S.messages.shift(); });
-  say(msg, undo ? snap : null);
+  return [msg, undo];
 }
 
-$('#q').addEventListener('input', e => dock.classList.toggle('typing', !!e.target.value.trim()));
+// What the AI reader sends back, put into the shape the phone's own reader uses.
+function fromReader(a) {
+  if (a.type === 'food') return { type: 'food', name: a.name, protein: a.protein, calories: a.calories, n: 1, source: a.estimated ? 'estimate' : 'typed' };
+  if (a.type === 'sleep') return { type: 'sleep', hours: a.hours };
+  if (a.type === 'session_done') return { type: 'done' };
+  if (a.type === 'skip_lift' && S.lifts[a.lift_id]) return { type: 'skip', id: a.lift_id };
+  if (a.type === 'lift' && S.lifts[a.lift_id]) {
+    return { type: 'lift', id: a.lift_id, w: a.weight, reps: Object.fromEntries((a.reps || []).map(x => [x.set - 1, x.reps])) };
+  }
+  return null;
+}
 
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const homeScreen = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-let rec = null;
-$('#mic').addEventListener('click', () => {
-  const q = $('#q');
-  if (dock.classList.contains('typing')) { dock.requestSubmit(); return; }
-  // iPhone home-screen apps cannot use the browser's speech reader, so the
-  // keyboard's own dictation key does the listening there.
-  if (!SR || (iOS && homeScreen)) { q.focus(); return; }
-  if (rec) { rec.stop(); return; }
-  rec = new SR();
-  rec.lang = 'en-US';
-  rec.interimResults = true;
-  rec.onresult = ev => { q.value = [...ev.results].map(r => r[0].transcript).join(''); };
-  rec.onerror = () => { q.focus(); };
-  rec.onend = () => { rec = null; dock.classList.remove('hearing'); if (q.value.trim()) dock.requestSubmit(); };
-  dock.classList.add('hearing');
-  q.placeholder = 'Listening';
-  rec.start();
-});
-
-if (window.visualViewport) {
-  const vv = visualViewport;
-  const lift = () => {
-    const kb = Math.max(0, innerHeight - vv.height - vv.offsetTop);
-    document.documentElement.style.setProperty('--kb', kb + 'px');
-    document.documentElement.classList.toggle('kb', kb > 80);
+// What the AI reader needs to know to read a message: today's lifts and the usual foods.
+function readerContext(day) {
+  return {
+    day,
+    lifts: S.order[day].map(id => { const l = S.lifts[id]; return { id, name: l.name, sets: l.sets, planned_reps: l.targets, weight: l.weight }; }),
+    other_lifts: Object.entries(S.order).filter(([d]) => d !== day).flatMap(([, ids]) => ids.map(id => S.lifts[id].name)),
+    usuals: E.usuals(S, new Date().getHours()).slice(0, 40).map(f => ({ name: f.name, protein: f.protein, calories: f.calories || 0 })),
   };
-  vv.addEventListener('resize', lift);
-  vv.addEventListener('scroll', lift);
 }
 
-/* ---------- Drawing the screen ---------- */
+const remember = (words, type) => commit(S => { S.messages.push({ at: Date.now(), text: words, type }); if (S.messages.length > 300) S.messages.shift(); });
 
-const was = new Map();
+async function handleText(raw) {
+  const t = today();
+  const day = S.draft?.day ?? S.rotation[S.pointer];
+  const r = read(S, raw, S.order[day]);
 
-// Size the big lifting numbers so they span the screen, whatever the digits.
-function fitLoad() {
-  const el = view.querySelector('.load');
-  if (!el) return;
-  el.style.fontSize = '100px';
-  const w = el.firstElementChild.getBoundingClientRect().width;
-  el.style.fontSize = Math.min(150, Math.floor(100 * el.clientWidth / w)) + 'px';
+  // The phone reads the common messages itself, with no wait.
+  if (r.type !== 'unread' || !Sync.connected()) {
+    const snap = snapshot();
+    const [msg, undo] = act(r, t, day);
+    remember(raw, r.type);
+    say(msg, undo ? snap : null);
+    return;
+  }
+
+  // Anything else goes to the AI reader.
+  say('Reading.');
+  try {
+    const out = await Sync.ask(raw, readerContext(day));
+    const snap = snapshot();
+    const done = (out.actions || []).map(fromReader).filter(Boolean).map(a => act(a, t, day));
+    remember(raw, 'ai');
+    if (!done.length) { say(out.note || 'Nothing in that to log.'); return; }
+    say(done.map(d => d[0]).join(' ') + (out.note ? ' ' + out.note : ''), done.some(d => d[1]) ? snap : null);
+  } catch (e) {
+    remember(raw, 'unread');
+    const why = e instanceof TypeError || e?.name === 'TimeoutError' ? 'offline' : e.message;
+    say(`${problem(why)} For now, type a usual, grams, or a lift and reps.`);
+  }
 }
-document.fonts?.ready.then(fitLoad);
-addEventListener('resize', fitLoad);
 
-function hydrate() {
-  // Numbers roll from their last value. Only digits that change move.
-  view.querySelectorAll('[data-roll]').forEach(el => {
-    const key = el.dataset.roll, to = el.textContent.trim();
-    const from = (was.get(key) ?? to).padStart(to.length, ' ').slice(-to.length);
-    was.set(key, to);
-    el.setAttribute('aria-label', to);
-    el.innerHTML = [...to].map((ch, i) => {
-      if (!/\d/.test(ch)) return `<span aria-hidden="true">${esc(ch)}</span>`;
-      const f = /\d/.test(from[i]) ? from[i] : 0;
-      return `<span class="dg" aria-hidden="true" style="--d:${f}" data-to="${ch}"><em>${ch}</em><span>0<br>1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9</span></span>`;
-    }).join('');
-  });
-  const fills = [...view.querySelectorAll('[data-bar],[data-ring]')].map(el => {
-    const key = el.dataset.bar || el.dataset.ring, to = el.style.getPropertyValue('--p');
-    const from = was.get('p:' + key) ?? to;
-    was.set('p:' + key, to);
-    el.style.setProperty('--p', from);
-    return [el, to];
-  });
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    view.querySelectorAll('.dg').forEach(d => d.style.setProperty('--d', d.dataset.to));
-    fills.forEach(([el, to]) => el.style.setProperty('--p', to));
-  }));
-}
+/* ---------- Keeping the screen current ---------- */
 
 let lock = null;
 async function keepAwake(on) {
@@ -705,53 +893,34 @@ async function keepAwake(on) {
   } catch (e) { /* not allowed right now */ }
 }
 
-function render() {
-  const r = route();
-  if (r === '/go' && !S.draft && !E.sessionOn(S, today())) { E.ensureDraft(S, today()); save(); }
-  const lifting = r === '/go' && !!S.draft;
-  document.body.dataset.route = lifting ? 'go' : r === '/lift' ? 'lift' : r === '/food' ? 'food' : 'home';
-  view.innerHTML = r === '/lift' ? liftView() : r === '/food' ? foodView() : r === '/go' ? goView() : homeView();
-  hydrate();
-  fitLoad();
-  keepAwake(lifting && !S.draft.done);
+function refresh() {
+  drawHome();
+  if (ui.panel) draw[ui.panel]();
 }
+subscribe(refresh);
 
-const depth = r => (r === '/' ? 0 : 1);
-let lastRoute = route();
-addEventListener('hashchange', () => {
-  const to = route();
-  if (to !== '/go') lastRig = '';
-  document.documentElement.dataset.dir = depth(to) < depth(lastRoute) ? 'back' : 'fwd';
-  lastRoute = to;
-  const draw = () => { render(); scrollTo(0, 0); };
-  if (document.startViewTransition && !reduced) {
-    const vt = document.startViewTransition(draw);
-    vt.ready.catch(() => {});
-    vt.finished.catch(() => {});
-  } else draw();
-});
-
-subscribe(render);
-
+// The rest clock ticks by changing two things, not by redrawing the screen.
 setInterval(() => {
-  const d = S.draft;
-  if (document.body.dataset.route !== 'go' || !d?.rest) return;
-  const left = d.rest.until - Date.now();
+  const r = S.draft?.rest;
+  if (ui.panel !== 'go' || !r) return;
+  const left = r.until - Date.now();
   if (left <= 0) { commit(S => { S.draft.rest = null; }); return; }
-  const c = $('#clock'), b = $('#restbar');
-  if (c) { c.textContent = mmss(left); c.style.setProperty('--n', c.textContent.length); }
-  if (b) b.style.setProperty('--p', left / (d.rest.total * 1000));
+  const c = el('clock');
+  if (c) { text(c, mmss(left)); fill(el('restbar'), left / (r.total * 1000)); }
 }, 250);
 
 function wake() {
-  const before = snapshot();
-  E.rollOver(S, today());
-  if (snapshot() !== before) save();
-  render();
+  // A session left open from an earlier day closes itself. That is a real
+  // change, so it goes through commit and gets saved like any other.
+  if (S.draft && S.draft.date !== today()) commit(S => E.rollOver(S, today()));
+  else refresh();
+  if (ui.panel === 'go') keepAwake(!S.draft?.done);
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
 
+shell();
 wake();
+Sync.start();
 if (!S.setup) goalsSheet(true);
 
 if ('serviceWorker' in navigator && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {

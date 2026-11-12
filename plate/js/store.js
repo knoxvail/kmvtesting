@@ -36,16 +36,32 @@ export function save() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* full or blocked */ }
 }
 
-// Change state, save it, and tell the screen to redraw.
+// Change state, save it, and tell the screen to redraw. The time of the
+// last change is kept so sync can tell which copy is newer. It only ever
+// goes up, so a change made here always counts as newer than the copy it
+// was made on, even if another device's clock runs ahead of this one.
+const stampChange = was => { S.touched = Math.max(Date.now(), (was || 0) + 1); };
+
 export function commit(fn) {
+  const was = S.touched;
   fn(S);
+  stampChange(was);
   save();
   subs.forEach(f => f());
 }
 
 export const snapshot = () => JSON.stringify(S);
 export function restore(snap) {
+  const was = S.touched;
   S = JSON.parse(snap);
+  stampChange(was);
+  save();
+  subs.forEach(f => f());
+}
+
+// Take a copy that came from the database as it is, without marking it changed.
+export function adopt(data) {
+  S = { ...seed(), ...data };
   save();
   subs.forEach(f => f());
 }
