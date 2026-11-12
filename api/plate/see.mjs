@@ -12,7 +12,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { allow } from './_shared.mjs';
+import { allow, aiKey } from './_shared.mjs';
 
 export const config = { maxDuration: 60 };
 
@@ -63,13 +63,13 @@ const n = (v, hi) => Math.round(Math.min(hi, Math.max(0, Number.isFinite(v) ? v 
 export default async function handler(req, res) {
   if (!allow(req, res)) return;
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); res.status(405).json({ error: 'method_not_allowed' }); return; }
-  if (!process.env.ANTHROPIC_API_KEY) { res.status(503).json({ error: 'not_set_up' }); return; }
+  if (!aiKey()) { res.status(503).json({ error: 'not_set_up' }); return; }
 
   const { image, note } = req.body || {};
   if (typeof image !== 'string' || image.length < 100 || image.length > 4_000_000) { res.status(400).json({ error: 'bad_request' }); return; }
   const words = typeof note === 'string' ? note.trim().slice(0, 300) : '';
 
-  const client = new Anthropic();
+  const client = new Anthropic({ apiKey: aiKey() });
   try {
     // 1. What is in the photo.
     const seen = await client.messages.parse({

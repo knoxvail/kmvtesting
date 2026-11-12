@@ -24,4 +24,16 @@ export function db(path, init = {}) {
   });
 }
 
+// Finds a setting by name without caring about capitals, so ANTHROPIC_API_KEY
+// and Anthropic_API_Key are the same thing. The first name that is set wins.
+export function setting(...names) {
+  for (const want of names) {
+    const hit = Object.keys(process.env).find(k => k.toUpperCase() === want);
+    if (hit && process.env[hit]) return process.env[hit];
+  }
+  return '';
+}
+export const aiKey = () => setting('ANTHROPIC_API_KEY', 'ANTHROPIC_KEY');
+export const speechKey = () => setting('GROQ_API_KEY', 'GROQ_KEY');
+
 export const dbReady = () => !!(process.env.SUPABASE_URL && process.env.SUPABASE_SECRET_KEY);

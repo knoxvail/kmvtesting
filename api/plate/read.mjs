@@ -7,7 +7,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { allow } from './_shared.mjs';
+import { allow, aiKey } from './_shared.mjs';
 
 const MODEL = 'claude-haiku-5-5';
 
@@ -84,7 +84,7 @@ function clean(out, context) {
 export default async function handler(req, res) {
   if (!allow(req, res)) return;
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); res.status(405).json({ error: 'method_not_allowed' }); return; }
-  if (!process.env.ANTHROPIC_API_KEY) { res.status(503).json({ error: 'not_set_up' }); return; }
+  if (!aiKey()) { res.status(503).json({ error: 'not_set_up' }); return; }
 
   const { text, context } = req.body || {};
   if (typeof text !== 'string' || !text.trim() || text.length > 600 || !context || typeof context !== 'object') {
@@ -99,7 +99,7 @@ export default async function handler(req, res) {
   });
   if (brief.length > 12_000) { res.status(413).json({ error: 'too_big' }); return; }
 
-  const client = new Anthropic();
+  const client = new Anthropic({ apiKey: aiKey() });
   try {
     const response = await client.messages.parse({
       model: MODEL,
