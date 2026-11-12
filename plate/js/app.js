@@ -71,26 +71,35 @@ function drawHome() {
   const ids = S.order[day];
   text(el('h-date'), new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }));
 
-  let title = day, sub, actions;
+  // The top of the screen is today's session: its name, one button, and the
+  // lifts themselves with what is planned for each.
+  const planOf = l => (l.weight == null ? 'new' : `${E.fmtW(l.weight)} × ${l.targets ? E.fmtReps(l.targets) : `${l.lo}–${l.hi}`}`);
+  const listFor = (dayName, log) => S.order[dayName].map(id => {
+    const l = V.lifts[id], g = log?.[id];
+    const n = (g?.reps || []).filter(x => x != null).length;
+    const state = g?.skip ? 'skipped' : n >= l.sets ? 'done' : n ? `${n} of ${l.sets}` : planOf(l);
+    return `<li><button type="button" data-act="go-lift" data-id="${id}"><span>${esc(l.name)}</span><b>${state}</b></button></li>`;
+  }).join('');
+
+  let title = day, sub = '', button = '', list = '', under = '';
   if (done) {
+    const nextDay = V.rotation[V.pointer];
     title = done.day;
-    sub = `Done. ${cap(V.rotation[V.pointer])} is next.`;
-    actions = `<button class="link" type="button" data-act="go">See next time's plan</button>`;
-    if (!S.draft) actions = `<button class="link" type="button" data-act="open" data-panel="lift">See where each lift stands</button>`;
+    sub = `Done today. ${cap(nextDay)} is next:`;
+    list = listFor(nextDay, null);
+    under = S.draft ? `<button class="link quiet" type="button" data-act="go">See what changed</button>` : '';
   } else if (!ids.length) {
     sub = 'No lifts on this day yet.';
-    actions = `<button class="btn" type="button" data-act="open" data-panel="lift">Add lifts</button>`;
+    button = `<button class="btn" type="button" data-act="open" data-panel="lift">Add lifts</button>`;
   } else {
     const going = E.draftActive(d);
     const at = going ? E.cursor(S) : null;
-    const first = S.lifts[at?.id ?? ids[0]];
-    sub = going
-      ? (at ? `${first.name} is next.` : 'Every set is in.')
-      : `${plural(ids.length, 'lift')}. ${first.name}${first.weight != null ? ' at ' + E.fmtW(first.weight) : ''} first.`;
-    actions = `<button class="btn" type="button" data-act="go">${going ? (at ? 'Keep lifting' : 'Finish up') : 'Start lifting'}${icon.go}</button>` +
-      (E.canAssume(S, day) ? `<button class="link" type="button" data-act="as-written">Did it as written</button>` : '');
+    button = `<button class="btn" type="button" data-act="go">${going ? (at ? 'Keep going' : 'Finish') : 'Start'}${icon.go}</button>`;
+    list = listFor(day, S.draft?.log);
+    under = E.canAssume(S, day) ? `<button class="link quiet" type="button" data-act="as-written">Did it all as written</button>` : '';
   }
-  patch(el('h-hero'), `<h1 class="day">${title}</h1><p class="sub">${sub}</p><div class="acts">${actions}</div>`);
+  patch(el('h-hero'), `<div class="headrow"><h1 class="day">${title}</h1>${button}</div>
+    ${sub ? `<p class="sub">${sub}</p>` : ''}${list ? `<ul class="plan">${list}</ul>` : ''}${under}`);
 
   const week = weekOf(t);
   const lifted = V.sessions.filter(s => week.includes(s.date)).length;
@@ -689,8 +698,38 @@ const acts = {
   compose: () => openCompose(false),
   'compose-close': closeCompose,
   mic: talk,
-  photo: () => say('Photos need the AI connection, which is not set up yet.'),
+  photo: () => el('cam').click(),
+  'go-lift': n => {
+    if (E.sessionOn(E.project(S), today())) { openPanel(S.draft ? 'go' : 'lift'); return; }
+    openPanel('go');
+    const id = n.dataset.id;
+    if (S.draft && S.order[S.draft.day].includes(id) && !S.draft.log[id]?.skip) { ui.go = { id, set: firstOpen(id) }; drawGo(); }
+  },
 };
+
+// The camera opens straight away. The photo is shown once so you can say
+// what it was, then it is dropped. It is never saved on the phone or sent
+// anywhere until the AI is connected.
+el('cam').addEventListener('change', e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  openSheet('What was it',
+    `<img class="shot" src="${url}" alt="The photo you just took">
+     <p class="sub">The AI will fill this in from the photo once it is connected. For now, enter it here.</p>` +
+    field('Name', '<input name="name" type="text" autocomplete="off" autocapitalize="sentences" maxlength="40" placeholder="Chicken bowl">') +
+    field('Protein, grams', stepper('protein', 30, 5, 0, 300, 'Protein in grams')) +
+    field('Calories', '<input name="calories" type="number" inputmode="numeric" min="0" max="5000" placeholder="Leave empty to skip">') +
+    '<label class="check"><input type="checkbox" name="keep" checked><span>Keep as a usual</span></label>',
+    'Log it',
+    f => addFood({ name: (f.name || '').trim(), protein: Math.round(+f.protein || 0), calories: +f.calories || 0, keep: !!f.keep, source: 'photo' }));
+  sheet.addEventListener('close', () => URL.revokeObjectURL(url), { once: true });
+});
+
+// After the keyboard goes away an iPhone can leave the screen shifted up.
+// Put it back.
+document.addEventListener('focusout', () => setTimeout(() => scrollTo(0, 0), 60));
 
 document.addEventListener('click', e => {
   const st = e.target.closest('[data-step]');
