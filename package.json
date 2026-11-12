@@ -1,0 +1,9 @@
+{
+  "name": "kmvtesting",
+  "private": true,
+  "description": "Static experiments plus a few serverless functions in /api.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "zod": "^4.6.7"
+  }
+}
