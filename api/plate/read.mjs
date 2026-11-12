@@ -13,7 +13,7 @@ const MODEL = 'claude-haiku-5-5';
 
 // Every field is always present, with null where it does not apply.
 const Action = z.object({
-  type: z.enum(['food', 'lift', 'skip_lift', 'sleep', 'session_done']),
+  type: z.enum(['food', 'lift', 'skip_lift', 'sleep', 'session_done', 'remove_last_food']),
   name: z.string().nullable(),          // food: short name, the way he said it
   protein: z.number().nullable(),       // food: grams of protein for the amount eaten
   calories: z.number().nullable(),      // food: calories for the amount eaten
@@ -34,6 +34,8 @@ const SYSTEM = `You turn one short message from a lifter into entries for his tr
 
 You get a JSON context and the message he typed or dictated. Dictation can garble a word, so read for what he meant.
 
+The context also holds recent, his last few messages with what was logged for each. Use it to understand words like "that", "it", "again" and "the other one".
+
 The context holds today's lifts (id, name, number of sets, the reps planned for each set, the planned weight), the names of lifts that belong to other days, and his usual foods with their protein and calories per serving.
 
 Entries you can return:
@@ -45,6 +47,8 @@ lift: only for a lift in today's list, using its id. Put in reps only the sets h
 skip_lift: he says he skipped a lift from today's list.
 
 sleep: hours as a decimal number, so 7 hours 30 minutes is 7.5.
+
+remove_last_food: he is correcting or cancelling the food he logged most recently, for example "make that 40 grams", "no, it was chicken" or "take that off". Return this first, then the corrected food entry if there is one. Use it only when the correction clearly refers to the most recent food in recent.
 
 session_done: he says the workout is finished. This can come with lift entries for what fell short.
 
@@ -76,6 +80,8 @@ function clean(out, context) {
       if (hours) actions.push({ type: 'sleep', hours: Math.round(hours * 60) / 60 });
     } else if (a.type === 'session_done') {
       actions.push({ type: 'session_done' });
+    } else if (a.type === 'remove_last_food') {
+      actions.push({ type: 'remove_last_food' });
     }
   }
   return { actions, note: String(out.note || '').slice(0, 200) };
@@ -96,6 +102,7 @@ export default async function handler(req, res) {
     lifts: (context.lifts || []).slice(0, 20),
     lifts_on_other_days: (context.other_lifts || []).slice(0, 40),
     usual_foods: (context.usuals || []).slice(0, 40),
+    recent: (context.recent || []).slice(-8).map(r => ({ said: String(r.said || '').slice(0, 200), did: String(r.did || '').slice(0, 200) })),
   });
   if (brief.length > 12_000) { res.status(413).json({ error: 'too_big' }); return; }
 

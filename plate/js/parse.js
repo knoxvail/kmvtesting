@@ -58,9 +58,12 @@ export function read(S, raw, dayIds) {
     const rest = text.replace(hit.alias, ' ');
     if (/\b(skip|skipped|skipping|no|didn'?t do)\b/.test(rest)) return { type: 'skip', id: l.id };
     let w = null;
-    let body = rest.replace(/(?:at|with|@)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)/g, (_, a, b) => { w = +(a ?? b); return ' '; });
+    const wr = rest.match(/(\d{2,3})\s*(?:x|×|for)\s*(\d{1,2})/);
+    if (wr) w = +wr[1];
+    let body = (wr ? rest.replace(wr[0], ' ') : rest).replace(/(?:at|with|@)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)/g, (_, a, b) => { w = +(a ?? b); return ' '; });
     const reps = {};
-    m = body.match(/(?:last|final)(?:\s+set)?\D{0,10}(\d{1,2})|(\d{1,2})\D{0,12}(?:last|final)/);
+    if (wr) reps[0] = +wr[2];
+    m = wr ? null : body.match(/(?:last|final)(?:\s+set)?\D{0,10}(\d{1,2})|(\d{1,2})\D{0,12}(?:last|final)/);
     if (m) reps[l.sets - 1] = +(m[1] ?? m[2]);
     else if ((m = body.match(/(first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)(?:\s+set)?\D{0,10}(\d{1,2})/))) reps[ORDINAL[m[1]]] = +m[2];
     else if ((m = body.match(/set\s*(\d)\D{1,10}(\d{1,2})/))) reps[+m[1] - 1] = +m[2];

@@ -11,7 +11,11 @@ const lift = (id, name, kind, sets, lo, hi, jump, rest) => ({
   targets: null,     // reps planned per set, learned from the first two sessions
   sessions: 0,
   missStreak: 0,
-  history: [],       // { d, w, reps, plan, planW }
+  history: [],       // { d, w, reps, plan, planW, warm }
+  style: 'straight', // 'top' = a warm-up ramp that is assumed, then the working set(s) you log
+  warm: null,        // { w, reps }: the last warm-up set before the working set, counted but assumed
+  goal: null,        // { w, reps }: where you are heading
+  drop: false,       // a drop set follows the working set, assumed done
 });
 
 export function seed() {
@@ -45,6 +49,28 @@ export function seed() {
     weights: {},       // date -> bodyweight in pounds
     messages: [],      // raw text typed or said
   };
+}
+
+// Where Knox started, from memory, on push day (2026-11-12). Applied once, and
+// only to lifts nothing has been logged for, so it can never overwrite real data.
+const BASE = {
+  bench:    { style: 'top', sets: 2, lo: 3, hi: 8, jump: 5, weight: 245, reps: 4 },
+  ohp:      { style: 'top', sets: 1, lo: 5, hi: 8, jump: 5, weight: 115, reps: 6, goal: { w: 135, reps: 6 } },
+  fly:      { name: 'Pec deck', style: 'top', sets: 1, lo: 6, hi: 10, jump: 5, weight: 145, reps: 6, drop: true },
+  latraise: { style: 'straight', sets: 3, lo: 8, hi: 10, jump: 5, weight: 20, reps: 10 },
+  pushdown: { style: 'top', sets: 1, lo: 8, hi: 12, jump: 5, weight: 110, reps: 8, drop: true },
+};
+export function applyBaseline(S, date) {
+  if (S.baseline1) return false;
+  for (const [id, b] of Object.entries(BASE)) {
+    const l = S.lifts[id];
+    if (!l || l.history.length || l.sessions) continue;
+    const { reps, weight, ...rest } = b;
+    Object.assign(l, rest, { weight, targets: Array.from({ length: l.sets = b.sets }, () => reps), sessions: 2, missStreak: 0 });
+    l.history = [{ d: date, w: weight, reps: [reps], plan: null, planW: null }];
+  }
+  S.baseline1 = true;
+  return true;
 }
 
 export const round = (x, step) => Math.round(x / step) * step;
@@ -99,7 +125,7 @@ export function applyResult(l, w, reps, d) {
   const plan = l.targets ? [...l.targets] : null;
   const planW = l.weight;
   const note = { id: l.id, name: l.name, w, reps: [...reps], plan, planW };
-  l.history.push({ d, w, reps: [...reps], plan, planW });
+  l.history.push({ d, w, reps: [...reps], plan, planW, ...(l.warm ? { warm: { ...l.warm } } : {}) });
   if (l.history.length > 60) l.history.shift();
   l.sessions++;
   l.weight = w;

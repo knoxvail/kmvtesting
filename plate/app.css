@@ -318,7 +318,10 @@ body[data-panel="go"] .dock { display: none; }
 .eaten .when { color: var(--knurl); font-size: 13px; }
 .eaten b { font-weight: 700; font-size: 17px; text-align: right; }
 .eaten b i { display: block; font-weight: 400; font-size: 12px; color: var(--knurl); }
-.eaten.hist li { grid-template-columns: 74px 56px 1fr; min-height: 38px; }
+.eaten.hist li { grid-template-columns: 74px 56px 1fr 32px; min-height: 38px; }
+.eaten .what { text-align: left; }
+button.what:active { opacity: .6; }
+#g-note { color: var(--chalk); }
 .eaten.hist .what { font-weight: 700; font-size: 17px; }
 
 .marks { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }

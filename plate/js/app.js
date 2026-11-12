@@ -1,4 +1,4 @@
-import { S, commit, save, today, weekOf, snapshot, restore, subscribe, uid } from './store.js';
+import { S, commit, save, today, weekOf, snapshot, restore, subscribe, uid, adopt } from './store.js';
 import * as E from './engine.js';
 import { read } from './parse.js';
 import { rig, icon } from './draw.js';
@@ -246,7 +246,7 @@ function drawFood() {
   const list = S.foodLog.filter(f => f.date === t).reverse();
   patch(el('f-list'), list.length ? `<ul class="eaten">${list.map(f => `<li>
       <span class="when">${esc(f.time)}</span>
-      <span class="what">${esc(f.name || 'Protein')}</span>
+      <button class="what" type="button" data-act="edit-food" data-id="${f.id}">${esc(f.name || 'Protein')}</button>
       <b>${f.protein} g${f.calories ? `<i>${num(f.calories)} cal</i>` : ''}</b>
       <button class="iconbtn sm" type="button" data-act="del-food" data-id="${f.id}" aria-label="Remove ${esc(f.name || 'entry')}">${icon.close}</button>
     </li>`).join('')}</ul>` : '<p class="empty">Nothing eaten yet today.</p>');
@@ -314,6 +314,11 @@ function drawGo() {
       <button class="iconbtn" type="button" data-act="go-step" data-dir="1" aria-label="Next lift">${icon.next}</button>
     </span>`);
   text(el('g-name'), l.name);
+  text(el('g-note'), [
+    l.warm ? `Warm-up ${E.fmtW(l.warm.w)}${l.warm.reps ? ' × ' + l.warm.reps : ''}, counted` : '',
+    l.goal ? `Goal ${E.fmtW(l.goal.w)} × ${l.goal.reps}` : '',
+    l.drop ? 'Drop set after, assumed' : '',
+  ].filter(Boolean).join(' · '));
 
   // A lift nobody has done yet needs its weight first.
   if (w == null) {
@@ -501,7 +506,8 @@ function goalsSheet(first) {
     field('Sleep per night, hours', stepper('sleep', p.sleep, 0.25, 4, 12, 'Sleep goal in hours')) +
     field('Calories per day', `<input name="calories" type="number" inputmode="numeric" min="0" max="9000" value="${p.calories || ''}" placeholder="Leave empty to skip">`) +
     `<div class="pair">${field('Carbs, grams', `<input name="carbs" type="number" inputmode="numeric" min="0" max="1500" value="${p.carbs || ''}" placeholder="Skip">`)}${field('Fat, grams', `<input name="fat" type="number" inputmode="numeric" min="0" max="600" value="${p.fat || ''}" placeholder="Skip">`)}</div>` +
-    (first ? '' : `<button class="link quiet" type="button" data-act="sync">${Sync.connected() ? 'Sync is on' : 'Sync and AI reader'}</button>`),
+    (first ? '' : `<button class="link quiet" type="button" data-act="sync">${Sync.connected() ? 'Sync is on' : 'Sync and AI reader'}</button>
+      <div class="pair"><button class="link quiet" type="button" data-act="backup">Export a backup</button><button class="link quiet" type="button" data-act="restore">Restore a backup</button></div>`),
     first ? 'Start' : 'Save',
     f => commit(S => {
       S.profile = { protein: +f.protein || 180, days: Math.min(7, Math.max(1, +f.days || 5)), sleep: +f.sleep || 8, calories: +f.calories || 0, carbs: +f.carbs || 0, fat: +f.fat || 0 };
@@ -598,9 +604,10 @@ const settle = S => { if (S.draft?.done) E.finalize(S); };
 
 function liftSheet(id) {
   const l = S.lifts[id], s = E.status(l);
-  const hist = l.history.slice(-5).reverse().map(e => `<li><span class="when">${new Date(e.d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+  const hist = l.history.map((e, i) => [e, i]).slice(-5).reverse().map(([e, i]) => `<li><span class="when">${new Date(e.d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
       <span class="what">${E.fmtW(e.w)}</span>
-      <span class="marks">${e.reps.map((r, i) => (e.plan && r < e.plan[i] ? `<span class="mk short"><s>${e.plan[i]}</s>${r}</span>` : `<span class="mk">${r}</span>`)).join('')}</span></li>`).join('');
+      <span class="marks">${e.reps.map((r, k) => (e.plan && r < e.plan[k] ? `<span class="mk short"><s>${e.plan[k]}</s>${r}</span>` : `<span class="mk">${r}</span>`)).join('')}</span>
+      <button class="iconbtn sm" name="do" value="rm:${i}" aria-label="Remove this entry">${icon.close}</button></li>`).join('');
   const kinds = [['barbell', 'Barbell'], ['dumbbell', 'Dumbbells'], ['stack', 'Cable or machine stack'], ['other', 'Something else']];
   openSheet(esc(l.name),
     `<p class="sub">${E.advice(l)}</p>` +
@@ -611,12 +618,17 @@ function liftSheet(id) {
     `<div class="pair">${field('Reps from', stepper('lo', l.lo, 1, 1, 50, 'Lowest reps'))}${field('Reps to', stepper('hi', l.hi, 1, 1, 50, 'Highest reps'))}</div>` +
     field('Rest between sets, seconds', stepper('rest', l.rest, 15, 15, 600, 'Rest in seconds')) +
     field('Equipment', `<select name="kind">${kinds.map(([v, n]) => `<option value="${v}" ${l.kind === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`) +
+    field('How you do it', `<select name="style"><option value="straight" ${l.style !== 'top' ? 'selected' : ''}>Straight sets, every set logged or assumed</option><option value="top" ${l.style === 'top' ? 'selected' : ''}>Warm up, then a working set (warm-ups assumed)</option></select>`) +
+    `<div class="pair">${field('Goal weight', box('gw', l.goal?.w, 'Skip'))}${field('Goal reps', box('gr', l.goal?.reps, 'Skip'))}</div>` +
+    `<div class="pair">${field('Last warm-up weight', box('ww', l.warm?.w, 'Skip'))}${field('Its reps', box('wr', l.warm?.reps, 'Skip'))}</div>` +
+    `<label class="check"><input type="checkbox" name="drop" ${l.drop ? 'checked' : ''}><span>A drop set follows (assumed done)</span></label>` +
     `<button class="link quiet" name="do" value="retire">Take this lift out of the program</button>`,
     'Save',
     (f, act) => commit(S => {
       settle(S);
       const l = S.lifts[id];
       if (act === 'retire') { for (const k of Object.keys(S.order)) S.order[k] = S.order[k].filter(x => x !== id); return; }
+      if (act && act.startsWith('rm:')) { l.history.splice(+act.slice(3), 1); l.sessions = Math.max(0, l.sessions - 1); return; }
       if (act === 'drop') { const e = E.easeOff(l); l.weight = e.w; l.targets = [...e.reps]; l.missStreak = 0; return; }
       l.weight = f.weight === '' ? null : +f.weight;
       l.sets = Math.max(1, Math.round(+f.sets || l.sets));
@@ -625,6 +637,10 @@ function liftSheet(id) {
       l.jump = +f.jump || l.jump;
       l.rest = Math.round(+f.rest || l.rest);
       l.kind = f.kind;
+      l.style = f.style === 'top' ? 'top' : 'straight';
+      l.drop = !!f.drop;
+      l.goal = +f.gw ? { w: +f.gw, reps: Math.round(+f.gr) || 0 } : null;
+      l.warm = +f.ww ? { w: +f.ww, reps: Math.round(+f.wr) || null } : null;
       if (l.targets) {
         const t = l.targets.slice(0, l.sets);
         while (t.length < l.sets) t.push(t[t.length - 1]);
@@ -685,6 +701,25 @@ const acts = {
   sleep: sleepSheet,
   'add-food': foodSheet,
   weigh: weighSheet,
+  'edit-food': n => {
+    const x0 = S.foodLog.find(x => x.id === n.dataset.id);
+    if (!x0) return;
+    openSheet('Edit food', foodFields(x0).replace(/<label class="check">[\s\S]*?<\/label>/, '') + '<button class="link quiet" name="do" value="del">Remove this entry</button>', 'Save',
+      (f, act) => commit(S => {
+        if (act === 'del') { S.foodLog = S.foodLog.filter(x => x.id !== x0.id); return; }
+        const x = S.foodLog.find(y => y.id === x0.id);
+        if (!x) return;
+        Object.assign(x, { name: (f.name || '').trim(), protein: Math.round(+f.protein || 0), calories: Math.round(+f.calories || 0), carbs: Math.round(+f.carbs || 0), fat: Math.round(+f.fat || 0) });
+      }));
+  },
+  backup: async () => {
+    const file = new File([JSON.stringify(S)], `plate-backup-${today()}.json`, { type: 'application/json' });
+    try { if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file] }); return; } } catch (e) { if (e.name === 'AbortError') return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file); a.download = file.name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  },
+  restore: () => el('restore').click(),
   'close-sheet': closeSheet,
   tab: n => { ui.tab = n.dataset.day; drawLift(); },
   lift: n => liftSheet(n.dataset.id),
@@ -967,6 +1002,10 @@ function act(r, t, day) {
     if (closed || S.draft?.done) { msg = 'Today is already logged.'; undo = false; }
     else if (!E.canAssume(S, day) && !E.draftActive(S.draft)) { msg = `${cap(day)} is still learning your numbers. Log the sets in lifting mode.`; undo = false; }
     else { commit(S => { E.ensureDraft(S, t).done = true; }); msg = `${cap(day)} logged as written.`; }
+  } else if (r.type === 'remove_food') {
+    const last = [...S.foodLog].reverse().find(x => x.date === t);
+    if (!last) { msg = 'Nothing logged today to remove.'; undo = false; }
+    else { commit(S => { S.foodLog = S.foodLog.filter(x => x.id !== last.id); }); msg = `Removed ${last.name || 'the last entry'}.`; }
   } else if (r.type === 'skip' || r.type === 'lift') {
     const l = S.lifts[r.id];
     if (closed) { msg = 'Today is already logged.'; undo = false; }
@@ -996,6 +1035,7 @@ function fromReader(a) {
   if (a.type === 'food') return { type: 'food', name: a.name, protein: a.protein, calories: a.calories, carbs: a.carbs, fat: a.fat, n: 1, source: a.estimated ? 'estimate' : 'typed' };
   if (a.type === 'sleep') return { type: 'sleep', hours: a.hours };
   if (a.type === 'session_done') return { type: 'done' };
+  if (a.type === 'remove_last_food') return { type: 'remove_food' };
   if (a.type === 'skip_lift' && S.lifts[a.lift_id]) return { type: 'skip', id: a.lift_id };
   if (a.type === 'lift' && S.lifts[a.lift_id]) {
     return { type: 'lift', id: a.lift_id, w: a.weight, reps: Object.fromEntries((a.reps || []).map(x => [x.set - 1, x.reps])) };
@@ -1010,10 +1050,11 @@ function readerContext(day) {
     lifts: S.order[day].map(id => { const l = S.lifts[id]; return { id, name: l.name, sets: l.sets, planned_reps: l.targets, weight: l.weight }; }),
     other_lifts: Object.entries(S.order).filter(([d]) => d !== day).flatMap(([, ids]) => ids.map(id => S.lifts[id].name)),
     usuals: E.usuals(S, new Date().getHours()).slice(0, 40).map(f => ({ name: f.name, protein: f.protein, calories: f.calories || 0 })),
+    recent: S.messages.slice(-6).map(m => ({ said: m.text, did: m.did || '' })),
   };
 }
 
-const remember = (words, type) => commit(S => { S.messages.push({ at: Date.now(), text: words, type }); if (S.messages.length > 300) S.messages.shift(); });
+const remember = (words, type, did = '') => commit(S => { S.messages.push({ at: Date.now(), text: words, type, did: String(did).slice(0, 160) }); if (S.messages.length > 300) S.messages.shift(); });
 
 async function handleText(raw) {
   const t = today();
@@ -1024,7 +1065,7 @@ async function handleText(raw) {
   if (r.type !== 'unread' || !Sync.connected()) {
     const snap = snapshot();
     const [msg, undo] = act(r, t, day);
-    remember(raw, r.type);
+    remember(raw, r.type, msg);
     say(msg, undo ? snap : null);
     return;
   }
@@ -1035,7 +1076,7 @@ async function handleText(raw) {
     const out = await Sync.ask(raw, readerContext(day));
     const snap = snapshot();
     const done = (out.actions || []).map(fromReader).filter(Boolean).map(a => act(a, t, day));
-    remember(raw, 'ai');
+    remember(raw, 'ai', done.map(d => d[0]).join(' ') || out.note || '');
     if (!done.length) { say(out.note || 'Nothing in that to log.'); return; }
     say(done.map(d => d[0]).join(' ') + (out.note ? ' ' + out.note : ''), done.some(d => d[1]) ? snap : null);
   } catch (e) {
@@ -1079,6 +1120,20 @@ function wake() {
   if (ui.panel === 'go') keepAwake(!S.draft?.done);
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+
+el('restore').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  let data;
+  try { data = JSON.parse(await file.text()); } catch (err) { data = null; }
+  if (!data || !data.lifts || !data.order || !data.profile) { say('That file is not a Plate backup.'); return; }
+  openSheet('Restore a backup', '<p class="sub">This replaces everything on this phone with the backup. It cannot be undone.</p>', 'Replace what is on this phone',
+    () => { adopt(data); commit(() => {}); say('Backup restored.'); });
+});
+
+// Your push-day starting numbers go in once, and only for lifts with nothing logged.
+if (!S.baseline1) commit(S => E.applyBaseline(S, today()));
 
 shell();
 wake();
