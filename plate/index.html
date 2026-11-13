@@ -94,6 +94,16 @@
       </section>
     </section>
 
+    <!-- The weekly review: what the last week says and what to do this one. -->
+    <section class="panel" id="p-week" aria-label="This week">
+      <header class="top">
+        <button class="iconbtn" type="button" data-act="close" aria-label="Close"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></button>
+        <p class="cap" id="w-title">This week</p>
+        <span></span>
+      </header>
+      <div class="rows" id="w-body"></div>
+    </section>
+
     <!-- Days: every day you have logged, newest first. -->
     <section class="panel" id="p-days" aria-label="Days">
       <header class="top">
@@ -101,6 +111,7 @@
         <p class="cap">Days</p>
         <span></span>
       </header>
+      <button class="link" type="button" data-act="open" data-panel="week" id="d-week">This week's plan</button>
       <div class="tally" id="d-sum"></div>
       <p class="cap" id="d-cap"></p>
       <div class="rows" id="d-rows"></div>

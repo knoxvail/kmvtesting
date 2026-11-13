@@ -25,6 +25,11 @@ const mmss = ms => {
 
 const ui = { panel: null, tab: null, go: null, date: null };
 
+// The calorie goal everywhere: the live target from his weigh-ins, unless he
+// switched that off and typed his own number.
+const live = () => E.coach(S, today());
+const calGoal = () => (S.profile.calAuto === false ? S.profile.calories : (live().target || S.profile.calories || 0));
+
 /* ---------- Changing only what changed ---------- */
 
 function patch(node, html) {
@@ -139,8 +144,8 @@ function drawHome() {
 
 /* ---------- Panels ---------- */
 
-const panels = { lift: el('p-lift'), food: el('p-food'), go: el('p-go'), days: el('p-days'), day: el('p-day') };
-const draw = { lift: drawLift, food: drawFood, go: drawGo, days: drawDays, day: drawDay };
+const panels = { lift: el('p-lift'), food: el('p-food'), go: el('p-go'), days: el('p-days'), day: el('p-day'), week: el('p-week') };
+const draw = { lift: drawLift, food: drawFood, go: drawGo, days: drawDays, day: drawDay, week: drawWeek };
 
 function openPanel(name) {
   if (name === 'go' && !S.draft && !E.sessionOn(S, today())) { E.ensureDraft(S, today()); save(); }
@@ -237,10 +242,14 @@ function drawFood() {
   fill(el('f-arc'), p / goal);
   // Calories, carbs and fat sit under the ring. A bar shows only where a goal is set.
   const w = S.weights?.[t];
-  patch(el('f-macros'), [['Calories', T.calories, P.calories, ''], ['Carbs', T.carbs, P.carbs, ' g'], ['Fat', T.fat, P.fat, ' g']]
+  const C = live();
+  patch(el('f-macros'), [['Calories', T.calories, calGoal(), ''], ['Carbs', T.carbs, P.carbs, ' g'], ['Fat', T.fat, P.fat, ' g']]
     .map(([name, v, g, u]) => `<div class="mac"><span class="cap">${name}</span><b>${num(Math.round(v))}${u}</b>
       <i>${g ? `of ${num(g)}${u}` : 'no goal'}</i><span class="bar"><i style="--p:${g ? Math.min(1, v / g) : 0}"></i></span></div>`).join('') +
-    `<button class="link quiet" type="button" data-act="weigh">${w ? `Bodyweight ${w} lb` : 'Log bodyweight'}</button>`);
+    `<button class="link quiet" type="button" data-act="weigh">${w ? `Bodyweight ${w} lb` : 'Log bodyweight'}</button>` +
+    (P.calAuto === false || !C.target ? '' : `<p class="coachline">${C.basis === 'data'
+      ? `Your real maintenance is about ${num(C.tdee)} calories, worked out from ${C.weighIns} weigh-ins and ${C.foodDays} days of food. The target adds ${Math.round(((P.goalRate ?? 0.5) / 7) * 3500)} for gaining ${P.goalRate ?? 0.5} lb a week.${C.rate != null ? ` You are gaining ${C.rate} lb a week now.` : ''}`
+      : `Starting estimate. It becomes exact after about a week of weigh-ins and logged food${C.weighIns < 3 ? ` (${C.weighIns} weigh-in${C.weighIns === 1 ? '' : 's'} so far)` : ''}.`}</p>`));
   const us = E.usuals(S, new Date().getHours()).slice(0, 7);
   patch(el('f-usuals'), `<button class="chip add" type="button" data-act="add-food">Add food</button>${us.map(usualChip).join('')}`);
   const list = S.foodLog.filter(f => f.date === t).reverse();
@@ -250,6 +259,77 @@ function drawFood() {
       <b>${f.protein} g${f.calories ? `<i>${num(f.calories)} cal</i>` : ''}</b>
       <button class="iconbtn sm" type="button" data-act="del-food" data-id="${f.id}" aria-label="Remove ${esc(f.name || 'entry')}">${icon.close}</button>
     </li>`).join('')}</ul>` : '<p class="empty">Nothing eaten yet today.</p>');
+}
+
+/* ---------- The weekly review ---------- */
+
+// The Monday of the week a date is in.
+const mondayOf = d => weekOf(d)[0];
+
+// A compact, numbers-only picture of the last three weeks for the review.
+function weekSummary() {
+  const t = today(), V = E.project(S), from = addDays(t, -20), C = live();
+  const days = [];
+  for (let i = -20; i <= 0; i++) days.push(addDays(t, i));
+  const lifts = Object.values(V.order).flat().map(id => {
+    const l = V.lifts[id], s = E.status(l);
+    return { name: l.name, style: l.style || 'straight', weight: l.weight, plan: l.targets, range: [l.lo, l.hi], goal: l.goal || null, status: s.label,
+      recent: l.history.slice(-6).map(e => ({ d: e.d, w: e.w, reps: e.reps, plan: e.plan })) };
+  });
+  return {
+    today: t,
+    weekday: new Date(t + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }),
+    goals: { proteinG: S.profile.protein, sleepHours: S.profile.sleep, liftDaysPerWeek: S.profile.days, gainLbPerWeek: S.profile.goalRate ?? 0.5, calories: calGoal() || null },
+    calorieTarget: { target: C.target, maintenance: C.tdee, basis: C.basis, trendWeight: C.weight, lbPerWeek: C.rate, weighIns: C.weighIns, foodDays: C.foodDays },
+    lifts,
+    workouts: V.sessions.filter(s => s.date >= from).map(s => ({ d: s.date, day: s.day, lifts: s.notes.map(n => n.reps ? `${n.name} ${n.w} x ${n.reps.join('/')}${n.plan ? ` (plan ${n.plan.join('/')})` : ''}` : `${n.name} skipped`) })),
+    food: days.map(d => { const T = E.totalsOn(V, d); return T.calories || T.protein ? { d, protein: T.protein, calories: Math.round(T.calories) } : null; }).filter(Boolean),
+    sleep: days.filter(d => V.sleep[d] != null).map(d => ({ d, hours: V.sleep[d] })),
+    bodyweight: days.filter(d => (V.weights || {})[d]).map(d => ({ d, lb: V.weights[d] })),
+  };
+}
+
+let weekBusy = false, weekTried = 0;
+
+// On the first open of each week, ask for the review. It never blocks the app.
+async function maybeWeekly() {
+  const key = mondayOf(today());
+  if (weekBusy || !Sync.connected() || S.reviews?.[key] || Date.now() - weekTried < 3600000) return;
+  const sum = weekSummary();
+  if (!sum.workouts.length && !sum.food.length) return;          // nothing to review yet
+  weekBusy = true; weekTried = Date.now();
+  say("Building this week's plan.");
+  try {
+    const data = await Sync.week(sum);
+    commit(S => { (S.reviews ||= {})[key] = { at: Date.now(), data }; for (const k of Object.keys(S.reviews).sort().slice(0, -12)) delete S.reviews[k]; });
+    hideSay();
+    openPanel('week');
+  } catch (e) {
+    const why = e instanceof TypeError || e?.name === 'TimeoutError' ? 'offline' : e.message;
+    say(`${problem(why)} Your plan for the week will try again next time you open the app.`);
+  } finally { weekBusy = false; }
+}
+
+function drawWeek() {
+  const key = mondayOf(today()), r = S.reviews?.[key];
+  const label = new Date(key + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  text(el('w-title'), `Week of ${label}`);
+  if (!r) {
+    patch(el('w-body'), `<div class="wk"><p class="sub">${weekBusy ? 'Building this week\'s plan. It takes a little while.' : Sync.connected() ? 'The plan for this week has not been built yet. It builds the first time you open the app each week.' : 'The weekly plan needs the connection. Open Goals, then Sync and AI reader.'}</p>
+      ${Sync.connected() && !weekBusy ? '<button class="btn big" type="button" data-act="week-now">Build it now</button>' : ''}</div>`);
+    return;
+  }
+  const d = r.data, C = live();
+  patch(el('w-body'), `<div class="wk">
+    <h1>${esc(d.headline)}</h1>
+    <h2 class="cap">Focus this week</h2><p class="focus">${esc(d.focus)}</p>
+    ${d.lifts.length ? `<h2 class="cap">Lifts</h2>${d.lifts.map(l => `<div class="call"><b>${esc(l.name)}</b><span class="tag ${l.call === 'push' ? 'push' : ''}">${esc(l.call)}</span><p>${esc(l.why)}</p></div>`).join('')}` : ''}
+    <h2 class="cap">Nutrition</h2><p>${esc(d.nutrition)}</p>
+    ${C.target ? `<p class="muted">Calorie target now: ${num(C.target)}</p>` : ''}
+    <h2 class="cap">Recovery</h2><p>${esc(d.recovery)}</p>
+    ${d.watch ? `<h2 class="cap">Worth watching</h2><p>${esc(d.watch)}</p>` : ''}
+    <p class="muted" style="margin-top:22px">Written ${new Date(r.at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} from your last three weeks of logs.</p>
+  </div>`);
 }
 
 /* ---------- Days ---------- */
@@ -304,7 +384,7 @@ function drawDay() {
   patch(el('dd-body'), `
     <div class="ddsum">
       <div><b>${T.protein}</b><span class="cap">Protein g</span><i>${goal(P.protein)}</i></div>
-      <div><b>${num(Math.round(T.calories))}</b><span class="cap">Calories</span><i>${goal(P.calories)}</i></div>
+      <div><b>${num(Math.round(T.calories))}</b><span class="cap">Calories</span><i>${goal(calGoal())}</i></div>
       <div><b>${Math.round(T.carbs)}</b><span class="cap">Carbs g</span><i>${goal(P.carbs)}</i></div>
       <div><b>${Math.round(T.fat)}</b><span class="cap">Fat g</span><i>${goal(P.fat)}</i></div>
     </div>
@@ -579,13 +659,15 @@ function goalsSheet(first) {
     field('Protein per day, grams', stepper('protein', p.protein, 5, 20, 400, 'Protein goal in grams')) +
     field('Lifting days per week', stepper('days', p.days, 1, 1, 7, 'Lifting days per week')) +
     field('Sleep per night, hours', stepper('sleep', p.sleep, 0.25, 4, 12, 'Sleep goal in hours')) +
-    field('Calories per day', `<input name="calories" type="number" inputmode="numeric" min="0" max="9000" value="${p.calories || ''}" placeholder="Leave empty to skip">`) +
+    `<label class="check"><input type="checkbox" name="calAuto" ${p.calAuto === false ? '' : 'checked'}><span>Set my calories from my weigh-ins</span></label>` +
+    field('Pounds to gain per week', stepper('goalRate', p.goalRate ?? 0.5, 0.25, 0, 2, 'Pounds to gain per week')) +
+    field('Calories per day, only if the box above is off', `<input name="calories" type="number" inputmode="numeric" min="0" max="9000" value="${p.calories || ''}" placeholder="Skip">`) +
     `<div class="pair">${field('Carbs, grams', `<input name="carbs" type="number" inputmode="numeric" min="0" max="1500" value="${p.carbs || ''}" placeholder="Skip">`)}${field('Fat, grams', `<input name="fat" type="number" inputmode="numeric" min="0" max="600" value="${p.fat || ''}" placeholder="Skip">`)}</div>` +
     (first ? '' : `<button class="link quiet" type="button" data-act="sync">${Sync.connected() ? 'Sync is on' : 'Sync and AI reader'}</button>
       <div class="pair"><button class="link quiet" type="button" data-act="backup">Export a backup</button><button class="link quiet" type="button" data-act="restore">Restore a backup</button></div>`),
     first ? 'Start' : 'Save',
     f => commit(S => {
-      S.profile = { protein: +f.protein || 180, days: Math.min(7, Math.max(1, +f.days || 5)), sleep: +f.sleep || 8, calories: +f.calories || 0, carbs: +f.carbs || 0, fat: +f.fat || 0 };
+      S.profile = { protein: +f.protein || 180, days: Math.min(7, Math.max(1, +f.days || 5)), sleep: +f.sleep || 8, calories: +f.calories || 0, carbs: +f.carbs || 0, fat: +f.fat || 0, calAuto: !!f.calAuto, goalRate: f.goalRate === '' ? 0.5 : Math.max(0, Math.min(2, +f.goalRate)) };
       S.setup = true;
     }));
   // Closing the first-run sheet any other way keeps the defaults. Either
@@ -804,6 +886,7 @@ const acts = {
   'sleep-on': n => sleepSheet(n.dataset.date),
   'weigh-on': n => weighSheet(n.dataset.date),
   days: () => openPanel('days'),
+  'week-now': () => { weekTried = 0; maybeWeekly(); drawWeek(); },
   'open-day': n => { ui.date = n.dataset.date; openPanel('day'); },
   'day-step': n => { const next = addDays(ui.date, +n.dataset.dir); ui.date = next > today() ? today() : next; drawDay(); },
   'add-food-on': n => {
@@ -1129,6 +1212,9 @@ function act(r, t, day) {
     if (closed || S.draft?.done) { msg = 'Today is already logged.'; undo = false; }
     else if (!E.canAssume(S, day) && !E.draftActive(S.draft)) { msg = `${cap(day)} is still learning your numbers. Log the sets in lifting mode.`; undo = false; }
     else { commit(S => { E.ensureDraft(S, t).done = true; }); msg = `${cap(day)} logged as written.`; }
+  } else if (r.type === 'weight') {
+    commit(S => { (S.weights ||= {})[t] = r.lb; });
+    msg = `Bodyweight: ${r.lb} lb.`;
   } else if (r.type === 'remove_food') {
     const last = [...S.foodLog].reverse().find(x => x.date === t);
     if (!last) { msg = 'Nothing logged today to remove.'; undo = false; }
@@ -1260,6 +1346,7 @@ function wake() {
   // change, so it goes through commit and gets saved like any other.
   if (S.draft && S.draft.date !== today()) commit(S => E.rollOver(S, today()));
   else refresh();
+  maybeWeekly();
   if (ui.panel === 'go') keepAwake(!S.draft?.done);
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });

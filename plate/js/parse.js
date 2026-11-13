@@ -51,6 +51,10 @@ export function read(S, raw, dayIds) {
     if (hours > 0 && hours <= 16) return { type: 'sleep', hours: Math.round(hours * 60) / 60 };
   }
 
+  // Bodyweight: "weighed 195", "bodyweight 194.5", "i weigh 195"
+  m = text.match(/^(?:i\s+)?(?:weigh(?:ed)?|bodyweight|body weight|scale)(?:\s+(?:is|at|was))?\s*(\d{2,3}(?:\.\d)?)/);
+  if (m && +m[1] >= 80 && +m[1] <= 500) return { type: 'weight', lb: +m[1] };
+
   // A lift named: shortfall, skip, or a different weight.
   const hit = findLift(S, text);
   if (hit) {

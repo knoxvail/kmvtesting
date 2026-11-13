@@ -124,6 +124,14 @@ export async function see(image, note) {
   return r.json;
 }
 
+// The weekly review. It can take a while, so it waits up to two minutes.
+export async function week(summary) {
+  const r = await call('week', 'POST', { summary }, cfg.key, 120000);
+  if (r.status !== 200) throw new Error(code(r));
+  if (r.json?.error) throw new Error(r.json.error);
+  return r.json;
+}
+
 // Send a short recording and get back the words.
 export async function hear(audio, mime) {
   const r = await call('hear', 'POST', { audio, mime }, cfg.key, 30000);

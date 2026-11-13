@@ -334,6 +334,18 @@ body[data-panel="go"] .dock { display: none; }
 .ddsum i { color: var(--knurl); font-size: 12px; }
 #dd-top .pair { margin-right: -10px; }
 .iconbtn:disabled { opacity: .3; }
+.wk h1 { font-weight: 700; font-size: 26px; line-height: 1.1; margin: 6px 0 14px; text-wrap: balance; }
+.wk h2 { margin: 22px 0 6px; }
+.wk p { font-size: 16px; line-height: 1.45; color: var(--chalk); }
+.wk .focus { font-size: 20px; font-weight: 600; line-height: 1.3; }
+.wk .muted { color: var(--knurl); font-size: 13px; }
+.call { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: baseline; padding: 10px 0; }
+.call b { font-weight: 700; font-size: 17px; }
+.call .tag { font-weight: 700; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; padding: 3px 7px 2px; background: var(--mat); color: var(--chalk); }
+.call .tag.push { background: var(--chalk); color: var(--floor); }
+.call p { grid-column: 1 / -1; color: var(--knurl); font-size: 15px; }
+.coachline { grid-column: 1 / -1; color: var(--knurl); font-size: 13px; line-height: 1.35; }
+#d-week { align-self: flex-start; margin: 0 0 6px; }
 button.what:active { opacity: .6; }
 #g-note { color: var(--chalk); }
 .eaten.hist .what { font-weight: 700; font-size: 17px; }

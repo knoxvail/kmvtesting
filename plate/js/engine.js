@@ -32,7 +32,7 @@ export function seed() {
   return {
     v: 1,
     setup: false,
-    profile: { protein: 180, calories: 0, carbs: 0, fat: 0, sleep: 8, days: 5 },
+    profile: { protein: 180, calories: 0, carbs: 0, fat: 0, sleep: 8, days: 5, calAuto: true, goalRate: 0.5 },
     rotation: [...DAYS],
     pointer: 0,
     lifts: Object.fromEntries(L.map(l => [l.id, l])),
@@ -71,6 +71,55 @@ export function applyBaseline(S, date) {
   }
   S.baseline1 = true;
   return true;
+}
+
+// ---------- The live calorie target ----------
+// Your calorie target follows your body, not a formula. The trend of your
+// weigh-ins says how fast you are really gaining. What you really ate says
+// what that took. Together they give your true maintenance, and the target is
+// maintenance plus the surplus for the rate you want. It re-works itself as
+// each weigh-in and each day of food comes in.
+const KCAL_PER_LB = 3500;
+const dayNum = d => Math.round(Date.parse(d + 'T12:00:00') / 86400000);
+
+export function coach(S, date) {
+  const P = S.profile, goalRate = P.goalRate ?? 0.5;
+  const today = dayNum(date);
+  const ws = Object.entries(S.weights || {}).map(([d, w]) => [dayNum(d), +w]).filter(([n, w]) => n <= today && n > today - 28 && w > 0).sort((a, b) => a[0] - b[0]);
+  const out = { weighIns: ws.length, foodDays: 0, rate: null, weight: null, avgCal: null, tdee: null, target: null, basis: 'none', goalRate };
+  if (!ws.length) return out;
+
+  // Where your weight really is: an average that leans on recent days.
+  let ema = ws[0][1];
+  for (let i = 1; i < ws.length; i++) ema += (ws[i][1] - ema) * (1 - Math.pow(0.8, ws[i][0] - ws[i - 1][0]));
+  out.weight = Math.round(ema * 10) / 10;
+
+  // How fast it is moving, in pounds a week, from a straight line through the weigh-ins.
+  const span = ws[ws.length - 1][0] - ws[0][0];
+  if (ws.length >= 3 && span >= 7) {
+    const mx = ws.reduce((a, [n]) => a + n, 0) / ws.length, my = ws.reduce((a, [, w]) => a + w, 0) / ws.length;
+    const slope = ws.reduce((a, [n, w]) => a + (n - mx) * (w - my), 0) / ws.reduce((a, [n]) => a + (n - mx) ** 2, 0);
+    out.rate = Math.round(slope * 7 * 100) / 100;
+  }
+
+  // What you really ate: days with a believable amount logged, in the same window.
+  const byDay = {};
+  for (const f of S.foodLog) { const n = dayNum(f.date); if (n < today && n >= today - 21) byDay[n] = (byDay[n] || 0) + (f.calories || 0); }
+  const full = Object.values(byDay).filter(c => c >= 1500);
+  out.foodDays = full.length;
+  if (full.length) out.avgCal = Math.round(full.reduce((a, b) => a + b, 0) / full.length);
+
+  const surplus = (goalRate / 7) * KCAL_PER_LB;
+  if (out.rate != null && out.avgCal != null && full.length >= 5) {
+    out.tdee = Math.round(out.avgCal - (out.rate / 7) * KCAL_PER_LB);
+    out.basis = 'data';
+  } else {
+    out.tdee = Math.round(out.weight * 15.5);   // a starting guess for someone who lifts and is on their feet
+    out.basis = 'formula';
+  }
+  out.tdee = Math.min(5000, Math.max(1800, out.tdee));
+  out.target = Math.round((out.tdee + surplus) / 25) * 25;
+  return out;
 }
 
 export const round = (x, step) => Math.round(x / step) * step;
