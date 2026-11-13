@@ -1,4 +1,4 @@
-import { S, commit, save, today, weekOf, snapshot, restore, subscribe, uid, adopt } from './store.js';
+import { S, commit, save, today, weekOf, addDays, snapshot, restore, subscribe, uid, adopt } from './store.js';
 import * as E from './engine.js';
 import { read } from './parse.js';
 import { rig, icon } from './draw.js';
@@ -23,7 +23,7 @@ const mmss = ms => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-const ui = { panel: null, tab: null, go: null };
+const ui = { panel: null, tab: null, go: null, date: null };
 
 /* ---------- Changing only what changed ---------- */
 
@@ -139,8 +139,8 @@ function drawHome() {
 
 /* ---------- Panels ---------- */
 
-const panels = { lift: el('p-lift'), food: el('p-food'), go: el('p-go') };
-const draw = { lift: drawLift, food: drawFood, go: drawGo };
+const panels = { lift: el('p-lift'), food: el('p-food'), go: el('p-go'), days: el('p-days'), day: el('p-day') };
+const draw = { lift: drawLift, food: drawFood, go: drawGo, days: drawDays, day: drawDay };
 
 function openPanel(name) {
   if (name === 'go' && !S.draft && !E.sessionOn(S, today())) { E.ensureDraft(S, today()); save(); }
@@ -250,6 +250,81 @@ function drawFood() {
       <b>${f.protein} g${f.calories ? `<i>${num(f.calories)} cal</i>` : ''}</b>
       <button class="iconbtn sm" type="button" data-act="del-food" data-id="${f.id}" aria-label="Remove ${esc(f.name || 'entry')}">${icon.close}</button>
     </li>`).join('')}</ul>` : '<p class="empty">Nothing eaten yet today.</p>');
+}
+
+/* ---------- Days ---------- */
+
+const dayLabel = d => {
+  const t = today();
+  if (d === t) return 'Today';
+  if (d === addDays(t, -1)) return 'Yesterday';
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
+function allDays(V) {
+  const set = new Set([...V.foodLog.map(f => f.date), ...Object.keys(V.sleep), ...Object.keys(V.weights || {}), ...V.sessions.map(x => x.date)]);
+  return [...set].sort().reverse().slice(0, 120);
+}
+
+function drawDays() {
+  const t = today(), V = E.project(S), P = S.profile;
+  const days = allDays(V);
+  const wk = days.filter(d => d >= addDays(t, -6) && d <= t);
+  const avg = (vals) => (vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null);
+  const pr = avg(wk.map(d => E.proteinOn(V, d)).filter(v => v > 0));
+  const cal = avg(wk.map(d => E.caloriesOn(V, d)).filter(v => v > 0));
+  const sl = wk.map(d => V.sleep[d]).filter(v => v != null);
+  const slAvg = sl.length ? fmtH(Math.round((sl.reduce((a, b) => a + b, 0) / sl.length) * 4) / 4) : '–';
+  const lifts = V.sessions.filter(s => s.date >= addDays(t, -6)).length;
+  patch(el('d-sum'), [[lifts, 'Workouts'], [pr ?? '–', 'Protein'], [cal != null ? num(cal) : '–', 'Calories'], [slAvg, 'Sleep']]
+    .map(([n, w]) => `<div class="${n === '–' ? 'none' : ''}"><b>${n}</b><span class="cap">${w}</span></div>`).join(''));
+  text(el('d-cap'), 'Last 7 days, average per logged day');
+  patch(el('d-rows'), days.length ? days.map(d => {
+    const T = E.totalsOn(V, d), s = V.sessions.find(x => x.date === d), sl2 = V.sleep[d];
+    const met = P.protein && T.protein >= P.protein;
+    const work = s ? `${cap(s.day)}, ${plural(s.notes.length, 'lift')}` : 'No workout';
+    const food = T.protein || T.calories ? `${T.protein} g protein${T.calories ? ' · ' + num(Math.round(T.calories)) + ' cal' : ''}` : 'Nothing eaten';
+    return `<button class="dayrow" type="button" data-act="open-day" data-date="${d}">
+        <span class="dn">${dayLabel(d)}</span><span class="dm">${met ? 'Protein met' : ''}</span>
+        <span class="ds">${esc(work)} · ${sl2 != null ? fmtH(sl2) + ' sleep' : 'no sleep logged'}</span><span class="ds r">${food}</span>
+      </button>`;
+  }).join('') : '<p class="empty">Nothing logged yet. Days show up here as you log.</p>');
+}
+
+function drawDay() {
+  const d = ui.date || today(), V = E.project(S), T = E.totalsOn(V, d), P = S.profile;
+  patch(el('dd-top'), `<button class="iconbtn" type="button" data-act="days" aria-label="Back to all days">${icon.down}</button>
+    <p class="cap">${dayLabel(d)}</p>
+    <span class="pair"><button class="iconbtn" type="button" data-act="day-step" data-dir="-1" aria-label="Earlier day">${icon.prev}</button>
+    <button class="iconbtn" type="button" data-act="day-step" data-dir="1" aria-label="Later day" ${d >= today() ? 'disabled' : ''}>${icon.next}</button></span>`);
+  const goal = g => (g ? `of ${num(g)}` : '');
+  const list = V.foodLog.filter(f => f.date === d);
+  const sess = V.sessions.find(s => s.date === d);
+  const sleepV = V.sleep[d], bw = (V.weights || {})[d];
+  patch(el('dd-body'), `
+    <div class="ddsum">
+      <div><b>${T.protein}</b><span class="cap">Protein g</span><i>${goal(P.protein)}</i></div>
+      <div><b>${num(Math.round(T.calories))}</b><span class="cap">Calories</span><i>${goal(P.calories)}</i></div>
+      <div><b>${Math.round(T.carbs)}</b><span class="cap">Carbs g</span><i>${goal(P.carbs)}</i></div>
+      <div><b>${Math.round(T.fat)}</b><span class="cap">Fat g</span><i>${goal(P.fat)}</i></div>
+    </div>
+    <h2 class="cap">Food</h2>
+    ${list.length ? `<ul class="eaten">${list.map(f => `<li>
+        <span class="when">${esc(f.time || '')}</span>
+        <button class="what" type="button" data-act="edit-food" data-id="${f.id}">${esc(f.name || 'Protein')}</button>
+        <b>${f.protein} g${f.calories ? `<i>${num(f.calories)} cal</i>` : ''}</b>
+        <button class="iconbtn sm" type="button" data-act="del-food" data-id="${f.id}" aria-label="Remove ${esc(f.name || 'entry')}">${icon.close}</button>
+      </li>`).join('')}</ul>` : '<p class="empty">Nothing eaten that day.</p>'}
+    <button class="link quiet" type="button" data-act="add-food-on" data-date="${d}">Add food to this day</button>
+    <h2 class="cap">Sleep and body</h2>
+    <button class="lift" type="button" data-act="sleep-on" data-date="${d}"><span class="ln">Sleep</span><span class="lw">${sleepV != null ? fmtH(sleepV) : '<i>add</i>'}</span></button>
+    <button class="lift" type="button" data-act="weigh-on" data-date="${d}"><span class="ln">Bodyweight</span><span class="lw">${bw ? bw + ' lb' : '<i>add</i>'}</span></button>
+    <h2 class="cap">Workout</h2>
+    ${sess ? sess.notes.map(n => `<button class="lift" type="button" data-act="edit-session" data-date="${d}" data-id="${n.id}">
+        <span class="ln">${esc(n.name)}</span>
+        <span class="lw">${n.reps ? `${E.fmtW(n.w)}<i> × </i>${n.reps.join(' · ')}` : '<i>skipped</i>'}</span>
+      </button>`).join('') + `<button class="link quiet" type="button" data-act="del-session" data-date="${d}">Remove this workout</button>`
+      : (S.draft && S.draft.date === d ? '<p class="empty">Today\'s workout is still open. Finish it in lifting mode.</p>' : '<p class="empty">No workout logged that day.</p>')}`);
 }
 
 /* ---------- Lifting mode ---------- */
@@ -572,9 +647,9 @@ async function connectWith(key, prefer) {
   say(r.ok ? (r.took === 'saved' ? 'Connected. Your saved copy is on this phone now.' : r.took === 'ai' ? 'Connected. The AI can read your messages now.' : 'Connected. This phone is saved.') : problem(r.error));
 }
 
-function sleepSheet() {
-  openSheet('Last night', field('Hours slept', stepper('hours', S.sleep[today()] ?? S.profile.sleep, 0.25, 0, 16, 'Hours slept')), 'Save',
-    f => { const snap = snapshot(); commit(S => { S.sleep[today()] = +f.hours; }); say(`Sleep: ${fmtH(+f.hours)}.`, snap); });
+function sleepSheet(date = today()) {
+  openSheet(date === today() ? 'Last night' : `Sleep, ${dayLabel(date)}`, field('Hours slept', stepper('hours', S.sleep[date] ?? S.profile.sleep, 0.25, 0, 16, 'Hours slept')), 'Save',
+    f => { const snap = snapshot(); commit(S => { S.sleep[date] = +f.hours; }); say(`Sleep: ${fmtH(+f.hours)}.`, snap); });
 }
 
 // The fields for one food: a name and its four numbers.
@@ -591,11 +666,38 @@ function foodSheet() {
   openSheet('Add food', foodFields(), 'Log it', f => addFood(foodFrom(f, 'form')));
 }
 
-function weighSheet() {
+// Change what was recorded for one lift on a past day. The plan for next time
+// is left as it was, because it was already worked out from the original numbers.
+function sessionSheet(date, id) {
+  const sess = S.sessions.find(s => s.date === date), note = sess?.notes.find(n => n.id === id);
+  if (!note || !note.reps) { say('There is nothing to edit for that one.'); return; }
+  const l = S.lifts[id];
+  openSheet(esc(note.name),
+    `<p class="sub">This changes the record. Next time's plan stays as it was.</p>` +
+    field('Weight, pounds', stepper('w', note.w, l?.jump || 5, 0, 1000, 'Weight in pounds')) +
+    note.reps.map((r, i) => field(`Set ${i + 1} reps`, stepper('r' + i, r, 1, 0, 100, `Set ${i + 1} reps`))).join('') +
+    `<button class="link quiet" name="do" value="del">Remove this lift from the workout</button>`,
+    'Save',
+    (f, act) => commit(S => {
+      const sess = S.sessions.find(s => s.date === date), note = sess?.notes.find(n => n.id === id);
+      if (!note) return;
+      const l = S.lifts[id], hi = l ? l.history.findIndex(e => e.d === date) : -1;
+      if (act === 'del') {
+        sess.notes = sess.notes.filter(n => n !== note);
+        if (hi >= 0) { l.history.splice(hi, 1); l.sessions = Math.max(0, l.sessions - 1); }
+        return;
+      }
+      note.w = +f.w;
+      note.reps = note.reps.map((_, i) => Math.max(0, Math.round(+f['r' + i] || 0)));
+      if (hi >= 0) { l.history[hi].w = note.w; l.history[hi].reps = [...note.reps]; }
+    }));
+}
+
+function weighSheet(date = today()) {
   const days = Object.keys(S.weights || {}).sort();
-  const last = days.length ? S.weights[days[days.length - 1]] : 180;
-  openSheet('Bodyweight', field('Pounds, today', stepper('w', last, 0.5, 60, 500, 'Bodyweight in pounds')), 'Save',
-    f => { const snap = snapshot(); commit(S => { (S.weights ||= {})[today()] = +f.w; }); say(`Bodyweight: ${+f.w} lb.`, snap); });
+  const last = (S.weights || {})[date] ?? (days.length ? S.weights[days[days.length - 1]] : 180);
+  openSheet(date === today() ? 'Bodyweight' : `Bodyweight, ${dayLabel(date)}`, field('Pounds', stepper('w', last, 0.5, 60, 500, 'Bodyweight in pounds')), 'Save',
+    f => { const snap = snapshot(); commit(S => { (S.weights ||= {})[date] = +f.w; }); say(`Bodyweight: ${+f.w} lb.`, snap); });
 }
 
 // Editing the program closes out a finished session first, so the edit
@@ -698,7 +800,32 @@ const acts = {
   go: () => openPanel('go'),
   goals: () => goalsSheet(false),
   sync: syncSheet,
-  sleep: sleepSheet,
+  sleep: () => sleepSheet(),
+  'sleep-on': n => sleepSheet(n.dataset.date),
+  'weigh-on': n => weighSheet(n.dataset.date),
+  days: () => openPanel('days'),
+  'open-day': n => { ui.date = n.dataset.date; openPanel('day'); },
+  'day-step': n => { const next = addDays(ui.date, +n.dataset.dir); ui.date = next > today() ? today() : next; drawDay(); },
+  'add-food-on': n => {
+    const date = n.dataset.date;
+    openSheet('Add food', foodFields(), 'Log it', f => { const snap = snapshot(); const x = foodFrom(f, 'form'); commit(S => E.logFood(S, { ...x, ...now(), date, time: date === today() ? now().time : '', id: uid() })); say(`${x.name || 'Protein'}, ${x.protein} g.`, snap); });
+  },
+  'edit-session': n => sessionSheet(n.dataset.date, n.dataset.id),
+  'del-session': n => {
+    const date = n.dataset.date;
+    openSheet('Remove this workout', '<p class="sub">Removes this day\'s workout and its entries in each lift\'s history. Food and sleep stay. Next time\'s plans stay as they are.</p>', 'Remove the workout',
+      () => commit(S => {
+        const sess = S.sessions.find(s => s.date === date);
+        if (!sess) return;
+        for (const note of sess.notes) {
+          const l = S.lifts[note.id], i = l ? l.history.findIndex(e => e.d === date) : -1;
+          if (i >= 0) { l.history.splice(i, 1); l.sessions = Math.max(0, l.sessions - 1); }
+        }
+        const last = S.sessions[S.sessions.length - 1] === sess;
+        S.sessions = S.sessions.filter(s => s !== sess);
+        if (last) S.pointer = (S.pointer - 1 + S.rotation.length) % S.rotation.length;
+      }));
+  },
   'add-food': foodSheet,
   weigh: weighSheet,
   'edit-food': n => {
@@ -1032,7 +1159,7 @@ function act(r, t, day) {
 
 // What the AI reader sends back, put into the shape the phone's own reader uses.
 function fromReader(a) {
-  if (a.type === 'food') return { type: 'food', name: a.name, protein: a.protein, calories: a.calories, carbs: a.carbs, fat: a.fat, n: 1, source: a.estimated ? 'estimate' : 'typed' };
+  if (a.type === 'food') return { type: 'food', name: a.name, protein: a.protein, calories: a.calories, carbs: a.carbs, fat: a.fat, detail: a.detail || '', n: 1, source: a.estimated ? 'estimate' : 'typed' };
   if (a.type === 'sleep') return { type: 'sleep', hours: a.hours };
   if (a.type === 'session_done') return { type: 'done' };
   if (a.type === 'remove_last_food') return { type: 'remove_food' };
@@ -1056,6 +1183,18 @@ function readerContext(day) {
 
 const remember = (words, type, did = '') => commit(S => { S.messages.push({ at: Date.now(), text: words, type, did: String(did).slice(0, 160) }); if (S.messages.length > 300) S.messages.shift(); });
 
+// Show estimated foods one at a time with the numbers editable. Saving one as a
+// usual means the next time it is exact, not guessed.
+function reviewFoods(list) {
+  const f = list.shift();
+  if (!f) return;
+  openSheet(`Check the estimate${list.length ? ` (${list.length} more after)` : ''}`,
+    `<p class="sub">This is a guess, so check it before it counts.${f.detail ? ' ' + esc(f.detail) : ''} Change any number you know is different. Keeping it as a usual makes it exact next time.</p>` +
+    foodFields({ name: f.name, protein: f.protein, calories: f.calories, carbs: f.carbs, fat: f.fat }),
+    'Log it',
+    form => { addFood(foodFrom(form, 'estimate')); setTimeout(() => reviewFoods(list), 80); });
+}
+
 async function handleText(raw) {
   const t = today();
   const day = S.draft?.day ?? S.rotation[S.pointer];
@@ -1075,8 +1214,12 @@ async function handleText(raw) {
   try {
     const out = await Sync.ask(raw, readerContext(day));
     const snap = snapshot();
-    const done = (out.actions || []).map(fromReader).filter(Boolean).map(a => act(a, t, day));
+    const read_ = (out.actions || []).map(fromReader).filter(Boolean);
+    // A food the AI had to estimate is shown for checking, not logged straight away.
+    const est = read_.filter(a => a.type === 'food' && a.source === 'estimate');
+    const done = read_.filter(a => !est.includes(a)).map(a => act(a, t, day));
     remember(raw, 'ai', done.map(d => d[0]).join(' ') || out.note || '');
+    if (est.length) { say(done.length ? done.map(d => d[0]).join(' ') + ' Check the estimate next.' : 'Check the estimate before it is logged.'); setTimeout(() => reviewFoods(est), 60); return; }
     if (!done.length) { say(out.note || 'Nothing in that to log.'); return; }
     say(done.map(d => d[0]).join(' ') + (out.note ? ' ' + out.note : ''), done.some(d => d[1]) ? snap : null);
   } catch (e) {

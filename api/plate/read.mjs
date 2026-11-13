@@ -9,7 +9,9 @@ import { z } from 'zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { allow, aiKey } from './_shared.mjs';
 
-const MODEL = 'claude-haiku-5-5';
+// Food amounts and nutrition need real knowledge, so this uses a stronger model than the
+// photo and speech steps. It still costs a fraction of a cent a message.
+const MODEL = 'claude-sonnet-5-5';
 
 // Every field is always present, with null where it does not apply.
 const Action = z.object({
@@ -20,6 +22,7 @@ const Action = z.object({
   carbs: z.number().nullable(),         // food: grams of carbohydrate for the amount eaten
   fat: z.number().nullable(),           // food: grams of fat for the amount eaten
   estimated: z.boolean().nullable(),    // food: true when the numbers are your estimate
+  detail: z.string().nullable(),        // food: the pieces added up, like "2 eggs 12 g + toast 4 g"
   lift_id: z.string().nullable(),       // lift, skip_lift: an id from today's lifts
   weight: z.number().nullable(),        // lift: only if he used a different weight than planned
   reps: z.array(z.object({ set: z.number(), reps: z.number() })).nullable(), // lift: only the sets he mentions, set is 1-based
@@ -40,7 +43,9 @@ The context holds today's lifts (id, name, number of sets, the reps planned for 
 
 Entries you can return:
 
-food: one entry per food. Always give all four numbers: protein, calories, carbs and fat. If it matches one of his usuals, use that usual's name and its numbers multiplied by how many he had, and set estimated to false. If he states the protein himself, use his number and set estimated to false. Otherwise estimate protein, carbs and fat in grams and calories for the amount he describes from typical values for that food, round to whole numbers, and set estimated to true. Keep the name short, in his words, with a capital first letter.
+food: one entry per food. Always give all four numbers: protein, calories, carbs and fat. If it matches one of his usuals, use that usual's name and its numbers multiplied by how many he had, and set estimated to false. If he states the protein himself, use his number and set estimated to false. Otherwise estimate protein, carbs and fat in grams and calories for the amount he describes, round to whole numbers, and set estimated to true. Build the estimate piece by piece: decide the amount of each part in grams, apply the reference values below, and add them up. Put the pieces in detail, for example "2 eggs 12 g + toast 4 g". Never round protein up. When the amount is unclear, assume the smaller portion. For restaurant or packaged items you cannot see, say in detail that the numbers are a guess.
+
+Reference protein values: cooked chicken breast 31 g per 100 g; cooked lean ground beef 26 g per 100 g; cooked steak 27 g per 100 g; cooked salmon 22 g per 100 g; cooked white fish 22 g per 100 g; egg 6 g each; egg white 3.6 g each; Greek yogurt 10 g per 100 g; cottage cheese 11 g per 100 g; whey protein scoop 24 g; milk 3.4 g per 100 ml; cooked rice 2.7 g per 100 g; cooked pasta 5 g per 100 g; bread slice 3 to 4 g; flour tortilla 3 to 4 g; cheddar 25 g per 100 g; peanut butter 4 g per tablespoon; almonds 21 g per 100 g; black beans cooked 9 g per 100 g; tofu firm 8 g per 100 g; protein bar 15 to 20 g. Meat and fish values are for cooked weight unless he says raw. Keep the name short, in his words, with a capital first letter.
 
 lift: only for a lift in today's list, using its id. Put in reps only the sets he mentions, with what he got. "Last set" means the highest set number. If he gives one number per set, map them in order. Set weight only when he says he used a different weight than planned.
 
@@ -64,7 +69,7 @@ function clean(out, context) {
     if (a.type === 'food') {
       const protein = num(a.protein, 0, 400);
       if (protein == null) continue;
-      actions.push({ type: 'food', name: String(a.name || '').slice(0, 40), protein: Math.round(protein), calories: Math.round(num(a.calories, 0, 6000) ?? 0), carbs: Math.round(num(a.carbs, 0, 1000) ?? 0), fat: Math.round(num(a.fat, 0, 500) ?? 0), estimated: a.estimated !== false });
+      actions.push({ type: 'food', name: String(a.name || '').slice(0, 40), protein: Math.round(protein), calories: Math.round(num(a.calories, 0, 6000) ?? 0), detail: String(a.detail || '').slice(0, 160), carbs: Math.round(num(a.carbs, 0, 1000) ?? 0), fat: Math.round(num(a.fat, 0, 500) ?? 0), estimated: a.estimated !== false });
     } else if (a.type === 'lift' || a.type === 'skip_lift') {
       const l = lifts.get(String(a.lift_id));
       if (!l) continue;

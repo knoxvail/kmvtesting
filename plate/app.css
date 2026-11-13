@@ -320,6 +320,20 @@ body[data-panel="go"] .dock { display: none; }
 .eaten b i { display: block; font-weight: 400; font-size: 12px; color: var(--knurl); }
 .eaten.hist li { grid-template-columns: 74px 56px 1fr 32px; min-height: 38px; }
 .eaten .what { text-align: left; }
+.dayrow { display: grid; grid-template-columns: 1fr auto; gap: 3px 14px; align-items: baseline; width: 100%; padding: 12px 0; }
+.dayrow:active { opacity: .6; }
+.dayrow .dn { font-weight: 600; font-size: 17px; }
+.dayrow .dm { font-weight: 700; font-size: 17px; text-align: right; }
+.dayrow .ds { color: var(--knurl); font-size: 13px; }
+.dayrow .ds.r { text-align: right; }
+#d-cap { margin: 0 0 6px; flex: none; }
+#dd-body h2 { margin: 18px 0 4px; }
+.ddsum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 4px 0 6px; }
+.ddsum div { display: grid; gap: 4px; }
+.ddsum b { font-weight: 700; font-size: 22px; line-height: 1; }
+.ddsum i { color: var(--knurl); font-size: 12px; }
+#dd-top .pair { margin-right: -10px; }
+.iconbtn:disabled { opacity: .3; }
 button.what:active { opacity: .6; }
 #g-note { color: var(--chalk); }
 .eaten.hist .what { font-weight: 700; font-size: 17px; }

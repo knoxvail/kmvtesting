@@ -27,7 +27,7 @@
     <main id="home" class="screen">
       <header class="top">
         <p class="cap" id="h-date"></p>
-        <button class="link quiet" type="button" data-act="goals">Goals</button>
+        <span class="pair"><button class="link quiet" type="button" data-act="open" data-panel="days">Days</button><button class="link quiet" type="button" data-act="goals">Goals</button></span>
       </header>
 
       <section class="hero" id="h-hero"></section>
@@ -92,6 +92,24 @@
         <h2 class="cap">Today</h2>
         <div class="rows" id="f-list"></div>
       </section>
+    </section>
+
+    <!-- Days: every day you have logged, newest first. -->
+    <section class="panel" id="p-days" aria-label="Days">
+      <header class="top">
+        <button class="iconbtn" type="button" data-act="close" aria-label="Close"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></button>
+        <p class="cap">Days</p>
+        <span></span>
+      </header>
+      <div class="tally" id="d-sum"></div>
+      <p class="cap" id="d-cap"></p>
+      <div class="rows" id="d-rows"></div>
+    </section>
+
+    <!-- One day: what you ate, how you slept, and the workout. All of it can be changed. -->
+    <section class="panel" id="p-day" aria-label="Day">
+      <header class="top" id="dd-top"></header>
+      <div class="rows" id="dd-body"></div>
     </section>
 
     <!-- Lifting mode. It takes the whole screen. -->
