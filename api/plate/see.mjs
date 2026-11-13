@@ -16,7 +16,8 @@ import { allow, aiKey } from './_shared.mjs';
 
 export const config = { maxDuration: 60 };
 
-const MODEL = 'claude-haiku-5-5';
+// Judging portions from a photo and reading nutrition pages both need a strong model.
+const MODEL = 'claude-sonnet-5-5';
 
 const Look = z.object({
   kind: z.enum(['label', 'ordered', 'plain']),
@@ -99,14 +100,21 @@ export default async function handler(req, res) {
     const ask = `${look.place ? `Restaurant or brand: ${look.place}\n` : 'No restaurant or brand is known.\n'}Items eaten:\n${list}`;
     let findings = '';
     try {
-      const found = await client.messages.create({
-        model: MODEL,
-        max_tokens: 4096,
-        output_config: { effort: 'low' },
-        system: FIND,
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }],
-        messages: [{ role: 'user', content: ask }],
-      });
+      const messages = [{ role: 'user', content: ask }];
+      let found;
+      // A search can pause the turn partway. Pick it up again, a few times at most.
+      for (let turn = 0; turn < 4; turn++) {
+        found = await client.messages.create({
+          model: MODEL,
+          max_tokens: 4096,
+          output_config: { effort: 'low' },
+          system: FIND,
+          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }],
+          messages,
+        });
+        if (found.stop_reason !== 'pause_turn') break;
+        messages.push({ role: 'assistant', content: found.content });
+      }
       findings = textOf(found);
     } catch (e) {
       if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.RateLimitError) throw e;
