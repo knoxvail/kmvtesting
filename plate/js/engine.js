@@ -12,6 +12,7 @@ const lift = (id, name, kind, sets, lo, hi, jump, rest) => ({
   sessions: 0,
   missStreak: 0,
   history: [],       // { d, w, reps, plan, planW, warm }
+  opt: false,        // an extra: only counts when you say you did it, never assumed
   style: 'straight', // 'top' = a warm-up ramp that is assumed, then the working set(s) you log
   warm: null,        // { w, reps }: the last warm-up set before the working set, counted but assumed
   goal: null,        // { w, reps }: where you are heading
@@ -122,6 +123,82 @@ export function coach(S, date) {
   return out;
 }
 
+// ---------- Knox's real program (from memory, 2026-11-16) ----------
+// Core lifts are assumed done as planned. Extras (opt) only count when he says so.
+// Reps marked guess were not given and are placeholders to be corrected.
+const DEFS = [
+  // push
+  { id: 'bench', day: 'push', name: 'Bench press', kind: 'barbell', style: 'top', sets: 1, lo: 4, hi: 8, jump: 5, rest: 180, weight: 245, reps: 7, drop: true, today: [7] },
+  { id: 'ohp', day: 'push', name: 'Overhead press', kind: 'barbell', style: 'top', sets: 1, lo: 3, hi: 6, jump: 5, rest: 150, weight: 135, reps: 3, goal: { w: 135, reps: 6 }, today: [3] },
+  { id: 'pushdown', day: 'push', name: 'Tricep pushdown', kind: 'stack', sets: 3, lo: 8, hi: 12, jump: 5, rest: 75, weight: 120, reps: 8, today: [8, 8, 8] },
+  { id: 'fly', day: 'push', name: 'Chest fly', kind: 'dumbbell', sets: 3, lo: 8, hi: 12, jump: 5, rest: 75, weight: 30, reps: 8, today: [8, 8, 8] },
+  { id: 'dips', day: 'push', opt: true, name: 'Dips', kind: 'other', sets: 3, lo: 6, hi: 12, jump: 5, rest: 90, weight: null, reps: null },
+  { id: 'otext', day: 'push', opt: true, name: 'Overhead tricep extension', kind: 'stack', sets: 3, lo: 8, hi: 12, jump: 5, rest: 75, weight: 90, reps: 10 },
+  { id: 'latraise', day: 'push', opt: true, name: 'Lateral raise', kind: 'dumbbell', sets: 3, lo: 8, hi: 12, jump: 5, rest: 60, weight: 25, reps: 10 },
+  { id: 'dbbench', day: 'push', opt: true, name: 'Dumbbell bench', kind: 'dumbbell', sets: 3, lo: 6, hi: 10, jump: 5, rest: 120, weight: 80, reps: 8 },
+  { id: 'smithbench', day: 'push', opt: true, name: 'Smith machine bench', kind: 'other', sets: 3, lo: 5, hi: 8, jump: 5, rest: 150, weight: 225, reps: 6 },
+  { id: 'jampress', day: 'push', opt: true, name: 'Jam press (smith)', kind: 'other', sets: 3, lo: 8, hi: 12, jump: 5, rest: 90, weight: 155, reps: 10 },
+  { id: 'incsmith', day: 'push', opt: true, name: 'Incline smith bench', kind: 'other', sets: 3, lo: 6, hi: 10, jump: 5, rest: 120, weight: 185, reps: 8 },
+  { id: 'pecdeck', day: 'push', opt: true, name: 'Pec deck', kind: 'stack', sets: 3, lo: 8, hi: 12, jump: 5, rest: 75, weight: 200, reps: 10 },
+  // pull
+  { id: 'row', day: 'pull', name: 'Barbell row', kind: 'barbell', sets: 3, lo: 8, hi: 12, jump: 5, rest: 120, weight: 135, reps: 8, guess: true },
+  { id: 'scurl', day: 'pull', name: 'Standing curl', kind: 'dumbbell', sets: 3, lo: 8, hi: 12, jump: 5, rest: 75, weight: 50, reps: 8, guess: true },
+  { id: 'ccurl', day: 'pull', opt: true, name: 'Cable curl', kind: 'stack', sets: 3, lo: 8, hi: 12, jump: 5, rest: 75, weight: 120, reps: 10 },
+  { id: 'sarow', day: 'pull', opt: true, name: 'Single-arm row', kind: 'dumbbell', sets: 3, lo: 8, hi: 12, jump: 5, rest: 90, weight: 70, reps: 10 },
+  { id: 'wpull', day: 'pull', opt: true, name: 'Weighted pull-up', kind: 'other', sets: 3, lo: 4, hi: 8, jump: 5, rest: 150, weight: null, reps: null },
+  { id: 'reardelt', day: 'pull', opt: true, name: 'Rear delt fly', kind: 'dumbbell', sets: 3, lo: 10, hi: 15, jump: 5, rest: 60, weight: null, reps: null },
+  { id: 'curl', day: 'pull', opt: true, name: 'Seated incline curl', kind: 'dumbbell', sets: 3, lo: 8, hi: 12, jump: 5, rest: 75 },
+  // legs
+  { id: 'squat', day: 'legs', name: 'Squat', kind: 'barbell', style: 'top', sets: 1, lo: 3, hi: 8, jump: 5, rest: 180, weight: 225, reps: 5, guess: true },
+  { id: 'legext', day: 'legs', name: 'Leg extension', kind: 'stack', sets: 3, lo: 8, hi: 12, jump: 5, rest: 75, weight: 200, reps: 10, guess: true },
+  { id: 'legcurl', day: 'legs', name: 'Leg curl', kind: 'stack', sets: 3, lo: 8, hi: 12, jump: 5, rest: 75, weight: 130, reps: 10, guess: true },
+  { id: 'rdl', day: 'legs', opt: true, name: 'Romanian deadlift', kind: 'barbell', sets: 3, lo: 6, hi: 10, jump: 10, rest: 150, weight: 185, reps: 8 },
+  { id: 'dbrdl', day: 'legs', opt: true, name: 'Dumbbell RDL', kind: 'dumbbell', sets: 3, lo: 8, hi: 12, jump: 5, rest: 120, weight: 60, reps: 10 },
+  { id: 'deadlift', day: 'legs', opt: true, name: 'Deadlift', kind: 'barbell', sets: 1, lo: 3, hi: 6, jump: 10, rest: 180, weight: 225, reps: 5, style: 'top' },
+];
+
+export function applyBaseline2(S) {
+  if (S.baseline2) return false;
+  const D = '2026-11-16';
+  const keep = Object.fromEntries(DAYS.map(d => [d, S.order[d] ? [...S.order[d]] : []]));
+  const by = Object.fromEntries(DAYS.map(d => [d, { core: [], extra: [] }]));
+  for (const def of DEFS) {
+    const { day, weight, reps, today, guess, ...cfg } = def;
+    let l = S.lifts[def.id];
+    if (!l) l = S.lifts[def.id] = lift(def.id, def.name, def.kind, def.sets, def.lo, def.hi, def.jump, def.rest);
+    Object.assign(l, { opt: false, style: 'straight', drop: false, goal: null }, cfg);
+    if (weight !== undefined) {
+      l.weight = weight;
+      l.targets = weight != null && reps != null ? Array.from({ length: l.sets }, () => reps) : null;
+      if (l.targets && l.sessions < 2) l.sessions = 2;
+      l.missStreak = 0;
+    } else if (l.targets) {
+      l.targets = l.targets.slice(0, l.sets); while (l.targets.length < l.sets) l.targets.push(l.targets[l.targets.length - 1] ?? l.lo);
+    }
+    (l.opt ? by[day].extra : by[day].core).push(def.id);
+  }
+  // Anything he already had that is not in the list stays, as an extra.
+  for (const d of DAYS) {
+    const known = new Set([...by[d].core, ...by[d].extra]);
+    const left = keep[d].filter(id => S.lifts[id] && !known.has(id) && !Object.values(by).some(b => b.core.includes(id) || b.extra.includes(id)));
+    for (const id of left) S.lifts[id].opt = true;
+    S.order[d] = [...by[d].core, ...by[d].extra, ...left];
+  }
+  S.week = ['push', 'pull', 'legs', 'push', 'pull', null, null];
+  S.profile.days = 5;
+
+  // Monday's push, as he reported it, goes in as a finished session that is still open
+  // for the rest of the day, so anything he adds in his debrief (an extra, a correction)
+  // still lands. It closes itself at midnight like any other day.
+  if (!S.sessions.some(s => s.date === D) && !S.draft) {
+    const log = {};
+    for (const def of DEFS) if (def.today) log[def.id] = { reps: [...def.today] };
+    S.draft = { date: D, day: 'push', log, rest: null, done: true };
+  }
+  S.baseline2 = true;
+  return true;
+}
+
 export const round = (x, step) => Math.round(x / step) * step;
 export const fmtW = w => (w == null ? '' : String(+(+w).toFixed(1)));
 export const fmtReps = r => (r.every(x => x === r[0]) ? String(r[0]) : r.join(' · '));
@@ -138,11 +215,26 @@ export function platesFor(w) {
 export const learning = l => !l.targets;
 
 export function ensureDraft(S, date) {
-  if (!S.draft) S.draft = { date, day: S.rotation[S.pointer % S.rotation.length], log: {}, rest: null };
+  if (!S.draft) S.draft = { date, day: dayFor(S, date), log: {}, rest: null };
   return S.draft;
 }
 export const entry = (d, id) => (d.log[id] ||= { reps: [] });
 export const draftActive = d => !!d && Object.values(d.log).some(g => g.skip || g.w != null || g.reps.some(x => x != null));
+
+// Which session a date belongs to. Follows the weekly schedule when there is
+// one (Monday push, Tuesday pull ...), and on a rest day shows the next session.
+export function dayFor(S, date) {
+  if (!S.week) return S.rotation[S.pointer % S.rotation.length];
+  const idx = (new Date(date + 'T12:00:00').getDay() + 6) % 7;
+  for (let i = 0; i < 7; i++) { const d = S.week[(idx + i) % 7]; if (d) return d; }
+  return S.rotation[0];
+}
+export const isRest = (S, date) => !!S.week && !S.week[(new Date(date + 'T12:00:00').getDay() + 6) % 7];
+
+// A lift is part of today's session if it is not skipped, and, when it is an
+// extra, only once you have said you are doing it.
+export const isLive = (l, g) => !g?.skip && (!l.opt || !!g);
+export const liveIds = (S, d) => S.order[d.day].filter(id => isLive(S.lifts[id], d.log[id]));
 
 // Where lifting mode should be: the first set nobody has logged yet.
 export function cursor(S) {
@@ -150,7 +242,7 @@ export function cursor(S) {
   if (!d) return null;
   for (const id of S.order[d.day]) {
     const l = S.lifts[id], g = d.log[id];
-    if (g?.skip) continue;
+    if (!isLive(l, g)) continue;
     for (let i = 0; i < l.sets; i++) if (g?.reps[i] == null) return { id, set: i };
   }
   return null; // every set is accounted for
@@ -158,7 +250,7 @@ export function cursor(S) {
 
 export function sessionOn(S, date) { return S.sessions.find(s => s.date === date); }
 export function canAssume(S, day) {
-  const ids = S.order[day];
+  const ids = S.order[day].filter(id => !S.lifts[id].opt);
   return ids.length > 0 && ids.every(id => S.lifts[id].targets && S.lifts[id].weight != null);
 }
 
@@ -214,7 +306,8 @@ export function finalize(S) {
   const notes = [];
   for (const id of S.order[d.day]) {
     const l = S.lifts[id], g = d.log[id] || { reps: [] };
-    if (g.skip) { notes.push({ id, name: l.name, kind: 'skipped' }); continue; }
+    if (l.opt && !d.log[id]) continue;                       // an extra nobody mentioned
+    if (g.skip) { if (!l.opt) notes.push({ id, name: l.name, kind: 'skipped' }); continue; }
     const w = g.w ?? l.weight;
     if (w == null) continue;
     let last = null;

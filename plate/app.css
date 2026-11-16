@@ -552,3 +552,7 @@ body[data-panel="go"] .say { bottom: auto; top: calc(var(--top) + 60px); }
 /* Days and Goals sit apart so a thumb picks the right one. */
 #home .top .pair { gap: 26px; margin-right: 0; }
 #home .top .pair .link { padding: 0 2px; }
+
+/* Lists scroll without a bar sitting on top of the numbers. */
+.rows { scrollbar-width: none; }
+.rows::-webkit-scrollbar { display: none; }

@@ -11,6 +11,23 @@ const ALIASES = {
   curl: ['incline curl', 'curls', 'curl'],
   squat: ['squats', 'squat'],
   rdl: ['romanian deadlift', 'romanian', 'rdls', 'rdl'],
+  dbbench: ['dumbbell bench', 'db bench', 'dumbbell press'],
+  smithbench: ['smith machine bench', 'smith bench'],
+  jampress: ['jam press'],
+  incsmith: ['incline smith bench', 'incline smith'],
+  pecdeck: ['pec deck', 'pec dec'],
+  dips: ['dips', 'dip'],
+  otext: ['overhead tricep extension', 'overhead extension', 'tricep extension', 'overhead triceps'],
+  scurl: ['standing curl', 'standing curls'],
+  ccurl: ['cable curl', 'cable curls'],
+  row: ['barbell row', 'bent over row', 'rows', 'row'],
+  sarow: ['single arm row', 'single-arm row', 'one arm row'],
+  wpull: ['weighted pull up', 'weighted pull-up', 'pull up', 'pullup', 'pull-up', 'pull ups'],
+  reardelt: ['rear delt fly', 'rear delt', 'rear delts', 'reverse fly'],
+  legext: ['leg extension', 'leg extensions', 'leg ext'],
+  legcurl: ['leg curl', 'leg curls', 'hamstring curl'],
+  dbrdl: ['dumbbell rdl', 'db rdl', 'dumbbell romanian'],
+  deadlift: ['deadlifts', 'deadlift'],
 };
 const ORDINAL = { first: 0, '1st': 0, second: 1, '2nd': 1, third: 2, '3rd': 2, fourth: 3, '4th': 3, fifth: 4, '5th': 4 };
 
@@ -62,11 +79,11 @@ export function read(S, raw, dayIds) {
     const rest = text.replace(hit.alias, ' ');
     if (/\b(skip|skipped|skipping|no|didn'?t do)\b/.test(rest)) return { type: 'skip', id: l.id };
     let w = null;
-    const wr = rest.match(/(\d{2,3})\s*(?:x|×|for)\s*(\d{1,2})/);
+    const wr = rest.match(/(\d{2,3})s?\s*(?:x|×|for)\s*(\d{1,2})/);
     if (wr) w = +wr[1];
     let body = (wr ? rest.replace(wr[0], ' ') : rest).replace(/(?:at|with|@)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)/g, (_, a, b) => { w = +(a ?? b); return ' '; });
     const reps = {};
-    if (wr) reps[0] = +wr[2];
+    if (wr) for (let i = 0; i < (l.style === 'top' ? 1 : l.sets); i++) reps[i] = +wr[2];
     m = wr ? null : body.match(/(?:last|final)(?:\s+set)?\D{0,10}(\d{1,2})|(\d{1,2})\D{0,12}(?:last|final)/);
     if (m) reps[l.sets - 1] = +(m[1] ?? m[2]);
     else if ((m = body.match(/(first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)(?:\s+set)?\D{0,10}(\d{1,2})/))) reps[ORDINAL[m[1]]] = +m[2];

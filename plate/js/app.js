@@ -72,14 +72,14 @@ function drawHome() {
   const V = E.project(S);
   const done = E.sessionOn(V, t);
   const d = V.draft;
-  const day = d?.day ?? V.rotation[V.pointer];
-  const ids = S.order[day];
+  const day = d?.day ?? E.dayFor(V, t);
+  const ids = S.order[day].filter(id => !S.lifts[id].opt || d?.log?.[id]);
   text(el('h-date'), new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }));
 
   // The top of the screen is today's session: its name, one button, and the
   // lifts themselves with what is planned for each.
   const planOf = l => (l.weight == null ? 'new' : `${E.fmtW(l.weight)} × ${l.targets ? E.fmtReps(l.targets) : `${l.lo}–${l.hi}`}`);
-  const listFor = (dayName, log) => S.order[dayName].map(id => {
+  const listFor = (dayName, log) => S.order[dayName].filter(id => !S.lifts[id].opt || log?.[id]).map(id => {
     const l = V.lifts[id], g = log?.[id];
     const n = (g?.reps || []).filter(x => x != null).length;
     const state = g?.skip ? 'skipped' : n >= l.sets ? 'done' : n ? `${n} of ${l.sets}` : planOf(l);
@@ -88,7 +88,7 @@ function drawHome() {
 
   let title = day, sub = '', button = '', list = '', under = '';
   if (done) {
-    const nextDay = V.rotation[V.pointer];
+    const nextDay = E.dayFor(V, addDays(t, 1));
     title = done.day;
     sub = `Done today. ${cap(nextDay)} is next:`;
     list = listFor(nextDay, null);
@@ -100,6 +100,7 @@ function drawHome() {
     const going = E.draftActive(d);
     const at = going ? E.cursor(S) : null;
     button = `<button class="btn" type="button" data-act="go">${going ? (at ? 'Keep going' : 'Finish') : 'Start'}${icon.go}</button>`;
+    if (E.isRest(S, t) && !going) sub = 'Rest day. This is the next session.';
     list = listFor(day, S.draft?.log);
     under = E.canAssume(S, day) ? `<button class="link quiet" type="button" data-act="as-written">Did it all as written</button>` : '';
   }
@@ -211,14 +212,14 @@ function liftRow(l, tag = 'button') {
   return `<button class="lift" type="button" data-act="lift" data-id="${l.id}">
       <span class="ln">${esc(l.name)}</span>
       <span class="lw">${plan}</span>
-      <span class="ls cap k-${s.k}">${s.label}</span>
+      <span class="ls cap k-${s.k}">${s.label}${l.opt ? ' · extra' : ''}</span>
     </button>`;
 }
 
 function drawLift() {
   const V = E.project(S);
-  if (!ui.tab || !V.rotation.includes(ui.tab)) ui.tab = V.draft?.day ?? V.rotation[V.pointer];
-  const all = Object.values(V.order).flat().map(id => V.lifts[id]);
+  if (!ui.tab || !V.rotation.includes(ui.tab)) ui.tab = V.draft?.day ?? E.dayFor(V, today());
+  const all = Object.values(V.order).flat().map(id => V.lifts[id]).filter(l => !l.opt);   // the tally counts the lifts you do every time
   const count = k => all.filter(l => E.status(l).k === k).length;
   const short = count('short') + count('drop');
   patch(el('l-tally'), [[count('up'), 'Climbing', ''], [count('flat'), 'Stalled', ''], [short, 'Short', short ? 'bad' : ''], [count('learning') + count('new'), 'Learning', '']]
@@ -418,12 +419,12 @@ const firstOpen = id => {
 // The lift and set the buttons act on. Follows the next unlogged set unless
 // you picked something yourself.
 function selected() {
-  const d = S.draft, ids = S.order[d.day];
+  const d = S.draft, ids = E.liveIds(S, d);
   const g = ui.go;
-  if (g && ids.includes(g.id) && !d.log[g.id]?.skip) return g;
+  if (g && ids.includes(g.id)) return g;
   const c = E.cursor(S);
   if (c) return (ui.go = { id: c.id, set: c.set });
-  return (ui.go = { id: ids.find(id => !d.log[id]?.skip) ?? ids[0], set: null });
+  return (ui.go = { id: ids[0] ?? S.order[d.day][0], set: null });
 }
 
 function closeLine(d) {
@@ -457,8 +458,8 @@ function drawGo() {
   sum.hidden = !d.done;
   if (d.done) { drawSummary(); return; }
 
-  const ids = S.order[d.day];
   const g = selected();
+  const ids = E.liveIds(S, d);
   const l = S.lifts[g.id], log = d.log[g.id], w = log?.w ?? l.weight;
 
   patch(el('g-top'), `
@@ -557,7 +558,7 @@ function drawSummary() {
   patch(el('g-sum'), `
     <div class="lede">
       <h1 class="headline">Next time.</h1>
-      <p class="sub">${cap(V.rotation[V.pointer])} is up next. If a set went differently, say so any time today.</p>
+      <p class="sub">${cap(E.dayFor(V, addDays(today(), 1)))} is up next. If a set went differently, say so any time today.</p>
     </div>
     <div class="rows">${rows || '<p class="empty">Nothing was logged.</p>'}</div>
     <footer class="ctl"><button class="btn big" type="button" data-act="close">Done</button></footer>`);
@@ -589,7 +590,7 @@ function logSet(n) {
 }
 
 function stepLift(dir) {
-  const d = S.draft, live = S.order[d.day].filter(id => !d.log[id]?.skip);
+  const d = S.draft, live = E.liveIds(S, d);
   if (!live.length) return;
   const at = live.indexOf(ui.go?.id);
   const id = live[(at + dir + live.length) % live.length];
@@ -605,14 +606,14 @@ function pickSheet() {
     return `<div class="pick">
         <button class="lift" name="do" value="jump:${id}" ${g?.skip ? 'disabled' : ''}>
           <span class="ln">${esc(l.name)}</span>
-          <span class="lw"><i>${g?.skip ? 'Skipped' : `${n} of ${l.sets} sets`}</i></span>
+          <span class="lw"><i>${g?.skip ? 'Skipped' : l.opt && !g ? 'Extra, tap to add' : `${n} of ${l.sets} sets`}</i></span>
         </button>
-        <button class="link quiet" name="do" value="skip:${id}">${g?.skip ? 'Bring back' : 'Skip'}</button>
+        ${l.opt && !g ? '<span></span>' : `<button class="link quiet" name="do" value="skip:${id}">${g?.skip ? 'Bring back' : 'Skip'}</button>`}
       </div>`;
   }).join('');
   openSheet(`${cap(d.day)} day`, `<p class="sub">Do them in any order. Tap one to go to it.</p>${rows}`, 'Close', (f, act) => {
     const [what, id] = String(act || '').split(':');
-    if (what === 'jump') { ui.go = { id, set: firstOpen(id) }; drawGo(); }
+    if (what === 'jump') { if (!E.isLive(S.lifts[id], S.draft.log[id])) commit(S => { E.entry(S.draft, id).skip = false; }); ui.go = { id, set: firstOpen(id) }; drawGo(); }
     if (what === 'skip') commit(S => { const g = E.entry(S.draft, id); g.skip = !g.skip; if (ui.go?.id === id) ui.go = null; });
   });
 }
@@ -806,6 +807,7 @@ function liftSheet(id) {
     `<div class="pair">${field('Goal weight', box('gw', l.goal?.w, 'Skip'))}${field('Goal reps', box('gr', l.goal?.reps, 'Skip'))}</div>` +
     `<div class="pair">${field('Last warm-up weight', box('ww', l.warm?.w, 'Skip'))}${field('Its reps', box('wr', l.warm?.reps, 'Skip'))}</div>` +
     `<label class="check"><input type="checkbox" name="drop" ${l.drop ? 'checked' : ''}><span>A drop set follows (assumed done)</span></label>` +
+    `<label class="check"><input type="checkbox" name="opt" ${l.opt ? 'checked' : ''}><span>Extra: counts only when I say I did it</span></label>` +
     `<button class="link quiet" name="do" value="retire">Take this lift out of the program</button>`,
     'Save',
     (f, act) => commit(S => {
@@ -823,6 +825,7 @@ function liftSheet(id) {
       l.kind = f.kind;
       l.style = f.style === 'top' ? 'top' : 'straight';
       l.drop = !!f.drop;
+      l.opt = !!f.opt;
       l.goal = +f.gw ? { w: +f.gw, reps: Math.round(+f.gr) || 0 } : null;
       l.warm = +f.ww ? { w: +f.ww, reps: Math.round(+f.wr) || null } : null;
       if (l.targets) {
@@ -838,7 +841,8 @@ function addLiftSheet(day) {
     field('Name', '<input name="name" type="text" autocomplete="off" autocapitalize="words" maxlength="40" required placeholder="Barbell row">') +
     field('Equipment', '<select name="kind"><option value="barbell">Barbell</option><option value="dumbbell">Dumbbells</option><option value="stack">Cable or machine stack</option><option value="other">Something else</option></select>') +
     `<div class="pair">${field('Reps from', stepper('lo', 8, 1, 1, 50, 'Lowest reps'))}${field('Reps to', stepper('hi', 12, 1, 1, 50, 'Highest reps'))}</div>` +
-    field('Sets', stepper('sets', 3, 1, 1, 8, 'Sets')),
+    field('Sets', stepper('sets', 3, 1, 1, 8, 'Sets')) +
+    '<label class="check"><input type="checkbox" name="extra"><span>Extra: counts only when I say I did it</span></label>',
     'Add lift',
     f => commit(S => {
       settle(S);
@@ -847,7 +851,7 @@ function addLiftSheet(day) {
       const id = old?.id ?? 'l' + uid();
       if (!old) {
         const lo = Math.max(1, Math.round(+f.lo || 8)), hi = Math.max(lo, Math.round(+f.hi || 12));
-        S.lifts[id] = { id, name, kind: f.kind, sets: Math.max(1, Math.round(+f.sets || 3)), lo, hi, jump: 5, rest: f.kind === 'barbell' ? 150 : 90, weight: null, targets: null, sessions: 0, missStreak: 0, history: [] };
+        S.lifts[id] = { id, name, kind: f.kind, sets: Math.max(1, Math.round(+f.sets || 3)), lo, hi, jump: 5, rest: f.kind === 'barbell' ? 150 : 90, weight: null, targets: null, sessions: 0, missStreak: 0, history: [], opt: !!f.extra, style: 'straight', warm: null, goal: null, drop: false };
       }
       if (!Object.values(S.order).flat().includes(id)) S.order[day].push(id);
     }));
@@ -946,7 +950,7 @@ const acts = {
   finish: () => commit(S => { S.draft.done = true; S.draft.rest = null; }),
   'as-written': () => {
     const snap = snapshot();
-    const day = S.draft?.day ?? S.rotation[S.pointer];
+    const day = S.draft?.day ?? E.dayFor(S, today());
     commit(S => { E.ensureDraft(S, today()).done = true; });
     say(`${cap(day)} logged as written.`, snap);
   },
@@ -1283,7 +1287,7 @@ function reviewFoods(list) {
 
 async function handleText(raw) {
   const t = today();
-  const day = S.draft?.day ?? S.rotation[S.pointer];
+  const day = S.draft?.day ?? E.dayFor(S, today());
   const r = read(S, raw, S.order[day]);
 
   // The phone reads the common messages itself, with no wait.
@@ -1364,6 +1368,8 @@ el('restore').addEventListener('change', async e => {
 
 // Your push-day starting numbers go in once, and only for lifts with nothing logged.
 if (!S.baseline1) commit(S => E.applyBaseline(S, today()));
+// Then his real program (all three days, the weekly schedule, and Monday's push) goes in once.
+if (!S.baseline2) commit(S => E.applyBaseline2(S));
 
 shell();
 wake();
