@@ -781,6 +781,8 @@
     }
 
     .cz-note { color: var(--muted); font-size: 13.5px; margin-top: 12px; }
+    .cz-more { margin-top: 14px; }
+    .cz-more a { display: inline-flex; align-items: center; min-height: 44px; color: var(--blue); font-weight: 600; text-underline-offset: 3px; }
 
     .lightbox {
       position: fixed;
@@ -1896,6 +1898,7 @@
           }).join('') +
         '</tbody></table>' +
         '<p class="cz-note">From Carmen Tyler\'s daily HC census report. Days after the latest report are left out.</p>' +
+        '<p class="cz-more"><a href="/census/">Open the full census tracker</a></p>' +
         '</div></div>';
       return h;
     }

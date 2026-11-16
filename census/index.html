@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Census">
+  <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <title>Health Center census</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* A census flowsheet: ruled paper, one pen, one highlighter.
+       paper / ink / muted are text and surface; rule and rule-strong are the
+       sheet's lines; pen is the only data color; marker is the selected day. */
+    :root {
+      --paper: #FFFFFF;
+      --ink: #14171C;
+      --muted: #59616B;
+      --rule: #D5DCE4;
+      --rule-strong: #AEB9C5;
+      --pen: #2456A6;
+      --marker: #FFF1A8;
+      --weekend: #F4F6F8;
+      --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --cond: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+      --pad: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font: 400 17px/1.5 var(--sans);
+      min-height: 100vh;
+    }
+
+    button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+    :focus-visible { outline: 3px solid var(--pen); outline-offset: 2px; }
+
+    .sheet {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: calc(22px + env(safe-area-inset-top)) calc(var(--pad) + env(safe-area-inset-right)) calc(56px + env(safe-area-inset-bottom)) calc(var(--pad) + env(safe-area-inset-left));
+    }
+
+    /* the small caps a printed form uses to name its boxes */
+    .lbl {
+      display: block;
+      font: 600 12.5px/1.2 var(--cond);
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ---------- masthead ---------- */
+    .mast {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--rule-strong);
+    }
+
+    .mast > div { padding: 10px 12px 11px; min-width: 0; }
+    .mast .title { grid-column: 1 / -1; border-bottom: 1px solid var(--rule-strong); }
+    .mast .field + .field { border-left: 1px solid var(--rule-strong); }
+    .mast h1 { font: 600 26px/1.15 var(--sans); letter-spacing: -0.01em; margin-top: 4px; }
+    .mast .field p { margin-top: 3px; font-weight: 500; }
+    .mast .field .sub { display: block; color: var(--muted); font-weight: 400; font-size: 15.5px; line-height: 1.3; }
+
+    /* ---------- span controls ---------- */
+    .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 18px; }
+
+    .seg { display: flex; border: 1px solid var(--rule-strong); }
+    .seg button {
+      min-height: 44px;
+      padding: 0 12px;
+      font: 500 15px/1 var(--sans);
+      white-space: nowrap;
+      border-left: 1px solid var(--rule-strong);
+    }
+    .seg button:first-child { border-left: 0; }
+    .seg button:hover { background: var(--weekend); }
+    .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+    .seg button:disabled { color: var(--rule-strong); cursor: default; background: none; }
+
+    .seg.spans { flex: 1 1 100%; }
+    .seg.spans button { flex: 1 1 0; padding: 0 4px; }
+    .seg.months button.name { min-width: 148px; }
+    .seg.months button.step { width: 48px; padding: 0; }
+    .seg.months svg { display: block; margin: 0 auto; }
+
+    /* ---------- readout + flowsheet ---------- */
+    .finding { margin-top: 22px; font: 600 20px/1.3 var(--sans); letter-spacing: -0.005em; }
+
+    .work { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 14px; }
+
+    /* phone: the count with its day beside it, then the three payer boxes in a row */
+    .readout { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 16px; align-items: end; border-top: 1px solid var(--rule-strong); padding-top: 12px; }
+    .readout > .lbl { grid-column: 1 / -1; }
+    .r-num { font: 600 68px/0.95 var(--sans); letter-spacing: -0.03em; margin-top: 4px; }
+    .r-when { min-width: 0; padding-bottom: 3px; }
+    .r-day { font-weight: 500; }
+    .r-delta { display: flex; align-items: center; gap: 6px; color: var(--muted); min-height: 1.5em; }
+    .r-delta svg { flex: none; }
+
+    .r-pay { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; border: 1px solid var(--rule-strong); }
+    .r-pay div { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 8px; padding: 8px 10px 9px; border-left: 1px solid var(--rule); min-width: 0; }
+    .r-pay div:first-child { border-left: 0; }
+    .r-pay dt { grid-column: 1 / -1; font: 600 12.5px/1.2 var(--cond); letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); white-space: nowrap; margin-bottom: 3px; }
+    .r-pay dd { font: 500 19px/1.2 var(--mono); }
+    .r-pay dd.pct { color: var(--muted); font-weight: 400; font-size: 15px; }
+
+    .r-latest { grid-column: 1 / -1; justify-self: start; margin-top: 10px; min-height: 44px; padding: 0 14px; border: 1px solid var(--rule-strong); font: 500 15px/1 var(--sans); }
+    .r-latest[hidden] { display: none; }
+
+    .flow { min-width: 0; outline-offset: 4px; }
+    .flow svg { display: block; width: 100%; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+    .flow-note { margin-top: 10px; color: var(--muted); font-size: 15.5px; }
+
+    .say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    /* chart text */
+    .t-tick { font: 400 12px/1 var(--mono); fill: var(--muted); }
+    .t-band { font: 600 12px/1 var(--cond); letter-spacing: 0.09em; fill: var(--muted); text-transform: uppercase; }
+    .t-row { font: 600 12px/1 var(--cond); letter-spacing: 0.09em; fill: var(--muted); text-transform: uppercase; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+    .t-end { font: 600 15px/1 var(--mono); fill: var(--ink); }
+    .t-end.small { font-size: 13.5px; }
+    .t-note { font: 500 12px/1 var(--mono); fill: var(--muted); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+    .t-tag { font: 500 12.5px/1 var(--mono); fill: var(--ink); }
+
+    .t-end.halo { paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+
+    .trace { fill: none; stroke: var(--pen); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+
+    /* the one moment of motion: the pen draws the traces when the sheet first
+       opens, then the dots and figures settle in behind it */
+    .inking .trace { transition: stroke-dashoffset 700ms cubic-bezier(0.3, 0.6, 0.2, 1); }
+    .inking .settle { transition: opacity 260ms ease 520ms; }
+    .drawing .settle { opacity: 0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .inking .trace, .inking .settle { transition: none; }
+    }
+
+    /* ---------- the span in numbers ---------- */
+    .facts { display: grid; grid-template-columns: 1fr 1fr; margin-top: 22px; border: 1px solid var(--rule-strong); }
+    .facts > div { padding: 10px 12px 11px; border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); min-width: 0; }
+    .facts > div:nth-child(-n+2) { border-top: 0; }
+    .facts > div:nth-child(odd) { border-left: 0; }
+    .facts > div.full { grid-column: 1 / -1; border-left: 0; }
+    .facts .v { font: 500 22px/1.2 var(--mono); margin-top: 4px; }
+    .facts .n { color: var(--muted); font-size: 15.5px; margin-top: 1px; }
+
+    /* ---------- ledgers ---------- */
+    section.block { margin-top: 38px; }
+    .block-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+    .block-head h2 { font: 600 20px/1.2 var(--sans); }
+    .block-head p { color: var(--muted); font-size: 15.5px; }
+
+    .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 9px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--rule); }
+    thead th { font: 600 12.5px/1.2 var(--cond); letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); vertical-align: bottom; border-bottom: 1px solid var(--rule-strong); }
+    td { font: 400 15.5px/1.3 var(--mono); }
+    th:first-child, td:first-child { text-align: left; padding-left: 0; position: sticky; left: 0; background: var(--paper); }
+    td:first-child { font: 500 16px/1.3 var(--sans); }
+    td.strong { font-weight: 600; }
+    td .sub { display: block; color: var(--muted); font: 400 14px/1.3 var(--sans); }
+    th:last-child, td:last-child { padding-right: 0; }
+
+    .months tbody tr { cursor: pointer; }
+    .months tbody tr:hover td { background: var(--weekend); }
+    .months tbody tr.on td { background: var(--marker); }
+    .months td button { font: inherit; text-align: left; text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 3px; }
+
+    .log tbody tr.on td { background: var(--marker); }
+
+    .text-btn { min-height: 44px; padding: 0 2px; font: 500 15.5px/1 var(--sans); text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 3px; }
+    .text-btn:hover { text-decoration-color: var(--ink); }
+    .more { margin-top: 6px; }
+    .more[hidden] { display: none; }
+
+    .foot { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--rule-strong); color: var(--muted); font-size: 15.5px; }
+    .foot p + p { margin-top: 6px; }
+    .foot a { color: var(--ink); text-underline-offset: 3px; }
+
+    .state { margin-top: 26px; padding: 18px 0; border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); }
+    .state[hidden] { display: none; }
+    .state button { margin-top: 10px; min-height: 44px; padding: 0 16px; border: 1px solid var(--ink); font-weight: 500; }
+
+    /* ---------- wider screens ---------- */
+    @media (min-width: 640px) {
+      :root { --pad: 32px; }
+      .mast { grid-template-columns: minmax(0, 1fr) auto auto; }
+      .mast .title { grid-column: auto; border-bottom: 0; }
+      .mast .field { border-left: 1px solid var(--rule-strong); min-width: 200px; }
+      .mast h1 { font-size: 30px; }
+      .seg.spans { flex: 0 1 auto; }
+      .seg.spans button { flex: none; padding: 0 16px; }
+      .seg button { min-height: 40px; }
+      .facts { grid-template-columns: repeat(4, 1fr); }
+      .facts > div { border-top: 0; }
+      .facts > div:nth-child(odd) { border-left: 1px solid var(--rule); }
+      .facts > div:first-child { border-left: 0; }
+      .facts > div.full { grid-column: 1 / -1; border-top: 1px solid var(--rule); border-left: 0; }
+    }
+
+    @media (min-width: 980px) {
+      :root { --pad: 40px; }
+      .sheet { padding-top: 36px; }
+      .work { grid-template-columns: 236px minmax(0, 1fr); gap: 36px; align-items: start; }
+      /* the rail: everything stacked, payer groups as ruled rows */
+      .readout { display: block; padding-top: 14px; }
+      .r-num { font-size: 104px; }
+      .r-when { margin-top: 10px; padding-bottom: 0; }
+      .r-pay { display: block; margin-top: 22px; border: 0; border-top: 1px solid var(--rule-strong); }
+      .r-pay div { grid-template-columns: minmax(0, 1fr) auto 3.2em; padding: 8px 0; border-left: 0; border-top: 1px solid var(--rule); }
+      .r-pay div:first-child { border-top: 0; }
+      .r-pay dt { grid-column: auto; margin-bottom: 0; }
+      .r-pay dd { font-size: 17px; text-align: right; }
+      .r-latest { margin-top: 16px; }
+      .facts { grid-template-columns: repeat(5, 1fr); }
+      .facts > div.full { grid-column: auto; border-top: 0; border-left: 1px solid var(--rule); }
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <header class="mast">
+      <div class="title">
+        <span class="lbl">University Village</span>
+        <h1>Health Center census</h1>
+      </div>
+      <div class="field">
+        <span class="lbl" id="as-lbl">Report of</span>
+        <p id="as-of">&nbsp;</p>
+      </div>
+      <div class="field">
+        <span class="lbl">On record</span>
+        <p id="on-record">&nbsp;</p>
+      </div>
+    </header>
+
+    <div class="state" id="state" hidden>
+      <p id="state-text"></p>
+      <button type="button" id="state-retry" hidden>Try again</button>
+    </div>
+
+    <div id="content" hidden>
+      <div class="controls">
+        <div class="seg spans" role="group" aria-label="Show the last">
+          <button type="button" data-span="30">30 days</button>
+          <button type="button" data-span="90">90 days</button>
+          <button type="button" data-span="180">6 mo</button>
+          <button type="button" data-span="365">1 year</button>
+          <button type="button" data-span="all">All</button>
+        </div>
+        <div class="seg months" role="group" aria-label="Show one month">
+          <button type="button" class="step" id="m-prev" aria-label="Previous month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+          <button type="button" class="name" id="m-name"></button>
+          <button type="button" class="step" id="m-next" aria-label="Next month"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        </div>
+      </div>
+
+      <h2 class="finding" id="finding"></h2>
+
+      <div class="work">
+        <aside class="readout" aria-label="The selected day">
+          <span class="lbl">In house</span>
+          <p class="r-num" id="r-num"></p>
+          <div class="r-when">
+            <p class="r-day" id="r-day"></p>
+            <p class="r-delta" id="r-delta"></p>
+          </div>
+          <dl class="r-pay">
+            <div><dt>Private pay</dt><dd id="r-private"></dd><dd class="pct" id="r-private-pct"></dd></div>
+            <div><dt>Medicaid</dt><dd id="r-medicaid"></dd><dd class="pct" id="r-medicaid-pct"></dd></div>
+            <div><dt>Skilled</dt><dd id="r-snf"></dd><dd class="pct" id="r-snf-pct"></dd></div>
+          </dl>
+          <button type="button" class="r-latest" id="r-latest" hidden>Back to the latest day</button>
+        </aside>
+
+        <figure class="flow" id="flow" tabindex="0" role="group">
+          <div id="flow-svg"></div>
+          <figcaption class="flow-note">Move across the sheet to read any day. The three payer rows share one scale, so a step of one resident is the same height in each.</figcaption>
+          <p class="say" id="flow-say" aria-live="polite"></p>
+        </figure>
+      </div>
+
+      <div class="facts" id="facts"></div>
+
+      <section class="block months">
+        <div class="block-head">
+          <h2>By month</h2>
+          <p>Averages are residents per day. Pick a month to open it above.</p>
+        </div>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Month</th>
+                <th scope="col">Average</th>
+                <th scope="col">High</th>
+                <th scope="col">Low</th>
+                <th scope="col">Last day</th>
+                <th scope="col">Private pay</th>
+                <th scope="col">Medicaid</th>
+                <th scope="col">Skilled</th>
+                <th scope="col">Resident days</th>
+              </tr>
+            </thead>
+            <tbody id="months-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block log">
+        <div class="block-head">
+          <h2>Daily log</h2>
+          <p id="log-span"></p>
+        </div>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Day</th>
+                <th scope="col">In house</th>
+                <th scope="col">Change</th>
+                <th scope="col">Private pay</th>
+                <th scope="col">Medicaid</th>
+                <th scope="col">Skilled</th>
+              </tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+          </table>
+        </div>
+        <button type="button" class="text-btn more" id="log-more" hidden></button>
+        <p style="margin-top: 10px;">
+          <button type="button" class="text-btn" id="csv-span">Download these days</button>
+          &nbsp;&nbsp;
+          <button type="button" class="text-btn" id="csv-all">Download the whole log</button>
+        </p>
+      </section>
+    </div>
+
+    <footer class="foot">
+      <p>Counts come from the billing office's daily Health Center census report. Weekend days arrive with Monday's report. This page shows counts only.</p>
+      <p><a href="/blake/">Blake's list</a></p>
+    </footer>
+  </div>
+
+  <script>
+    // ---------- where the numbers come from ----------
+    // The dashboard logs the daily census and serves it as counts. Served
+    // locally, this page talks to a local dashboard unless ?api=prod.
+    var LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !/[?&]api=prod\b/.test(location.search);
+    var API = (LOCAL ? 'http://localhost:3000' : 'https://knox-dashboard-pnsj.vercel.app') + '/api/census';
+    var CACHE_KEY = 'census.days.v1';
+
+    function $(id) { return document.getElementById(id); }
+    function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function isNum(v) { return typeof v === 'number' && isFinite(v); }
+
+    // ---------- dates ----------
+    var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    var DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    function parts(iso) { return iso.split('-').map(Number); }
+    function dayNum(iso) { var p = parts(iso); return Math.round(Date.UTC(p[0], p[1] - 1, p[2]) / 86400000); }
+    function isoOf(n) { return new Date(n * 86400000).toISOString().slice(0, 10); }
+    function dowOf(iso) { return new Date(dayNum(iso) * 86400000).getUTCDay(); }
+    function shortDate(iso) { var p = parts(iso); return MON[p[1] - 1] + ' ' + p[2]; }
+    function dayName(iso) { return DOW[dowOf(iso)] + ', ' + shortDate(iso); }
+    function fullDate(iso) { return dayName(iso) + ', ' + parts(iso)[0]; }
+    function monthOf(iso) { return iso.slice(0, 7); }
+    function monthLabel(m, short) { var p = m.split('-').map(Number); return (short ? MON : MONTHS)[p[1] - 1] + ' ' + p[0]; }
+    function monthStart(m) { return m + '-01'; }
+    function monthEnd(m) { var p = m.split('-').map(Number); return m + '-' + String(new Date(Date.UTC(p[0], p[1], 0)).getUTCDate()).padStart(2, '0'); }
+    function shiftMonth(m, by) { var p = m.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1 + by, 1)); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); }
+    function todayIso() { var t = new Date(); return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); }
+    function ordinal(n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+    function commas(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+    // ---------- state ----------
+    var S = {
+      days: [],            // the whole log, oldest first
+      byDate: {},
+      span: { kind: 'trail', n: 30 },
+      cols: [],            // one column per calendar day in the span; d is null where nothing is logged
+      sel: null,           // column index being read, null = the latest day in the span
+      pinned: false,       // the selection was set by touch or keys, so it stays put
+      logAll: false,
+      drawn: false,
+      geo: null
+    };
+
+    var ROWS = [
+      { key: 'total', label: 'Total in house' },
+      { key: 'private', label: 'Private pay' },
+      { key: 'medicaid', label: 'Medicaid' },
+      { key: 'snf', label: 'Skilled' }
+    ];
+
+    // ---------- loading ----------
+    function show(what, text, retry) {
+      $('content').hidden = what !== 'content';
+      $('state').hidden = what !== 'state';
+      if (what === 'state') { $('state-text').textContent = text; $('state-retry').hidden = !retry; }
+    }
+
+    function setData(days) {
+      var clean = (days || []).filter(function (d) { return d && /^\d{4}-\d{2}-\d{2}$/.test(d.date) && isNum(d.total); });
+      clean.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+      var same = JSON.stringify(clean) === JSON.stringify(S.days);
+      S.days = clean;
+      S.byDate = {};
+      clean.forEach(function (d, i) { d.i = i; S.byDate[d.date] = d; });
+      return !same;
+    }
+
+    function fetchAll() {
+      return fetch(API + '?all=1', { cache: 'no-store' })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (j) {
+          var changed = setData(j.days);
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify(S.days.map(function (d) { return { date: d.date, total: d.total, private: d.private, medicaid: d.medicaid, snf: d.snf }; }))); } catch (e) {}
+          return changed;
+        });
+    }
+
+    function refresh() {
+      return fetchAll().then(function (changed) {
+        if (!S.days.length) { show('state', 'Nothing has been logged yet.', false); return; }
+        if (changed || $('content').hidden) { show('content'); render(); }
+        else header(); // the "no new report" line depends on today's date
+      }).catch(function () {
+        if (!S.days.length) show('state', 'The census log did not load. Check the connection and try again.', true);
+      });
+    }
+
+    // Ask the dashboard to look for a newer report. It answers with counts and
+    // dates only and ignores asks less than five minutes apart. A 401 means the
+    // census job is switched off there, so stop asking for an hour.
+    var lastPoke = 0, pokeAfter = 0;
+    function poke() {
+      var now = Date.now();
+      if (now < pokeAfter || now - lastPoke < 60000) return Promise.resolve(false);
+      lastPoke = now;
+      return fetch(API + '/sync', { cache: 'no-store' })
+        .then(function (r) { if (r.status === 401) pokeAfter = Date.now() + 3600000; return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (!j) return false;
+          var shown = S.days.length ? S.days[S.days.length - 1].date : '';
+          return !!j.written || !!(j.through && j.through > shown);
+        })
+        .catch(function () { return false; });
+    }
+
+    function keepFresh() {
+      poke().then(function (moved) { setTimeout(refresh, moved ? 2500 : 0); });
+    }
+
+    // ---------- the span ----------
+    function latest() { return S.days[S.days.length - 1]; }
+    function latestMonth() { return monthOf(latest().date); }
+    function firstMonth() { return monthOf(S.days[0].date); }
+
+    function spanRange() {
+      var last = latest().date, first = S.days[0].date;
+      if (S.span.kind === 'month') return { from: monthStart(S.span.month), to: monthEnd(S.span.month) };
+      if (S.span.n === 'all') return { from: first, to: last };
+      var from = isoOf(dayNum(last) - (S.span.n - 1));
+      return { from: from < first ? first : from, to: last };
+    }
+
+    function buildCols() {
+      var r = spanRange(), a = dayNum(r.from), b = dayNum(r.to), cols = [];
+      for (var n = a; n <= b; n++) { var iso = isoOf(n); cols.push({ date: iso, d: S.byDate[iso] || null }); }
+      S.cols = cols;
+    }
+
+    function logged() { return S.cols.filter(function (c) { return c.d; }).map(function (c) { return c.d; }); }
+    function lastLoggedCol() { for (var i = S.cols.length - 1; i >= 0; i--) if (S.cols[i].d) return i; return -1; }
+    function nearestLogged(i) {
+      i = Math.max(0, Math.min(S.cols.length - 1, i));
+      for (var k = 0; k < S.cols.length; k++) {
+        if (S.cols[i - k] && S.cols[i - k].d) return i - k;
+        if (S.cols[i + k] && S.cols[i + k].d) return i + k;
+      }
+      return -1;
+    }
+
+    function setSpan(span, quiet) {
+      S.span = span;
+      S.sel = null;
+      S.pinned = false;
+      S.logAll = false;
+      if (!quiet) {
+        var h = span.kind === 'month' ? span.month : String(span.n);
+        try { history.replaceState(null, '', '#' + h); } catch (e) { location.hash = h; }
+      }
+      render();
+    }
+
+    function spanFromHash() {
+      var h = location.hash.replace('#', '');
+      if (/^\d{4}-(0[1-9]|1[0-2])$/.test(h)) return { kind: 'month', month: h };
+      if (h === 'all') return { kind: 'trail', n: 'all' };
+      if (/^(30|90|180|365)$/.test(h)) return { kind: 'trail', n: Number(h) };
+      return null;
+    }
+
+    function spanWords() {
+      if (S.span.kind === 'month') return monthLabel(S.span.month);
+      if (S.span.n === 'all') return 'Since ' + shortDate(S.days[0].date) + ', ' + parts(S.days[0].date)[0];
+      return 'Last ' + (S.span.n === 180 ? '6 months' : S.span.n === 365 ? 'year' : S.span.n + ' days');
+    }
+
+    // ---------- rendering ----------
+    function render() {
+      if (!S.days.length) return;
+      // a month that is outside the log falls back to the latest month
+      if (S.span.kind === 'month' && (S.span.month < firstMonth() || S.span.month > latestMonth())) S.span = { kind: 'month', month: latestMonth() };
+      buildCols();
+      header();
+      controls();
+      finding();
+      drawFlow();
+      readout();
+      facts();
+      monthsTable();
+      logTable();
+    }
+
+    // Carmen reports on weekdays and Monday's report fills in the weekend, so a
+    // count three days old is an ordinary Monday morning. Four or more days
+    // means a report was missed, and the sheet says so.
+    function header() {
+      var l = latest(), behind = dayNum(todayIso()) - dayNum(l.date);
+      $('as-lbl').textContent = behind >= 4 ? 'No new report since' : 'Report of';
+      $('as-of').innerHTML = esc(dayName(l.date)) + '<span class="sub">' + parts(l.date)[0] + '</span>';
+      $('on-record').innerHTML = commas(S.days.length) + ' days<span class="sub">since ' + esc(shortDate(S.days[0].date)) + ', ' + parts(S.days[0].date)[0] + '</span>';
+    }
+
+    function controls() {
+      var btns = document.querySelectorAll('.spans button');
+      for (var i = 0; i < btns.length; i++) {
+        var v = btns[i].getAttribute('data-span');
+        btns[i].setAttribute('aria-pressed', String(S.span.kind === 'trail' && String(S.span.n) === v));
+      }
+      var m = S.span.kind === 'month' ? S.span.month : latestMonth();
+      $('m-name').textContent = monthLabel(m);
+      $('m-name').setAttribute('aria-pressed', String(S.span.kind === 'month'));
+      $('m-prev').disabled = m <= firstMonth();
+      $('m-next').disabled = S.span.kind !== 'month' || m >= latestMonth();
+    }
+
+    function finding() {
+      var ds = logged();
+      if (!ds.length) { $('finding').textContent = spanWords() + ': nothing logged.'; return; }
+      var vals = ds.map(function (d) { return d.total; });
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), end = ds[ds.length - 1];
+      var live = end.date === latest().date;
+      var range = lo === hi ? 'steady at ' + lo + '.' : 'between ' + lo + ' and ' + hi + '.';
+      var tail = lo === hi ? '' : (live ? ' Now ' + end.total + '.' : ' Ended at ' + end.total + '.');
+      $('finding').textContent = spanWords() + ': ' + range + tail;
+    }
+
+    // nice whole-number ticks that cover lo..hi in about four steps
+    function ticksFor(lo, hi) {
+      var steps = [1, 2, 5, 10, 20, 25, 50, 100], step = 1;
+      for (var i = 0; i < steps.length; i++) { step = steps[i]; if ((hi - lo) / step <= 5) break; }
+      var a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step;
+      if (a === b) { a -= step; b += step; }
+      var out = [];
+      for (var v = a; v <= b + 1e-9; v += step) out.push(v);
+      return out;
+    }
+
+    function drawFlow() {
+      var host = $('flow-svg'), W = Math.floor($('flow').clientWidth);
+      if (!W) return;
+      var wide = W >= 620;
+      var gl = wide ? 40 : 30, gr = wide ? 46 : 40, bandH = 40;
+      var hTotal = wide ? Math.round(Math.min(380, Math.max(270, W * 0.4))) : 224;
+      var hRow = wide ? 66 : 56;
+      var x0 = gl, x1 = W - gr, n = S.cols.length, cw = (x1 - x0) / n;
+      var H = bandH + hTotal + hRow * 3 + 1;
+      var cx = function (i) { return x0 + (i + 0.5) * cw; };
+      var px = function (v) { return (Math.round(v * 10) / 10).toFixed(1); };
+      var lastCol = lastLoggedCol();
+      var o = [];
+
+      // geometry of each row: top, height, and a value-to-y scale
+      var geoRows = [], top = bandH;
+      var spanOf = function (key) {
+        var vals = S.cols.filter(function (c) { return c.d && isNum(c.d[key]); }).map(function (c) { return c.d[key]; });
+        return { any: vals.length > 0, lo: vals.length ? Math.min.apply(null, vals) : 0, hi: vals.length ? Math.max.apply(null, vals) : 1 };
+      };
+      // The three payer rows share one scale (pixels per resident), each
+      // centered on its own values, so one resident looks the same in every
+      // row. Never finer than six residents to the row: a change of one is a
+      // small step, not a cliff.
+      var payerReach = 6;
+      ROWS.slice(1).forEach(function (row) { var s = spanOf(row.key); if (s.any) payerReach = Math.max(payerReach, s.hi - s.lo); });
+      ROWS.forEach(function (row, r) {
+        var h = r === 0 ? hTotal : hRow, rowTop = top; // rowTop: this row only (top moves on as the loop runs)
+        var s = spanOf(row.key), lo = s.lo, hi = s.hi;
+        var g = { key: row.key, label: row.label, top: top, h: h, lo: lo, hi: hi, any: s.any };
+        if (r === 0) {
+          g.ticks = ticksFor(lo, hi);
+          var a = g.ticks[0], b = g.ticks[g.ticks.length - 1], padT = 36, padB = 14;
+          g.y = function (v) { return rowTop + padT + (b - v) * (h - padT - padB) / (b - a); };
+        } else {
+          var pt = 24, pb = 10, unit = (h - pt - pb) / payerReach, mid = (lo + hi) / 2;
+          g.y = function (v) { return rowTop + pt + (h - pt - pb) / 2 - (v - mid) * unit; };
+        }
+        geoRows.push(g);
+        top += h;
+      });
+
+      // weekends, tinted the way a wall calendar does, while days are wide enough to tell apart
+      if (n <= 62) {
+        S.cols.forEach(function (c, i) {
+          var w = dowOf(c.date);
+          if (w === 0 || w === 6) o.push('<rect x="' + px(x0 + i * cw) + '" y="' + bandH + '" width="' + px(cw) + '" height="' + (H - bandH - 1) + '" fill="var(--weekend)"/>');
+        });
+      }
+
+      // the selected day, under the ink
+      o.push('<rect id="fl-band" x="0" y="' + (bandH - 20) + '" width="' + px(Math.max(cw, 3)) + '" height="' + (H - bandH + 19) + '" fill="var(--marker)" visibility="hidden"/>');
+
+      // total row: value lines
+      var g0 = geoRows[0];
+      g0.ticks.forEach(function (t) {
+        var y = Math.round(g0.y(t)) + 0.5;
+        o.push('<line x1="' + x0 + '" x2="' + x1 + '" y1="' + y + '" y2="' + y + '" stroke="var(--rule)"/>');
+        o.push('<text class="t-tick" x="' + (x0 - 7) + '" y="' + (y + 4) + '" text-anchor="end">' + t + '</text>');
+      });
+
+      // weeks and months
+      S.cols.forEach(function (c, i) {
+        var day = parts(c.date)[2], x = Math.round(x0 + i * cw) + 0.5;
+        if (day === 1 && i > 0) o.push('<line x1="' + x + '" x2="' + x + '" y1="4" y2="' + (H - 1) + '" stroke="var(--rule-strong)"/>');
+        else if (n <= 124 && dowOf(c.date) === 1 && i > 0) o.push('<line x1="' + x + '" x2="' + x + '" y1="' + bandH + '" y2="' + (H - 1) + '" stroke="var(--rule)"/>');
+      });
+
+      // row rules and the frame
+      geoRows.forEach(function (g, r) {
+        var y = g.top + 0.5;
+        o.push('<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="' + (r <= 1 ? 'var(--rule-strong)' : 'var(--rule)') + '"/>');
+      });
+      o.push('<line x1="0" x2="' + W + '" y1="' + (H - 0.5) + '" y2="' + (H - 0.5) + '" stroke="var(--rule-strong)"/>');
+      o.push('<line x1="' + (x0 + 0.5) + '" x2="' + (x0 + 0.5) + '" y1="' + bandH + '" y2="' + (H - 1) + '" stroke="var(--rule-strong)"/>');
+      o.push('<line x1="' + (Math.round(x1) + 0.5) + '" x2="' + (Math.round(x1) + 0.5) + '" y1="' + bandH + '" y2="' + (H - 1) + '" stroke="var(--rule-strong)"/>');
+
+      // date band: months on the first line, days or weeks on the second
+      var monthsSeen = {};
+      S.cols.forEach(function (c, i) {
+        var m = monthOf(c.date);
+        if (monthsSeen[m]) return;
+        monthsSeen[m] = true;
+        var lastOfMonth = i;
+        while (lastOfMonth + 1 < n && monthOf(S.cols[lastOfMonth + 1].date) === m) lastOfMonth++;
+        var room = (lastOfMonth - i + 1) * cw;
+        var p = m.split('-').map(Number);
+        var text = room >= 76 ? MON[p[1] - 1] + ' ' + p[0] : room >= 30 ? MON[p[1] - 1] : '';
+        if (text) o.push('<text class="t-band" x="' + px(x0 + i * cw + 5) + '" y="15">' + text + '</text>');
+      });
+      var every = cw >= 19 ? 1 : cw >= 9.5 ? 2 : 0;
+      S.cols.forEach(function (c, i) {
+        var day = parts(c.date)[2];
+        var showIt = every === 1 || (every === 2 && day % 2 === 1 && day !== 31) || (every === 0 && n <= 124 && dowOf(c.date) === 1);
+        if (showIt) o.push('<text class="t-tick" x="' + px(cx(i)) + '" y="' + (bandH - 8) + '" text-anchor="middle">' + day + '</text>');
+      });
+
+      // average of the span, the figure an operator calls average daily census
+      var totals = logged().map(function (d) { return d.total; });
+      if (totals.length > 1) {
+        var avg = totals.reduce(function (a, b) { return a + b; }, 0) / totals.length;
+        var ya = Math.round(g0.y(avg)) + 0.5;
+        // Named in the right margin, where the line runs out, so the trace
+        // never crosses it. If the trace ends at about the same height, the
+        // name steps aside for that figure.
+        var yLabel = ya;
+        if (lastCol === n - 1) {
+          var yEnd = g0.y(S.cols[lastCol].d.total);
+          if (Math.abs(yLabel - yEnd) < 22) yLabel = yLabel >= yEnd ? yEnd + 22 : yEnd - 22;
+        }
+        yLabel = Math.max(g0.top + 16, Math.min(g0.top + g0.h - 16, yLabel));
+        o.push('<g class="settle"><line x1="' + x0 + '" x2="' + x1 + '" y1="' + ya + '" y2="' + ya + '" stroke="var(--rule-strong)" stroke-width="1"/>' +
+          '<text class="t-band" x="' + px(x1 + 8) + '" y="' + px(yLabel - 3) + '">Avg</text>' +
+          '<text class="t-tick" x="' + px(x1 + 8) + '" y="' + px(yLabel + 10) + '">' + avg.toFixed(1) + '</text></g>');
+      }
+
+      // the traces: straight pen lines, broken wherever a day is missing
+      var dots = cw >= 18;
+      geoRows.forEach(function (g, r) {
+        if (!g.any) return;
+        var d = '', pen = false;
+        S.cols.forEach(function (c, i) {
+          var v = c.d ? c.d[g.key] : null;
+          if (!isNum(v)) { pen = false; return; }
+          d += (pen ? 'L' : 'M') + px(cx(i)) + ' ' + px(g.y(v)) + ' ';
+          pen = true;
+        });
+        o.push('<path class="trace" d="' + d + '"/>');
+        if (r === 0 && dots) {
+          var marks = '';
+          S.cols.forEach(function (c, i) {
+            if (c.d && i !== lastCol) marks += '<circle cx="' + px(cx(i)) + '" cy="' + px(g.y(c.d.total)) + '" r="4" fill="var(--pen)" stroke="var(--paper)" stroke-width="2"/>';
+          });
+          o.push('<g class="settle">' + marks + '</g>');
+        }
+      });
+
+      // where each trace ends, and what it reads there
+      if (lastCol >= 0) {
+        var end = S.cols[lastCol].d, ends = '';
+        geoRows.forEach(function (g, r) {
+          var v = end[g.key];
+          if (!isNum(v)) return;
+          var y = g.y(v);
+          ends += '<circle cx="' + px(cx(lastCol)) + '" cy="' + px(y) + '" r="' + (r === 0 ? 5 : 4) + '" fill="var(--pen)" stroke="var(--paper)" stroke-width="2"/>';
+          // in a month view the last logged day can sit mid-sheet, so the figure goes beside the dot
+          var atEdge = lastCol === n - 1;
+          var tx = atEdge ? x1 + 8 : cx(lastCol) + 10;
+          ends += '<text class="t-end' + (r === 0 ? '' : ' small') + (atEdge ? '' : ' halo') + '" x="' + px(tx) + '" y="' + px(y + 5) + '">' + v + '</text>';
+        });
+        o.push('<g class="settle">' + ends + '</g>');
+      }
+
+      // high and low of the span, named once each (the most recent day that hit them)
+      var ds = S.cols.map(function (c, i) { return c.d ? { i: i, v: c.d.total } : null; }).filter(Boolean);
+      if (ds.length > 2 && g0.hi !== g0.lo) {
+        var notes = '';
+        [['high', g0.hi, -9], ['low', g0.lo, 17]].forEach(function (k) {
+          var hit = null;
+          for (var j = ds.length - 1; j >= 0; j--) if (ds[j].v === k[1]) { hit = ds[j]; break; }
+          if (!hit || hit.i === lastCol) return; // the end label already reads it
+          var x = Math.max(x0 + 26, Math.min(x1 - 26, cx(hit.i)));
+          notes += '<text class="t-note" x="' + px(x) + '" y="' + px(g0.y(hit.v) + k[2]) + '" text-anchor="middle">' + k[0] + ' ' + hit.v + '</text>';
+        });
+        o.push('<g class="settle">' + notes + '</g>');
+      }
+
+      // row names, and each payer row's own scale at the left
+      geoRows.forEach(function (g, r) {
+        o.push('<text class="t-row" x="' + (x0 + 8) + '" y="' + (g.top + 16) + '">' + g.label + '</text>');
+        if (r > 0 && g.any) {
+          if (g.hi === g.lo) o.push('<text class="t-tick" x="' + (x0 - 7) + '" y="' + px(g.y(g.hi) + 4) + '" text-anchor="end">' + g.hi + '</text>');
+          else {
+            // the row's high and low, each beside its own height; nudged apart when they would touch
+            var yh = g.y(g.hi), yl = g.y(g.lo), gap = 13;
+            if (yl - yh < gap) { var m = (yh + yl) / 2; yh = m - gap / 2; yl = m + gap / 2; }
+            o.push('<text class="t-tick" x="' + (x0 - 7) + '" y="' + px(yh + 4) + '" text-anchor="end">' + g.hi + '</text>');
+            o.push('<text class="t-tick" x="' + (x0 - 7) + '" y="' + px(yl + 4) + '" text-anchor="end">' + g.lo + '</text>');
+          }
+        }
+      });
+
+      // the reading for the selected day: a ring on each trace and the date in the band
+      o.push('<g id="fl-read" visibility="hidden">');
+      geoRows.forEach(function (g, r) { o.push('<circle id="fl-ring-' + r + '" r="5.5" fill="var(--paper)" stroke="var(--pen)" stroke-width="2.5"/>'); });
+      o.push('<text class="t-tag" id="fl-tag" y="' + (bandH - 7) + '" text-anchor="middle"></text></g>');
+
+      var first = !S.drawn;
+      var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var first = !S.drawn && !still;
+      S.drawn = true;
+      host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" height="' + H + '" aria-hidden="true"' + (first ? ' class="drawing inking"' : '') + '>' + o.join('') + '</svg>';
+      S.geo = { W: W, x0: x0, x1: x1, cw: cw, n: n, rows: geoRows, bandH: bandH, cx: cx };
+
+      // the pen draws the traces once, when the sheet first opens
+      if (first) {
+        var svg = host.firstChild, traces = svg.querySelectorAll('.trace');
+        for (var t = 0; t < traces.length; t++) {
+          var len = Math.ceil(traces[t].getTotalLength()) + 1;
+          traces[t].style.strokeDasharray = len;
+          traces[t].style.strokeDashoffset = len;
+        }
+        // a timer, not an animation frame: frames do not run in a tab opened in the background
+        setTimeout(function () {
+          void svg.getBoundingClientRect(); // make sure the hidden start state has been applied
+          for (var t = 0; t < traces.length; t++) traces[t].style.strokeDashoffset = 0;
+          svg.classList.remove('drawing'); // lets the dots and figures fade in behind the pen
+        }, 40);
+        setTimeout(function () {
+          if (!svg.isConnected) return;
+          for (var t = 0; t < traces.length; t++) { traces[t].style.strokeDasharray = ''; traces[t].style.strokeDashoffset = ''; }
+          svg.classList.remove('inking');
+        }, 1200);
+      }
+
+      var sum = flowSummary();
+      $('flow').setAttribute('aria-label', sum + ' Use the left and right arrow keys to read each day.');
+      placeReading();
+    }
+
+    function flowSummary() {
+      var ds = logged();
+      if (!ds.length) return 'Census flowsheet, ' + spanWords() + ': nothing logged.';
+      var vals = ds.map(function (d) { return d.total; });
+      return 'Census flowsheet, ' + spanWords() + ': ' + ds[0].total + ' on ' + shortDate(ds[0].date) + ', ' + ds[ds.length - 1].total + ' on ' + shortDate(ds[ds.length - 1].date) +
+        '. Low ' + Math.min.apply(null, vals) + ', high ' + Math.max.apply(null, vals) + '.';
+    }
+
+    // which column the readout is on
+    function current() { return S.sel === null ? lastLoggedCol() : S.sel; }
+
+    function placeReading() {
+      var g = S.geo, i = current(), band = $('fl-band'), read = $('fl-read');
+      if (!g || !band || !read) return;
+      if (i < 0 || !S.cols[i] || !S.cols[i].d) { band.setAttribute('visibility', 'hidden'); read.setAttribute('visibility', 'hidden'); return; }
+      var d = S.cols[i].d, w = Math.max(g.cw, 3), x = g.cx(i);
+      band.setAttribute('x', (x - w / 2).toFixed(1));
+      band.setAttribute('visibility', 'visible');
+      g.rows.forEach(function (row, r) {
+        var ring = $('fl-ring-' + r), v = d[row.key];
+        if (!isNum(v)) { ring.setAttribute('visibility', 'hidden'); return; }
+        ring.setAttribute('visibility', 'inherit');
+        ring.setAttribute('cx', x.toFixed(1));
+        ring.setAttribute('cy', row.y(v).toFixed(1));
+      });
+      var tag = $('fl-tag');
+      tag.textContent = dayName(d.date);
+      var half = 46;
+      tag.setAttribute('x', Math.max(g.x0 + half, Math.min(g.x1 - half, x)).toFixed(1));
+      // the date tag only shows while a day other than the resting one is being read
+      var reading = S.sel !== null;
+      tag.setAttribute('visibility', reading ? 'inherit' : 'hidden');
+      read.setAttribute('visibility', reading ? 'visible' : 'hidden');
+    }
+
+    var TRI_UP = '<svg width="11" height="11" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8.5H1z" fill="currentColor"/></svg>';
+    var TRI_DOWN = '<svg width="11" height="11" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5 1 1.5h8z" fill="currentColor"/></svg>';
+
+    function readout() {
+      var i = current();
+      var d = i >= 0 && S.cols[i] ? S.cols[i].d : null;
+      if (!d) { $('r-num').textContent = '–'; $('r-day').textContent = ''; $('r-delta').textContent = ''; return; }
+      $('r-num').textContent = d.total;
+      $('r-day').textContent = fullDate(d.date);
+      var prev = S.days[d.i - 1];
+      if (!prev) $('r-delta').textContent = 'First day on record';
+      else {
+        var diff = d.total - prev.total;
+        $('r-delta').innerHTML = diff === 0
+          ? 'No change from ' + esc(DOW[dowOf(prev.date)])
+          : (diff > 0 ? TRI_UP : TRI_DOWN) + '<span>' + (diff > 0 ? 'up ' : 'down ') + Math.abs(diff) + ' from ' + esc(DOW[dowOf(prev.date)]) + '</span>';
+      }
+      ['private', 'medicaid', 'snf'].forEach(function (k) {
+        var v = d[k];
+        $('r-' + k).textContent = isNum(v) ? v : '–';
+        $('r-' + k + '-pct').textContent = isNum(v) && d.total ? Math.round(v * 100 / d.total) + '%' : '';
+      });
+      $('r-latest').hidden = !(S.pinned && S.sel !== null);
+      // mark the same day in the log
+      var rows = $('log-body').children;
+      for (var r = 0; r < rows.length; r++) rows[r].classList.toggle('on', S.sel !== null && rows[r].getAttribute('data-date') === d.date);
+    }
+
+    function select(i, pinned) {
+      var k = i === null ? null : nearestLogged(i);
+      if (k === -1) k = null;
+      if (k === lastLoggedCol()) k = null; // the latest day is where the sheet rests, so reading it is the same as no selection
+      if (k === S.sel && pinned === S.pinned) return;
+      S.sel = k;
+      S.pinned = k !== null && !!pinned;
+      placeReading();
+      readout();
+    }
+
+    function facts() {
+      var ds = logged(), host = $('facts');
+      if (!ds.length) { host.innerHTML = ''; return; }
+      var vals = ds.map(function (d) { return d.total; });
+      var sum = vals.reduce(function (a, b) { return a + b; }, 0);
+      var hi = Math.max.apply(null, vals), lo = Math.min.apply(null, vals);
+      var lastOf = function (v) { for (var j = ds.length - 1; j >= 0; j--) if (ds[j].total === v) return ds[j]; };
+      var countOf = function (v) { return vals.filter(function (x) { return x === v; }).length; };
+      var first = ds[0], end = ds[ds.length - 1], diff = end.total - first.total;
+      var paySum = function (k) { return ds.reduce(function (a, d) { return a + (isNum(d[k]) ? d[k] : 0); }, 0); };
+      var when = function (v) { var c = countOf(v); return c > 1 ? c + ' days, last on ' + shortDate(lastOf(v).date) : dayName(lastOf(v).date); };
+      var box = function (label, v, n, cls) { return '<div' + (cls ? ' class="' + cls + '"' : '') + '><span class="lbl">' + label + '</span><p class="v">' + v + '</p><p class="n">' + n + '</p></div>'; };
+      host.innerHTML =
+        box('Average', (sum / ds.length).toFixed(1), 'residents a day over ' + ds.length + (ds.length === 1 ? ' day' : ' days')) +
+        box('High', hi, esc(when(hi))) +
+        box('Low', lo, esc(when(lo))) +
+        box('Change', diff === 0 ? 'none' : (diff > 0 ? 'up ' : 'down ') + Math.abs(diff), first.total + ' on ' + esc(shortDate(first.date)) + ', ' + end.total + ' on ' + esc(shortDate(end.date))) +
+        box('Resident days', commas(sum), commas(paySum('private')) + ' private pay, ' + commas(paySum('medicaid')) + ' Medicaid, ' + commas(paySum('snf')) + ' skilled', 'full');
+    }
+
+    function monthsTable() {
+      var groups = {}, order = [];
+      S.days.forEach(function (d) {
+        var m = monthOf(d.date);
+        if (!groups[m]) { groups[m] = []; order.push(m); }
+        groups[m].push(d);
+      });
+      var avg = function (ds, k) { var xs = ds.filter(function (d) { return isNum(d[k]); }); return xs.length ? (xs.reduce(function (a, d) { return a + d[k]; }, 0) / xs.length).toFixed(1) : '–'; };
+      var html = '';
+      order.slice().reverse().forEach(function (m) {
+        var ds = groups[m], vals = ds.map(function (d) { return d.total; });
+        var sum = vals.reduce(function (a, b) { return a + b; }, 0);
+        var end = ds[ds.length - 1], partial = end.date < monthEnd(m);
+        var on = S.span.kind === 'month' && S.span.month === m;
+        html += '<tr data-month="' + m + '"' + (on ? ' class="on"' : '') + '>' +
+          '<td><button type="button" data-month="' + m + '">' + esc(monthLabel(m, true)) + '</button>' + (partial ? '<span class="sub">through the ' + ordinal(parts(end.date)[2]) + '</span>' : '') + '</td>' +
+          '<td class="strong">' + (sum / ds.length).toFixed(1) + '</td>' +
+          '<td>' + Math.max.apply(null, vals) + '</td>' +
+          '<td>' + Math.min.apply(null, vals) + '</td>' +
+          '<td>' + end.total + '</td>' +
+          '<td>' + avg(ds, 'private') + '</td>' +
+          '<td>' + avg(ds, 'medicaid') + '</td>' +
+          '<td>' + avg(ds, 'snf') + '</td>' +
+          '<td>' + commas(sum) + '</td></tr>';
+      });
+      $('months-body').innerHTML = html;
+    }
+
+    var LOG_FIRST = 45;
+    function logTable() {
+      var ds = logged().slice().reverse();
+      var showing = S.logAll ? ds : ds.slice(0, LOG_FIRST);
+      var html = '';
+      showing.forEach(function (d) {
+        var prev = S.days[d.i - 1], diff = prev ? d.total - prev.total : null;
+        var cell = function (v) { return '<td>' + (isNum(v) ? v : '–') + '</td>'; };
+        html += '<tr data-date="' + d.date + '"><td>' + esc(dayName(d.date)) + '</td><td class="strong">' + d.total + '</td>' +
+          '<td>' + (diff === null ? '–' : diff === 0 ? '0' : (diff > 0 ? '+' : '−') + Math.abs(diff)) + '</td>' +
+          cell(d.private) + cell(d.medicaid) + cell(d.snf) + '</tr>';
+      });
+      $('log-body').innerHTML = html;
+      var r = spanRange();
+      $('log-span').textContent = ds.length ? shortDate(ds[ds.length - 1].date) + ' to ' + shortDate(ds[0].date) + ', newest first' : 'Nothing logged in ' + shortDate(r.from) + ' to ' + shortDate(r.to);
+      var more = $('log-more');
+      more.hidden = S.logAll || ds.length <= LOG_FIRST;
+      more.textContent = 'Show all ' + ds.length + ' days';
+    }
+
+    function downloadCsv(ds, name) {
+      var lines = ['date,in_house,private_pay,medicaid,skilled'];
+      ds.forEach(function (d) { lines.push([d.date, d.total, isNum(d.private) ? d.private : '', isNum(d.medicaid) ? d.medicaid : '', isNum(d.snf) ? d.snf : ''].join(',')); });
+      var url = URL.createObjectURL(new Blob([lines.join('\n') + '\n'], { type: 'text/csv' }));
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    }
+
+    // ---------- events ----------
+    document.querySelector('.spans').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-span]');
+      if (!b) return;
+      var v = b.getAttribute('data-span');
+      setSpan({ kind: 'trail', n: v === 'all' ? 'all' : Number(v) });
+    });
+
+    $('m-name').addEventListener('click', function () { setSpan({ kind: 'month', month: S.span.kind === 'month' ? S.span.month : latestMonth() }); });
+    $('m-prev').addEventListener('click', function () { setSpan({ kind: 'month', month: shiftMonth(S.span.kind === 'month' ? S.span.month : latestMonth(), -1) }); });
+    $('m-next').addEventListener('click', function () { if (S.span.kind === 'month') setSpan({ kind: 'month', month: shiftMonth(S.span.month, 1) }); });
+
+    $('months-body').addEventListener('click', function (e) {
+      var tr = e.target.closest('tr[data-month]');
+      if (!tr) return;
+      setSpan({ kind: 'month', month: tr.getAttribute('data-month') });
+      $('finding').scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    });
+
+    $('log-more').addEventListener('click', function () { S.logAll = true; logTable(); readout(); });
+    $('csv-span').addEventListener('click', function () {
+      var ds = logged();
+      if (ds.length) downloadCsv(ds, 'health-center-census_' + ds[0].date + '_to_' + ds[ds.length - 1].date + '.csv');
+    });
+    $('csv-all').addEventListener('click', function () { downloadCsv(S.days, 'health-center-census_' + S.days[0].date + '_to_' + latest().date + '.csv'); });
+    $('r-latest').addEventListener('click', function () { select(null); });
+    $('state-retry').addEventListener('click', function () { show('state', 'Loading the census log.', false); refresh(); });
+
+    // reading the sheet: the mouse reads as it moves and lets go when it leaves;
+    // a finger or the arrow keys leave the day selected
+    var flow = $('flow');
+    function colAt(clientX) {
+      var g = S.geo, svg = $('flow-svg').firstChild;
+      if (!g || !svg) return -1;
+      var r = svg.getBoundingClientRect();
+      var x = (clientX - r.left) * (g.W / r.width);
+      return Math.floor((x - g.x0) / g.cw);
+    }
+    flow.addEventListener('pointermove', function (e) {
+      if (e.target.closest && !e.target.closest('#flow-svg')) return;
+      if (e.pointerType === 'mouse') select(colAt(e.clientX), false);
+      else if (e.buttons || e.pressure > 0) select(colAt(e.clientX), true);
+    });
+    flow.addEventListener('pointerdown', function (e) {
+      if (e.target.closest && !e.target.closest('#flow-svg')) return;
+      if (e.pointerType !== 'mouse') select(colAt(e.clientX), true);
+    });
+    flow.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse' && !S.pinned) select(null); });
+    flow.addEventListener('keydown', function (e) {
+      var i = current(), next = null;
+      if (e.key === 'ArrowLeft') next = i - 1;
+      else if (e.key === 'ArrowRight') next = i + 1;
+      else if (e.key === 'Home') next = 0;
+      else if (e.key === 'End') next = S.cols.length - 1;
+      else if (e.key === 'Escape') { select(null); $('flow-say').textContent = ''; return; }
+      else return;
+      e.preventDefault();
+      // step over days with nothing logged, in the direction of travel
+      var dir = next < i ? -1 : 1;
+      while (next >= 0 && next < S.cols.length && !S.cols[next].d) next += dir;
+      if (next < 0 || next >= S.cols.length) return;
+      select(next, true);
+      var d = S.cols[current()].d;
+      $('flow-say').textContent = fullDate(d.date) + ': ' + d.total + ' in house. ' + d.private + ' private pay, ' + d.medicaid + ' Medicaid, ' + d.snf + ' skilled.';
+    });
+
+    var resizeTimer = null, lastW = 0;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        var w = $('flow').clientWidth;
+        if (w === lastW || !S.days.length || $('content').hidden) return;
+        lastW = w;
+        drawFlow();
+      }, 120);
+    });
+
+    window.addEventListener('hashchange', function () { var s = spanFromHash(); if (s && S.days.length) setSpan(s, true); });
+
+    // ---------- start ----------
+    S.span = spanFromHash() || S.span;
+    try { setData(JSON.parse(localStorage.getItem(CACHE_KEY) || '[]')); } catch (e) {}
+    if (S.days.length) { show('content'); render(); }
+    else show('state', 'Loading the census log.', false);
+    refresh().then(function () { poke().then(function (moved) { if (moved) setTimeout(refresh, 2500); }); });
+    setInterval(function () { if (document.visibilityState === 'visible') keepFresh(); }, 600000);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') keepFresh(); });
+  </script>
+</body>
+</html>
