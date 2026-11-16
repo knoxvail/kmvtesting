@@ -101,6 +101,7 @@ function drawHome() {
     const at = going ? E.cursor(S) : null;
     button = `<button class="btn" type="button" data-act="go">${going ? (at ? 'Keep going' : 'Finish') : 'Start'}${icon.go}</button>`;
     if (E.isRest(S, t) && !going) sub = 'Rest day. This is the next session.';
+    if (S.off?.[t] && !going) sub = 'Marked as a day you did not lift.';
     list = listFor(day, S.draft?.log);
     under = E.canAssume(S, day) ? `<button class="link quiet" type="button" data-act="as-written">Did it all as written</button>` : '';
   }
@@ -149,7 +150,7 @@ const panels = { lift: el('p-lift'), food: el('p-food'), go: el('p-go'), days: e
 const draw = { lift: drawLift, food: drawFood, go: drawGo, days: drawDays, day: drawDay, week: drawWeek };
 
 function openPanel(name) {
-  if (name === 'go' && !S.draft && !E.sessionOn(S, today())) { E.ensureDraft(S, today()); save(); }
+  if (name === 'go' && !S.draft && !E.sessionOn(S, today())) { E.ensureDraft(S, today()); if (S.off) delete S.off[today()]; save(); }
   if (name === 'go' && !S.draft) name = 'lift';
   if (name === 'lift') ui.tab = null;
   if (name === 'go') ui.go = null;
@@ -405,7 +406,7 @@ function drawDay() {
         <span class="ln">${esc(n.name)}</span>
         <span class="lw">${n.reps ? `${E.fmtW(n.w)}<i> × </i>${n.reps.join(' · ')}` : '<i>skipped</i>'}</span>
       </button>`).join('') + `<button class="link quiet" type="button" data-act="del-session" data-date="${d}">Remove this workout</button>`
-      : (S.draft && S.draft.date === d ? '<p class="empty">Today\'s workout is still open. Finish it in lifting mode.</p>' : '<p class="empty">No workout logged that day.</p>')}`);
+      : (S.draft && S.draft.date === d ? '<p class="empty">Today\'s workout is still open. Finish it in lifting mode.</p>' : `<p class="empty">${S.off?.[d] ? 'Marked as a day you did not lift.' : E.plannedOn(S, d) ? 'No workout logged that day.' : 'Rest day.'}</p>${d < today() && E.plannedOn(S, d) ? `<button class="link quiet" type="button" data-act="log-day" data-date="${d}">Log this day's workout as written</button>` : ''}`)}`);
 }
 
 /* ---------- Lifting mode ---------- */
@@ -660,6 +661,7 @@ function goalsSheet(first) {
     field('Protein per day, grams', stepper('protein', p.protein, 5, 20, 400, 'Protein goal in grams')) +
     field('Lifting days per week', stepper('days', p.days, 1, 1, 7, 'Lifting days per week')) +
     field('Sleep per night, hours', stepper('sleep', p.sleep, 0.25, 4, 12, 'Sleep goal in hours')) +
+    `<label class="check"><input type="checkbox" name="auto" ${S.auto === false ? '' : 'checked'}><span>Assume I lift every planned day and hit everything</span></label>` +
     `<label class="check"><input type="checkbox" name="calAuto" ${p.calAuto === false ? '' : 'checked'}><span>Set my calories from my weigh-ins</span></label>` +
     field('Pounds to gain per week', stepper('goalRate', p.goalRate ?? 0.5, 0.25, 0, 2, 'Pounds to gain per week')) +
     field('Calories per day, only if the box above is off', `<input name="calories" type="number" inputmode="numeric" min="0" max="9000" value="${p.calories || ''}" placeholder="Skip">`) +
@@ -670,6 +672,7 @@ function goalsSheet(first) {
     f => commit(S => {
       S.profile = { protein: +f.protein || 180, days: Math.min(7, Math.max(1, +f.days || 5)), sleep: +f.sleep || 8, calories: +f.calories || 0, carbs: +f.carbs || 0, fat: +f.fat || 0, calAuto: !!f.calAuto, goalRate: f.goalRate === '' ? 0.5 : Math.max(0, Math.min(2, +f.goalRate)) };
       S.setup = true;
+      S.auto = !!f.auto;
     }));
   // Closing the first-run sheet any other way keeps the defaults. Either
   // way it is done, so it never comes back on the next open.
@@ -890,6 +893,7 @@ const acts = {
   'sleep-on': n => sleepSheet(n.dataset.date),
   'weigh-on': n => weighSheet(n.dataset.date),
   days: () => openPanel('days'),
+  'log-day': n => commit(S => { delete (S.off ||= {})[n.dataset.date]; E.assumeDay(S, n.dataset.date); }),
   'week-now': () => { weekTried = 0; maybeWeekly(); drawWeek(); },
   'open-day': n => { ui.date = n.dataset.date; openPanel('day'); },
   'day-step': n => { const next = addDays(ui.date, +n.dataset.dir); ui.date = next > today() ? today() : next; drawDay(); },
@@ -908,6 +912,7 @@ const acts = {
           const l = S.lifts[note.id], i = l ? l.history.findIndex(e => e.d === date) : -1;
           if (i >= 0) { l.history.splice(i, 1); l.sessions = Math.max(0, l.sessions - 1); }
         }
+        (S.off ||= {})[date] = true;       // so it is not logged as written again
         const last = S.sessions[S.sessions.length - 1] === sess;
         S.sessions = S.sessions.filter(s => s !== sess);
         if (last) S.pointer = (S.pointer - 1 + S.rotation.length) % S.rotation.length;
@@ -951,7 +956,7 @@ const acts = {
   'as-written': () => {
     const snap = snapshot();
     const day = S.draft?.day ?? E.dayFor(S, today());
-    commit(S => { E.ensureDraft(S, today()).done = true; });
+    commit(S => { delete (S.off ||= {})[today()]; E.ensureDraft(S, today()).done = true; });
     say(`${cap(day)} logged as written.`, snap);
   },
   usual: n => {
@@ -1216,6 +1221,9 @@ function act(r, t, day) {
     if (closed || S.draft?.done) { msg = 'Today is already logged.'; undo = false; }
     else if (!E.canAssume(S, day) && !E.draftActive(S.draft)) { msg = `${cap(day)} is still learning your numbers. Log the sets in lifting mode.`; undo = false; }
     else { commit(S => { E.ensureDraft(S, t).done = true; }); msg = `${cap(day)} logged as written.`; }
+  } else if (r.type === 'off') {
+    if (S.draft?.date === t && E.draftActive(S.draft)) { msg = 'You already logged sets today. Tell me which lift you missed instead.'; undo = false; }
+    else { commit(S => { (S.off ||= {})[t] = true; if (S.draft?.date === t) S.draft = null; }); msg = 'Okay. Today is marked as a day you did not lift.'; }
   } else if (r.type === 'weight') {
     commit(S => { (S.weights ||= {})[t] = r.lb; });
     msg = `Bodyweight: ${r.lb} lb.`;
@@ -1346,9 +1354,11 @@ setInterval(() => {
 }, 250);
 
 function wake() {
-  // A session left open from an earlier day closes itself. That is a real
-  // change, so it goes through commit and gets saved like any other.
-  if (S.draft && S.draft.date !== today()) commit(S => E.rollOver(S, today()));
+  // A session left open from an earlier day closes itself, and every planned day that
+  // passed with nothing logged counts as done as written. Both are real changes, so
+  // they go through commit and get saved like any other.
+  const t = today();
+  if ((S.draft && S.draft.date !== t) || E.autoPending(S, t).length) commit(S => { E.rollOver(S, t); E.autoLog(S, t); });
   else refresh();
   maybeWeekly();
   if (ui.panel === 'go') keepAwake(!S.draft?.done);
@@ -1370,6 +1380,7 @@ el('restore').addEventListener('change', async e => {
 if (!S.baseline1) commit(S => E.applyBaseline(S, today()));
 // Then his real program (all three days, the weekly schedule, and Monday's push) goes in once.
 if (!S.baseline2) commit(S => E.applyBaseline2(S));
+if (!S.baseline3) commit(S => E.applyBaseline3(S));
 
 shell();
 wake();

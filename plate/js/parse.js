@@ -98,6 +98,12 @@ export function read(S, raw, dayIds) {
     return { type: 'lift', id: l.id, w, reps, inDay: dayIds.includes(l.id) };
   }
 
+  // A day you did not lift. Only when no lift is named, so "skipped curls" still skips curls.
+  if (/^(?:i\s+)?(?:skipped|skip|missed|miss)(?:\s+(?:the\s+)?(?:workout|lift|lifting|gym|training|session|today))?$/.test(text) ||
+      /^(?:rest day|off day|day off|no (?:workout|lift|lifting|gym|training) today|(?:i\s+)?(?:didn'?t|did not) (?:lift|train|work ?out|go to the gym)(?: today)?|took (?:today|the day) off)$/.test(text)) {
+    return { type: 'off' };
+  }
+
   // The whole session, as planned.
   if (/^(?:(?:push|pull|legs?)\s*(?:day)?\s*)?(?:is\s+)?(?:done|finished|complete|completed)$/.test(text) ||
       /^(?:did|finished|done with)\s+(?:it|push|pull|legs?|the workout|my workout)(?:\s+day)?(?:\s+as written)?$/.test(text)) {

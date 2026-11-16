@@ -229,6 +229,57 @@ export function dayFor(S, date) {
   for (let i = 0; i < 7; i++) { const d = S.week[(idx + i) % 7]; if (d) return d; }
   return S.rotation[0];
 }
+// ---------- Assuming every planned day happened ----------
+// On a training day nobody has to log anything. Each planned day that passed
+// with no session counts as done exactly as planned, unless it was marked as
+// missed. Only the lifts you do every time are assumed, never the extras.
+const addD = (date, n) => { const d = new Date(date + 'T12:00:00'); d.setDate(d.getDate() + n); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+export const plannedOn = (S, date) => (S.week ? S.week[(new Date(date + 'T12:00:00').getDay() + 6) % 7] || null : null);
+
+export function autoPending(S, date) {
+  if (!S.auto || !S.autoFrom || !S.week) return [];
+  const out = [];
+  let from = S.autoFrom;
+  const floor = addD(date, -14);
+  if (from < floor) from = floor;
+  for (let d = from; d < date; d = addD(d, 1)) {
+    if (S.sessions.some(s => s.date === d) || S.off?.[d] || S.draft?.date === d) continue;
+    const day = plannedOn(S, d);
+    if (day && canAssume(S, day)) out.push(d);
+  }
+  return out;
+}
+
+// Log one day as written: every lift you do every time, hitting its plan.
+export function assumeDay(S, d) {
+  const day = plannedOn(S, d);
+  if (!day || !canAssume(S, day) || S.sessions.some(s => s.date === d)) return false;
+  const notes = [];
+  for (const id of S.order[day]) {
+    const l = S.lifts[id];
+    if (l.opt || l.weight == null || !l.targets) continue;
+    notes.push(applyResult(l, l.weight, [...l.targets], d));
+  }
+  S.sessions.push({ date: d, day, notes, auto: true });
+  S.sessions.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  return true;
+}
+
+export function autoLog(S, date) {
+  let n = 0;
+  for (const d of autoPending(S, date)) if (assumeDay(S, d)) n++;
+  return n;
+}
+
+export function applyBaseline3(S) {
+  if (S.baseline3) return false;
+  S.auto = true;
+  S.autoFrom = '2026-11-17';
+  S.off = S.off || {};
+  S.baseline3 = true;
+  return true;
+}
+
 export const isRest = (S, date) => !!S.week && !S.week[(new Date(date + 'T12:00:00').getDay() + 6) % 7];
 
 // A lift is part of today's session if it is not skipped, and, when it is an
