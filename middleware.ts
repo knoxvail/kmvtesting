@@ -21,9 +21,9 @@ const COOKIE = 'kmv_gate';
 const DEFAULT_TOKEN = '89f236b1c8175549abbfb0d928d46a8c9628cc0ad58533b5'; // same value in api/gate.mjs
 const OPEN = [/^\/api\//, /^\/plate(\/|$)/];
 
-// First rollout: only a test folder is locked, to prove the lock on the live
-// site before it goes in front of everything.
-export const config = { matcher: ['/gate-check/:path*'] };
+// Everything except the two open areas. The same two are checked again inside
+// the function, so a change to this pattern cannot lock them by accident.
+export const config = { matcher: ['/((?!api/|plate/|plate$).*)'] };
 
 export default function middleware(request: Request) {
   try {
