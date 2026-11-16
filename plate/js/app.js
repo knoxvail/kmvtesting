@@ -983,7 +983,7 @@ const acts = {
 
 // The camera opens straight away. The photo is shrunk, shown once, and sent to
 // be read if the AI is connected. It is never saved on the phone.
-const SOURCE = { label: 'From the label', published: 'Published numbers', matched: 'Matched online', estimate: 'Estimate' };
+const SOURCE = { label: 'From the label', published: 'Published numbers', matched: 'Matched online', saved: 'Saved from last time', standard: 'Standard values', estimate: 'Estimate' };
 
 function shrink(file) {
   return new Promise((done, fail) => {
@@ -1026,7 +1026,7 @@ el('cam').addEventListener('change', async e => {
       try {
         const m = await Sync.see(shot.split(',')[1], (f.note || '').trim());
         hideSay();
-        shotSheet(shot, m, `${SOURCE[m.source] || 'Estimate'}. ${esc(m.detail || '')}`);
+        shotSheet(shot, m, `${SOURCE[m.source] || 'Estimate'}${m.where ? ', ' + esc(m.where) : ''}. ${esc(m.detail || '')}`);
       } catch (err) {
         const why = err instanceof TypeError || err?.name === 'TimeoutError' ? 'offline' : err.message;
         hideSay();
@@ -1214,9 +1214,14 @@ function act(r, t, day) {
     commit(S => { S.sleep[t] = r.hours; });
     msg = `Sleep: ${fmtH(r.hours)}.`;
   } else if (r.type === 'food') {
-    commit(S => E.logFood(S, { name: r.name, protein: r.protein, calories: r.calories, carbs: r.carbs || 0, fat: r.fat || 0, source: r.source, keep: false, ...now(), id: uid() }));
+    commit(S => {
+      E.logFood(S, { name: r.name, protein: r.protein, calories: r.calories, carbs: r.carbs || 0, fat: r.fat || 0, source: r.source, where: r.where, keep: false, ...now(), id: uid() });
+      // Looked up once, kept for next time.
+      if (r.lookup && r.source !== 'estimate') E.keepKnown(S, r);
+    });
     const what = r.n === 0.5 ? 'Half a ' + r.name.toLowerCase() : (r.n !== 1 ? r.n + ' × ' : '') + (r.name || 'Protein');
-    msg = `${what}, ${r.source === 'estimate' ? 'about ' : ''}${r.protein} g.`;
+    const from = ['published', 'matched', 'saved', 'standard'].includes(r.source) ? SOURCE[r.source] : '';
+    msg = from ? `${what}, ${r.protein} g protein, ${r.calories} cal. ${from}${r.where ? ', ' + r.where : ''}.` : `${what}, ${r.source === 'estimate' ? 'about ' : ''}${r.protein} g.`;
   } else if (r.type === 'done') {
     if (closed || S.draft?.done) { msg = 'Today is already logged.'; undo = false; }
     else if (!E.canAssume(S, day) && !E.draftActive(S.draft)) { msg = `${cap(day)} is still learning your numbers. Log the sets in lifting mode.`; undo = false; }
@@ -1257,7 +1262,7 @@ function act(r, t, day) {
 
 // What the AI reader sends back, put into the shape the phone's own reader uses.
 function fromReader(a) {
-  if (a.type === 'food') return { type: 'food', name: a.name, protein: a.protein, calories: a.calories, carbs: a.carbs, fat: a.fat, detail: a.detail || '', n: 1, source: a.estimated ? 'estimate' : 'typed' };
+  if (a.type === 'food') return { type: 'food', name: a.name, protein: a.protein, calories: a.calories, carbs: a.carbs, fat: a.fat, detail: a.detail || '', n: 1, place: a.place || '', amount: a.amount || '', home: !!a.home, lookup: a.kind === 'lookup', source: a.source || (a.estimated ? 'estimate' : 'typed') };
   if (a.type === 'sleep') return { type: 'sleep', hours: a.hours };
   if (a.type === 'session_done') return { type: 'done' };
   if (a.type === 'remove_last_food') return { type: 'remove_food' };
@@ -1274,7 +1279,8 @@ function readerContext(day) {
     day,
     lifts: S.order[day].map(id => { const l = S.lifts[id]; return { id, name: l.name, sets: l.sets, planned_reps: l.targets, weight: l.weight }; }),
     other_lifts: Object.entries(S.order).filter(([d]) => d !== day).flatMap(([, ids]) => ids.map(id => S.lifts[id].name)),
-    usuals: E.usuals(S, new Date().getHours()).slice(0, 40).map(f => ({ name: f.name, protein: f.protein, calories: f.calories || 0 })),
+    usuals: E.usuals(S, new Date().getHours()).slice(0, 40).map(f => ({ name: f.name, protein: f.protein, calories: f.calories || 0, carbs: f.carbs || 0, fat: f.fat || 0 })),
+    known: (S.known || []).slice(-60).map(f => ({ name: f.name, place: f.place, amount: f.amount, protein: f.protein, calories: f.calories, carbs: f.carbs, fat: f.fat })),
     recent: S.messages.slice(-6).map(m => ({ said: m.text, did: m.did || '' })),
   };
 }
@@ -1287,10 +1293,10 @@ function reviewFoods(list) {
   const f = list.shift();
   if (!f) return;
   openSheet(`Check the estimate${list.length ? ` (${list.length} more after)` : ''}`,
-    `<p class="sub">This is a guess, so check it before it counts.${f.detail ? ' ' + esc(f.detail) : ''} Change any number you know is different. Keeping it as a usual makes it exact next time.</p>` +
+    `<p class="sub">${f.lookup ? 'Nothing was found online for this, so it is a guess.' : 'This is a guess, so check it before it counts.'}${f.detail ? ' ' + esc(f.detail) : ''} Change any number you know is different. What you log here is remembered for next time.</p>` +
     foodFields({ name: f.name, protein: f.protein, calories: f.calories, carbs: f.carbs, fat: f.fat }),
     'Log it',
-    form => { addFood(foodFrom(form, 'estimate')); setTimeout(() => reviewFoods(list), 80); });
+    form => { const x = foodFrom(form, 'estimate'); addFood(x); if (f.lookup) commit(S => E.keepKnown(S, { ...x, place: f.place, amount: f.amount, source: 'yours' })); setTimeout(() => reviewFoods(list), 80); });
 }
 
 async function handleText(raw) {
@@ -1311,9 +1317,21 @@ async function handleText(raw) {
   say('Reading.');
   try {
     const out = await Sync.ask(raw, readerContext(day));
-    const snap = snapshot();
     const read_ = (out.actions || []).map(fromReader).filter(Boolean);
-    // A food the AI had to estimate is shown for checking, not logged straight away.
+    // Anything ordered or cooked is looked up online before it is logged.
+    const look = read_.filter(a => a.type === 'food' && a.lookup);
+    if (look.length) {
+      say(`Looking up ${look.map(a => (a.place ? `${a.name} from ${a.place}` : a.name)).join(' and ')} online.`);
+      let got = null;
+      try { got = await Sync.find(look.map(a => ({ name: a.name, place: a.place, amount: a.amount, home: a.home })), raw); } catch (e) { got = null; }
+      look.forEach((a, i) => {
+        const g = got?.items?.[i];
+        if (g) Object.assign(a, { protein: g.protein, calories: g.calories, carbs: g.carbs, fat: g.fat, source: g.source, where: g.where || '', detail: g.detail || '' });
+        else { a.source = 'estimate'; a.detail = got ? '' : 'The lookup did not go through.'; }
+      });
+    }
+    const snap = snapshot();
+    // A food that is still a guess is shown for checking, not logged straight away.
     const est = read_.filter(a => a.type === 'food' && a.source === 'estimate');
     const done = read_.filter(a => !est.includes(a)).map(a => act(a, t, day));
     remember(raw, 'ai', done.map(d => d[0]).join(' ') || out.note || '');

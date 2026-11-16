@@ -22,6 +22,10 @@ const Action = z.object({
   carbs: z.number().nullable(),         // food: grams of carbohydrate for the amount eaten
   fat: z.number().nullable(),           // food: grams of fat for the amount eaten
   estimated: z.boolean().nullable(),    // food: true when the numbers are your estimate
+  kind: z.enum(['usual', 'saved', 'stated', 'standard', 'lookup']).nullable(), // food: where the numbers come from
+  place: z.string().nullable(),         // food to look up: restaurant, shop or brand, as he said it
+  amount: z.string().nullable(),        // food to look up: size, count and changes, in his words
+  home: z.boolean().nullable(),         // food to look up: true when cooked at home or plain food
   detail: z.string().nullable(),        // food: the pieces added up, like "2 eggs 12 g + toast 4 g"
   lift_id: z.string().nullable(),       // lift, skip_lift: an id from today's lifts
   weight: z.number().nullable(),        // lift: only if he used a different weight than planned
@@ -39,13 +43,21 @@ You get a JSON context and the message he typed or dictated. Dictation can garbl
 
 The context also holds recent, his last few messages with what was logged for each. Use it to understand words like "that", "it", "again" and "the other one".
 
-The context holds today's lifts (id, name, number of sets, the reps planned for each set, the planned weight), the names of lifts that belong to other days, and his usual foods with their protein and calories per serving.
+The context holds today's lifts (id, name, number of sets, the reps planned for each set, the planned weight), the names of lifts that belong to other days, his usual foods with their numbers per serving, and known_foods: things looked up for him before, each with the place, the amount the numbers are for, and the numbers.
 
 Entries you can return:
 
-food: one entry per food. Always give all four numbers: protein, calories, carbs and fat. If it matches one of his usuals, use that usual's name and its numbers multiplied by how many he had, and set estimated to false. If he states the protein himself, use his number and set estimated to false. Otherwise estimate protein, carbs and fat in grams and calories for the amount he describes, round to whole numbers, and set estimated to true. Build the estimate piece by piece: decide the amount of each part in grams, apply the reference values below, and add them up. Put the pieces in detail, for example "2 eggs 12 g + toast 4 g". Never round protein up. When the amount is unclear, assume the smaller portion. For a food from a named restaurant, shop, bakery or brand that is not one of his usuals, do not present numbers as if they were published. Say in detail that no published numbers are known for that place, use a cautious guess, and keep protein on the low side. Shop and bakery items vary a lot in size, so say what size you assumed.
+food: one entry per food or dish. Always give all four numbers: protein, calories, carbs and fat, as whole numbers for the amount he ate. Keep the name short, in his words, with a capital first letter. Set kind to say where the numbers come from:
 
-Reference protein values: cooked chicken breast 31 g per 100 g; cooked lean ground beef 26 g per 100 g; cooked steak 27 g per 100 g; cooked salmon 22 g per 100 g; cooked white fish 22 g per 100 g; egg 6 g each; egg white 3.6 g each; Greek yogurt 10 g per 100 g; cottage cheese 11 g per 100 g; whey protein scoop 24 g; milk 3.4 g per 100 ml; cooked rice 2.7 g per 100 g; cooked pasta 5 g per 100 g; bread slice 3 to 4 g; flour tortilla 3 to 4 g; cheddar 25 g per 100 g; peanut butter 4 g per tablespoon; almonds 21 g per 100 g; black beans cooked 9 g per 100 g; tofu firm 8 g per 100 g; protein bar 15 to 20 g. Meat and fish values are for cooked weight unless he says raw. Keep the name short, in his words, with a capital first letter.
+- "usual": it matches one of his usual_foods. Use that usual's name, and its numbers times how many he had.
+- "saved": it matches one of known_foods, the same item from the same place. Use its name and its numbers, scaled if he had a different amount than the one listed.
+- "stated": he gave the numbers himself, at least the protein. Use his numbers and fill in the rest only if he said them, otherwise 0.
+- "standard": one plain staple with a clear amount, where the value is settled: eggs, a scoop of whey, chicken breast by weight, rice by the cup, a glass of milk. Work it out from the reference values below and put the working in detail, for example "3 eggs, 6 g each".
+- "lookup": everything else. That means anything from a restaurant, shop, bakery, delivery order or packaged brand, and any cooked dish or meal with more than one part. Guessed numbers have been badly wrong for him, so the app looks these up online after you answer. Your job is to describe the food well enough to search for it. Set place to the restaurant, shop or brand exactly as he said it, or null. Set home to true when he cooked it or it is plain food with no source. Set amount to everything he said about size, count and changes, in his words, for example "2 everything bagels with cream cheese", "bowl, double chicken, no beans" or "about 8 oz chicken, a cup of rice, olive oil". Still fill in the four numbers with your best rough figures. They are only shown if the lookup fails.
+
+Set estimated to true for "lookup" and false for the others. When one message names several things from one order, return one entry per thing, each with the same place.
+
+Reference values for "standard": cooked chicken breast 31 g protein and 165 calories per 100 g; cooked lean ground beef 26 g and 250 per 100 g; cooked steak 27 g and 270 per 100 g; cooked salmon 22 g and 206 per 100 g; egg 6 g protein, 5 g fat, 72 calories each; egg white 3.6 g and 17 each; Greek yogurt 10 g and 60 to 100 per 100 g; whey protein scoop 24 g and 120; whole milk 8 g protein, 12 g carbs, 8 g fat, 150 calories per cup; cooked white rice 4 g protein, 45 g carbs, 205 calories per cup; peanut butter 4 g protein, 8 g fat, 95 calories per tablespoon; banana 1 g protein, 27 g carbs, 105 calories. Meat and fish are cooked weight unless he says raw.
 
 lift: only for a lift in today's list, using its id. Put in reps only the sets he mentions, with what he got. "Last set" means the highest set number. If he gives one number per set, map them in order. Set weight only when he says he used a different weight than planned.
 
@@ -69,7 +81,10 @@ function clean(out, context) {
     if (a.type === 'food') {
       const protein = num(a.protein, 0, 400);
       if (protein == null) continue;
-      actions.push({ type: 'food', name: String(a.name || '').slice(0, 40), protein: Math.round(protein), calories: Math.round(num(a.calories, 0, 6000) ?? 0), detail: String(a.detail || '').slice(0, 160), carbs: Math.round(num(a.carbs, 0, 1000) ?? 0), fat: Math.round(num(a.fat, 0, 500) ?? 0), estimated: a.estimated !== false });
+      const kind = ['usual', 'saved', 'stated', 'standard', 'lookup'].includes(a.kind) ? a.kind : (a.estimated === false ? 'stated' : 'lookup');
+      const source = { usual: 'usual', saved: 'saved', stated: 'typed', standard: 'standard', lookup: 'estimate' }[kind];
+      actions.push({ type: 'food', name: String(a.name || '').slice(0, 40), protein: Math.round(protein), calories: Math.round(num(a.calories, 0, 6000) ?? 0), detail: String(a.detail || '').slice(0, 160), carbs: Math.round(num(a.carbs, 0, 1000) ?? 0), fat: Math.round(num(a.fat, 0, 500) ?? 0),
+        kind, source, estimated: kind === 'lookup', place: String(a.place || '').slice(0, 80), amount: String(a.amount || '').slice(0, 240), home: a.home === true });
     } else if (a.type === 'lift' || a.type === 'skip_lift') {
       const l = lifts.get(String(a.lift_id));
       if (!l) continue;
@@ -107,6 +122,7 @@ export default async function handler(req, res) {
     lifts: (context.lifts || []).slice(0, 20),
     lifts_on_other_days: (context.other_lifts || []).slice(0, 40),
     usual_foods: (context.usuals || []).slice(0, 40),
+    known_foods: (context.known || []).slice(-60),
     recent: (context.recent || []).slice(-8).map(r => ({ said: String(r.said || '').slice(0, 200), did: String(r.did || '').slice(0, 200) })),
   });
   if (brief.length > 12_000) { res.status(413).json({ error: 'too_big' }); return; }

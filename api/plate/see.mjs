@@ -1,6 +1,6 @@
 // Plate: read a photo of food, a nutrition label, or a receipt.
 //   POST /api/plate/see  <- { image (base64 JPEG), note?, usuals? }
-//                        -> { name, protein, calories, carbs, fat, source, detail }
+//                        -> { name, protein, calories, carbs, fat, source, where, detail }
 // The order of trust:
 //   1. A nutrition label in the photo: its printed numbers are used as they are.
 //   2. Something ordered (a receipt, a named restaurant or brand, or what the
@@ -13,6 +13,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { allow, aiKey } from './_shared.mjs';
+import { lookup, guess } from './_food.mjs';
 
 export const config = { maxDuration: 60 };
 
@@ -30,16 +31,6 @@ const Look = z.object({
   label: z.object({ protein: z.number(), calories: z.number(), carbs: z.number(), fat: z.number() }).nullable(),
 });
 
-const Meal = z.object({
-  name: z.string(),                      // short name for the log
-  protein: z.number(),
-  calories: z.number(),
-  carbs: z.number(),
-  fat: z.number(),
-  source: z.enum(['label', 'published', 'matched', 'estimate']),
-  detail: z.string(),                    // one short sentence: where the numbers came from
-});
-
 const LOOK = `You look at one photo from a lifter logging what he ate, plus an optional note from him. Say what kind of photo it is and list what was eaten.
 
 kind "label": the photo shows a printed nutrition facts label. Fill label with the numbers for the amount he ate (one serving unless the note says otherwise) and list the product as the one item.
@@ -48,17 +39,6 @@ kind "plain": a photo of food with nothing that names it. List each food you can
 
 Use the note whenever it adds something. Do not guess a restaurant that is not shown or stated.`;
 
-const FIND = `Find nutrition numbers for what a person ate, using web search. For each item, find calories, protein, carbs and fat.
-
-If a restaurant or brand is given, find that restaurant's or brand's own published numbers for the exact item and any changes to it. Prefer the company's own nutrition page, then a nutrition database that quotes it.
-If no restaurant or brand is given, find the closest standard match for each food in a nutrition database such as USDA FoodData Central, as values per 100 grams, and work out the numbers for the amount given.
-
-Report each item with its numbers and where they came from. If you cannot find an item, say so plainly and give your best estimate, marked as an estimate.`;
-
-const SUM = `Turn the findings into one log entry for the whole meal: add the items together. Round to whole numbers. name is short, in plain words, with a capital first letter.
-source is "published" if the numbers came from the restaurant's or brand's own figures, "matched" if they came from a nutrition database match for the foods seen, and "estimate" if any main item had to be estimated. detail is one short plain sentence saying where the numbers came from.`;
-
-const textOf = msg => msg.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
 const n = (v, hi) => Math.round(Math.min(hi, Math.max(0, Number.isFinite(v) ? v : 0)));
 
 export default async function handler(req, res) {
@@ -95,47 +75,24 @@ export default async function handler(req, res) {
       return;
     }
 
-    // 2. Look the items up online.
-    const list = look.items.map(i => `- ${i.name}: ${i.amount}${i.grams ? ` (about ${Math.round(i.grams)} g)` : ''}`).join('\n');
-    const ask = `${look.place ? `Restaurant or brand: ${look.place}\n` : 'No restaurant or brand is known.\n'}Items eaten:\n${list}`;
-    let findings = '';
-    try {
-      const messages = [{ role: 'user', content: ask }];
-      let found;
-      // A search can pause the turn partway. Pick it up again, a few times at most.
-      for (let turn = 0; turn < 4; turn++) {
-        found = await client.messages.create({
-          model: MODEL,
-          max_tokens: 4096,
-          output_config: { effort: 'low' },
-          system: FIND,
-          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }],
-          messages,
-        });
-        if (found.stop_reason !== 'pause_turn') break;
-        messages.push({ role: 'assistant', content: found.content });
-      }
-      findings = textOf(found);
-    } catch (e) {
-      if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.RateLimitError) throw e;
-      findings = ''; // the lookup failed: fall back to an estimate below
-    }
+    // 2. Look the items up online, the same way typed food is looked up.
+    const items = look.items.slice(0, 6).map(i => ({
+      name: String(i.name).slice(0, 80), place: look.place ? String(look.place).slice(0, 80) : '',
+      amount: `${i.amount}${i.grams ? `, about ${Math.round(i.grams)} g judged from the photo` : ''}`.slice(0, 240),
+      home: look.kind === 'plain',
+    }));
+    let found = await lookup(client, items, words, 44000);
+    // 3. Nothing came back in time: a plain guess, labelled as one.
+    if (!found || found.some(f => !f)) found = await guess(client, items);
+    if (!found || found.some(f => !f)) { res.status(200).json({ error: 'unreadable' }); return; }
 
-    // 3. One entry for the meal.
-    const summed = await client.messages.parse({
-      model: MODEL,
-      max_tokens: 1024,
-      output_config: { effort: 'low', format: zodOutputFormat(Meal) },
-      system: SUM,
-      messages: [{ role: 'user', content: `${ask}\n\nFindings:\n${findings || 'The lookup found nothing. Estimate from typical values for these foods and amounts, and mark it as an estimate.'}` }],
-    });
-    const m = summed.parsed_output;
-    if (!m) { res.status(200).json({ error: 'unreadable' }); return; }
+    const sum = k => found.reduce((t, f) => t + f[k], 0);
+    const source = found.some(f => f.source === 'estimate') ? 'estimate' : found.some(f => f.source === 'matched') ? 'matched' : 'published';
     res.status(200).json({
-      name: String(m.name || title).slice(0, 40),
-      protein: n(m.protein, 400), calories: n(m.calories, 6000), carbs: n(m.carbs, 1000), fat: n(m.fat, 500),
-      source: findings ? m.source : 'estimate',
-      detail: String(m.detail || '').slice(0, 160),
+      name: title,
+      protein: n(sum('protein'), 400), calories: n(sum('calories'), 6000), carbs: n(sum('carbs'), 1000), fat: n(sum('fat'), 500),
+      source, where: found.find(f => f.where)?.where || '',
+      detail: found.map(f => f.detail).filter(Boolean).join(' ').slice(0, 240),
     });
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) res.status(503).json({ error: 'bad_ai_key' });

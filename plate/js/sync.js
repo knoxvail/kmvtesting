@@ -116,6 +116,13 @@ export async function ask(text, context) {
   return r.json;
 }
 
+// Look up real numbers online for foods the reader could not settle on its own.
+export async function find(items, said) {
+  const r = await call('find', 'POST', { items, said }, cfg.key, 70000);
+  if (r.status !== 200) throw new Error(code(r));
+  return r.json;
+}
+
 // Send one photo to be read. It takes a few seconds because the numbers are looked up online.
 export async function see(image, note) {
   const r = await call('see', 'POST', { image, note }, cfg.key, 60000);

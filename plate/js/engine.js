@@ -448,8 +448,20 @@ export function totalsOn(S, date) {
   return t;
 }
 
-export function logFood(S, { name, protein, calories = 0, carbs = 0, fat = 0, source, date, time, hour, id, keep }) {
-  S.foodLog.push({ id, date, time, name, protein, calories, carbs, fat, source });
+// Foods that were looked up once are kept, so the same order is exact and instant next time.
+const knownKey = (name, place) => `${String(place || '').toLowerCase().trim()}|${String(name || '').toLowerCase().trim()}`;
+export function keepKnown(S, f) {
+  if (!f.name) return;
+  const list = (S.known ||= []);
+  const k = knownKey(f.name, f.place);
+  const at = list.findIndex(x => knownKey(x.name, x.place) === k);
+  if (at >= 0) list.splice(at, 1);
+  list.push({ name: f.name, place: f.place || '', amount: f.amount || '', protein: f.protein, calories: f.calories || 0, carbs: f.carbs || 0, fat: f.fat || 0, source: f.source, where: f.where || '' });
+  if (list.length > 150) list.shift();
+}
+
+export function logFood(S, { name, protein, calories = 0, carbs = 0, fat = 0, source, where, date, time, hour, id, keep }) {
+  S.foodLog.push({ id, date, time, name, protein, calories, carbs, fat, source, ...(where ? { where } : {}) });
   if (!name) return;
   let f = S.foods.find(x => x.name.toLowerCase() === name.toLowerCase());
   if (!f) {
