@@ -1,43 +1,42 @@
 import { next } from '@vercel/functions';
 
-// The lock on the front door. Vercel runs this before it serves any page or
-// file. A browser that has typed the code holds a cookie and is let through;
-// anything else gets the number pad (for a page) or a plain "Locked." (for a
-// file a page was trying to load). The code itself is checked in api/gate.mjs,
-// which is what hands out the cookie.
+// The lock on the hub. The home page lists every project here, so it is the
+// one page that takes a code: Vercel runs this before serving it, a browser
+// that has typed the code holds a cookie and is let through, and anything else
+// gets the number pad. The code itself is checked in api/gate.mjs, which is
+// what hands out the cookie.
 //
-// Left open on purpose:
-//   /api/*    every function there has its own key
-//   /plate/*  a home-screen app that keeps a saved copy of itself; a lock in
-//             front of its files would stop it updating
+// Only the hub is locked. Every project page stays open to anyone who has its
+// address: the code is the key to the list, not to each page on it.
 //
-// What this is and is not: it keeps out anyone who lands on the address. The
-// cookie value and the code's hash below are fallbacks that live in a public
-// repository, so someone who reads the source can get past it. Setting
-// GATE_TOKEN and GATE_CODE in Vercel's environment (and redeploying) replaces
-// both with values that are not written down anywhere public.
+// What this is and is not: it keeps the list away from anyone who lands on
+// the address. The cookie value and the code's hash below are fallbacks that
+// live in a public repository, so someone who reads the source can get past
+// it. Setting GATE_TOKEN and GATE_CODE in Vercel's environment (and
+// redeploying) replaces both with values that are not written down anywhere
+// public.
 
 const COOKIE = 'kmv_gate';
 const DEFAULT_TOKEN = '89f236b1c8175549abbfb0d928d46a8c9628cc0ad58533b5'; // same value in api/gate.mjs
-const OPEN = [/^\/api\//, /^\/plate(\/|$)/];
+const LOCKED = ['/', '/index.html'];
 
-// Everything except the two open areas. The same two are checked again inside
-// the function, so a change to this pattern cannot lock them by accident.
-export const config = { matcher: ['/((?!api/|plate/|plate$).*)'] };
+// Vercel only runs this for the hub. The same list is checked again inside
+// the function, so a change to this pattern cannot lock anything else.
+export const config = { matcher: ['/', '/index.html'] };
 
 export default function middleware(request: Request) {
   try {
     const path = new URL(request.url).pathname;
-    if (OPEN.some((re) => re.test(path))) return next();
+    if (LOCKED.indexOf(path) === -1) return next();
 
     const env = ((globalThis as any).process && (globalThis as any).process.env) || {};
     const token: string = env.GATE_TOKEN || DEFAULT_TOKEN;
     const held = (request.headers.get('cookie') || '').split(';').some((c) => c.trim() === COOKIE + '=' + token);
     if (held) return next();
 
-    // a page someone is opening gets the number pad; a stylesheet, script,
-    // image or background request just gets told no, with a status that stops
-    // browsers and service workers from saving the answer as if it were the file
+    // someone opening the hub gets the number pad; a background request for
+    // it just gets told no, with a status that stops anything from saving the
+    // answer as if it were the page
     const dest = request.headers.get('sec-fetch-dest');
     const isPage = request.method === 'GET' && (dest ? dest === 'document' : (request.headers.get('accept') || '').includes('text/html'));
     if (!isPage) {
@@ -52,8 +51,8 @@ export default function middleware(request: Request) {
   }
 }
 
-// The number pad. Everything it needs is in this one string: no files to load,
-// because every file on the site is behind the lock.
+// The number pad. Everything it needs is in this one string, so it loads in
+// one request.
 const LOCK_PAGE = String.raw`<!DOCTYPE html>
 <html lang="en">
 <head>
