@@ -219,7 +219,7 @@ export function ensureDraft(S, date) {
   return S.draft;
 }
 export const entry = (d, id) => (d.log[id] ||= { reps: [] });
-export const draftActive = d => !!d && Object.values(d.log).some(g => g.skip || g.w != null || g.reps.some(x => x != null));
+export const draftActive = d => !!d && Object.values(d.log).some(g => g.skip || g.did || g.w != null || g.reps.some(x => x != null));
 
 // Which session a date belongs to. Follows the weekly schedule when there is
 // one (Monday push, Tuesday pull ...), and on a rest day shows the next session.
@@ -285,15 +285,68 @@ export const isRest = (S, date) => !!S.week && !S.week[(new Date(date + 'T12:00:
 // A lift is part of today's session if it is not skipped, and, when it is an
 // extra, only once you have said you are doing it.
 export const isLive = (l, g) => !g?.skip && (!l.opt || !!g);
-export const liveIds = (S, d) => S.order[d.day].filter(id => isLive(S.lifts[id], d.log[id]));
+// The lifts that belong to a session: the day's own list, then anything else he
+// said he did, whatever day it usually falls on.
+export const idsOf = (S, day, log) => [...S.order[day], ...Object.keys(log || {}).filter(id => S.lifts[id] && !S.order[day].includes(id))];
+export const liveIds = (S, d) => idsOf(S, d.day, d.log).filter(id => isLive(S.lifts[id], d.log[id]));
+
+// ---------- The memory of his lifts ----------
+// The app does not write his workout. It remembers every lift he has done and
+// what he did on it, so "did incline curls" is enough to log it.
+export const remembered = l => ({ w: l.weight ?? null, reps: l.targets || l.history[l.history.length - 1]?.reps || null });
+
+// A lift he names that the app has never seen goes straight into the memory,
+// as one that only counts when he says he did it.
+export function addLift(S, { id, name, kind, sets, day }) {
+  const k = ['barbell', 'dumbbell', 'stack', 'other'].includes(kind) ? kind : 'other';
+  const l = lift(id, String(name).trim().slice(0, 40), k, Math.max(1, Math.min(8, Math.round(+sets || 3))), 8, 12, 5, k === 'barbell' ? 150 : 90);
+  l.opt = true;
+  S.lifts[id] = l;
+  if (!Object.values(S.order).flat().includes(id)) S.order[DAYS.includes(day) ? day : DAYS[0]].push(id);
+  return l;
+}
+
+// The reps for one lift in one session: what he said, then what is remembered.
+function repsFor(l, g) {
+  const base = remembered(l).reps;
+  const reps = [];
+  let last = null;
+  for (let i = 0; i < l.sets; i++) {
+    const v = g.reps[i] ?? base?.[i] ?? last ?? base?.[base.length - 1];
+    if (v == null) break;
+    reps.push(v); last = v;
+  }
+  return reps;
+}
+
+// He names a lift after the day was already closed out. It still goes in.
+export function addToSession(S, date, id, w, said) {
+  const s = sessionOn(S, date), l = S.lifts[id];
+  if (!s || !l) return false;
+  const g = { reps: [] };
+  for (const [i, n] of Object.entries(said || {})) if (+i < l.sets) g.reps[+i] = n;
+  const ww = w ?? l.weight, reps = ww == null ? [] : repsFor(l, g);
+  s.notes = s.notes.filter(n => n.id !== id);
+  if (!reps.length) { if (w != null) l.weight = w; s.notes.push({ id, name: l.name, kind: 'noted' }); return true; }
+  s.notes.push(applyResult(l, ww, reps, date));
+  return true;
+}
+
+// He does not do this lift as a rule. It stops being assumed and stays in the memory.
+export function applyBaseline4(S) {
+  if (S.baseline4) return false;
+  if (S.lifts.row) S.lifts.row.opt = true;
+  S.baseline4 = true;
+  return true;
+}
 
 // Where lifting mode should be: the first set nobody has logged yet.
 export function cursor(S) {
   const d = S.draft;
   if (!d) return null;
-  for (const id of S.order[d.day]) {
+  for (const id of idsOf(S, d.day, d.log)) {
     const l = S.lifts[id], g = d.log[id];
-    if (!isLive(l, g)) continue;
+    if (!isLive(l, g) || g?.did) continue;
     for (let i = 0; i < l.sets; i++) if (g?.reps[i] == null) return { id, set: i };
   }
   return null; // every set is accounted for
@@ -355,20 +408,26 @@ export function finalize(S) {
   const d = S.draft;
   if (!d) return null;
   const notes = [];
-  for (const id of S.order[d.day]) {
+  for (const id of idsOf(S, d.day, d.log)) {
     const l = S.lifts[id], g = d.log[id] || { reps: [] };
     if (l.opt && !d.log[id]) continue;                       // an extra nobody mentioned
-    if (g.skip) { if (!l.opt) notes.push({ id, name: l.name, kind: 'skipped' }); continue; }
-    const w = g.w ?? l.weight;
-    if (w == null) continue;
-    let last = null;
-    const reps = [];
-    for (let i = 0; i < l.sets; i++) {
-      const v = g.reps[i] ?? (l.targets ? l.targets[i] : last);
-      if (v == null) break;
-      reps.push(v); last = v;
+    if (g.skip) {
+      if (!l.opt) {
+        notes.push({ id, name: l.name, kind: 'skipped' });
+        // Skipped two sessions running: it stops being assumed. He decides what he lifts.
+        l.skips = (l.skips || 0) + 1;
+        if (l.skips >= 2) { l.opt = true; l.skips = 0; }
+      }
+      continue;
     }
-    if (reps.length < l.sets) continue;
+    l.skips = 0;
+    const w = g.w ?? l.weight;
+    const reps = w == null ? [] : repsFor(l, g);
+    if (!reps.length) {
+      // He did it, but there are no numbers for it yet. It is still on the record.
+      if (d.log[id]) { if (g.w != null) l.weight = g.w; notes.push({ id, name: l.name, kind: 'noted' }); }
+      continue;
+    }
     notes.push(applyResult(l, w, reps, d.date));
   }
   S.sessions.push({ date: d.date, day: d.day, notes });

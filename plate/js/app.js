@@ -73,16 +73,16 @@ function drawHome() {
   const done = E.sessionOn(V, t);
   const d = V.draft;
   const day = d?.day ?? E.dayFor(V, t);
-  const ids = S.order[day].filter(id => !S.lifts[id].opt || d?.log?.[id]);
+  const ids = E.idsOf(S, day, d?.log).filter(id => !S.lifts[id].opt || d?.log?.[id]);
   text(el('h-date'), new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }));
 
   // The top of the screen is today's session: its name, one button, and the
   // lifts themselves with what is planned for each.
   const planOf = l => (l.weight == null ? 'new' : `${E.fmtW(l.weight)} × ${l.targets ? E.fmtReps(l.targets) : `${l.lo}–${l.hi}`}`);
-  const listFor = (dayName, log) => S.order[dayName].filter(id => !S.lifts[id].opt || log?.[id]).map(id => {
+  const listFor = (dayName, log) => E.idsOf(S, dayName, log).filter(id => !S.lifts[id].opt || log?.[id]).map(id => {
     const l = V.lifts[id], g = log?.[id];
     const n = (g?.reps || []).filter(x => x != null).length;
-    const state = g?.skip ? 'skipped' : n >= l.sets ? 'done' : n ? `${n} of ${l.sets}` : planOf(l);
+    const state = g?.skip ? 'skipped' : n >= l.sets || g?.did ? 'done' : n ? `${n} of ${l.sets}` : planOf(l);
     return `<li><button type="button" data-act="go-lift" data-id="${id}"><span>${esc(l.name)}</span><b>${state}</b></button></li>`;
   }).join('');
 
@@ -430,7 +430,7 @@ function selected() {
 
 function closeLine(d) {
   let sets = 0, short = 0, skipped = 0;
-  for (const id of S.order[d.day]) {
+  for (const id of E.idsOf(S, d.day, d.log)) {
     const l = S.lifts[id], g = d.log[id];
     if (g?.skip) { skipped++; continue; }
     for (let i = 0; i < l.sets; i++) {
@@ -542,7 +542,7 @@ function drawGo() {
   patch(el('g-ctl'), ctl);
 }
 
-const KIND = { jump: 'Weight goes up', hit: 'One more rep', short: 'Same again', ahead: 'New weight', learned: 'Plan set', learning: 'Learning', skipped: 'Skipped' };
+const KIND = { jump: 'Weight goes up', hit: 'One more rep', short: 'Same again', ahead: 'New weight', learned: 'Plan set', learning: 'Learning', skipped: 'Skipped', noted: 'Logged' };
 
 function drawSummary() {
   const V = E.project(S);
@@ -601,7 +601,7 @@ function stepLift(dir) {
 
 function pickSheet() {
   const d = S.draft;
-  const rows = S.order[d.day].map(id => {
+  const rows = E.idsOf(S, d.day, d.log).map(id => {
     const l = S.lifts[id], g = d.log[id];
     const n = (g?.reps || []).filter(x => x != null).length;
     return `<div class="pick">
@@ -977,7 +977,7 @@ const acts = {
     if (E.sessionOn(E.project(S), today())) { openPanel(S.draft ? 'go' : 'lift'); return; }
     openPanel('go');
     const id = n.dataset.id;
-    if (S.draft && S.order[S.draft.day].includes(id) && !S.draft.log[id]?.skip) { ui.go = { id, set: firstOpen(id) }; drawGo(); }
+    if (S.draft && E.idsOf(S, S.draft.day, S.draft.log).includes(id) && !S.draft.log[id]?.skip) { ui.go = { id, set: firstOpen(id) }; drawGo(); }
   },
 };
 
@@ -1236,22 +1236,53 @@ function act(r, t, day) {
     const last = [...S.foodLog].reverse().find(x => x.date === t);
     if (!last) { msg = 'Nothing logged today to remove.'; undo = false; }
     else { commit(S => { S.foodLog = S.foodLog.filter(x => x.id !== last.id); }); msg = `Removed ${last.name || 'the last entry'}.`; }
-  } else if (r.type === 'skip' || r.type === 'lift') {
+  } else if (r.type === 'demote') {
+    // He does not do this one as a rule. It stays in the memory and stops being assumed.
     const l = S.lifts[r.id];
-    if (closed) { msg = 'Today is already logged.'; undo = false; }
-    else if (!S.order[day].includes(r.id)) { msg = `${l.name} is not part of ${day} day.`; undo = false; }
-    else if (r.type === 'skip') {
-      commit(S => { E.entry(E.ensureDraft(S, t), r.id).skip = true; });
-      msg = `Skipping ${l.name.toLowerCase()} today.`;
-    } else {
+    commit(S => {
+      S.lifts[r.id].opt = true; S.lifts[r.id].skips = 0;
+      const g = S.draft?.log[r.id];
+      if (g && (g.skip || (!g.did && g.w == null && !g.reps.some(x => x != null)))) delete S.draft.log[r.id];
+    });
+    msg = `Okay. ${l.name} is no longer assumed. It only counts when you say you did it.`;
+  } else if (r.type === 'skip') {
+    const l = S.lifts[r.id];
+    if (closed) { msg = 'Today is already closed out, so there is nothing to skip.'; undo = false; }
+    else if (l.opt && !S.draft?.log[r.id]) { msg = `${l.name} only counts when you say you did it, so nothing was assumed.`; undo = false; }
+    else {
+      commit(S => { const g = E.entry(E.ensureDraft(S, t), r.id); g.skip = true; delete g.did; });
+      msg = `No ${l.name.toLowerCase()} today.${!l.opt && (l.skips || 0) >= 1 ? ' That is twice running, so I will stop assuming it.' : ''}`;
+    }
+  } else if (r.type === 'lift') {
+    // Any lift he names is logged: one from today, one from another day, or one the
+    // app has never seen. A new one goes into the memory on the spot.
+    const fresh = !S.lifts[r.id];
+    const id = fresh ? 'l' + uid() : r.id;
+    if (fresh && !r.name) { msg = 'Could not tell which lift that was. Say its name again.'; undo = false; }
+    else {
+      const before = fresh ? { w: null, reps: null } : E.remembered(S.lifts[id]);
+      const plan = fresh ? null : S.lifts[id].targets;
       commit(S => {
-        const g = E.entry(E.ensureDraft(S, t), r.id);
+        if (fresh) E.addLift(S, { id, name: r.name, kind: r.kind, sets: r.sets || (Object.keys(r.reps).length > 1 ? Object.keys(r.reps).length : 0), day });
+        const l = S.lifts[id];
+        if (S.off?.[t]) delete S.off[t];
+        if (closed) { E.addToSession(S, t, id, r.w, r.reps); return; }
+        const g = E.entry(E.ensureDraft(S, t), id);
+        delete g.skip;
         if (r.w != null) g.w = r.w;
         for (const [i, n] of Object.entries(r.reps)) if (+i < l.sets) g.reps[+i] = n;
+        if (!g.reps.some(x => x != null)) g.did = true;
       });
-      const bits = Object.entries(r.reps).map(([i, n]) => `set ${+i + 1}, ${n}${l.targets ? ` (plan ${l.targets[+i]})` : ''}`);
-      if (r.w != null) bits.unshift(`at ${E.fmtW(r.w)}`);
-      msg = `${l.name}: ${bits.join('; ')}.`;
+      const l = S.lifts[id], n = Object.keys(r.reps).length;
+      const same = n > 1 && new Set(Object.values(r.reps)).size === 1 && n === l.sets;
+      const bits = same ? [`${n} × ${Object.values(r.reps)[0]}`] : Object.entries(r.reps).map(([i, x]) => `set ${+i + 1}, ${x}${plan ? ` (plan ${plan[+i]})` : ''}`);
+      if (same && r.w != null) bits[0] = `${E.fmtW(r.w)} × ${Object.values(r.reps)[0]}, ${n} sets`;
+      else if (r.w != null) bits.unshift(`at ${E.fmtW(r.w)}`);
+      const w = r.w ?? before.w;
+      if (fresh) msg = bits.length ? `New lift, ${l.name}: ${bits.join('; ')}. I will remember it.` : `${l.name} is in your lifts now and counted for today. Tell me the weight and reps once and I will remember them.`;
+      else if (n) msg = `${l.name}: ${bits.join('; ')}.`;
+      else if (w != null && before.reps) msg = `${l.name}: ${E.fmtW(w)} × ${E.fmtReps(before.reps.slice(0, l.sets))}, as remembered.`;
+      else msg = `${l.name} is counted for today. Tell me the weight and reps once and I will remember them.`;
     }
   } else {
     msg = 'Could not read that. Try "shake", "40g chicken", "slept 7.5" or "bench last set 6".';
@@ -1267,18 +1298,25 @@ function fromReader(a) {
   if (a.type === 'session_done') return { type: 'done' };
   if (a.type === 'remove_last_food') return { type: 'remove_food' };
   if (a.type === 'skip_lift' && S.lifts[a.lift_id]) return { type: 'skip', id: a.lift_id };
-  if (a.type === 'lift' && S.lifts[a.lift_id]) {
-    return { type: 'lift', id: a.lift_id, w: a.weight, reps: Object.fromEntries((a.reps || []).map(x => [x.set - 1, x.reps])) };
+  if (a.type === 'drop_lift' && S.lifts[a.lift_id]) return { type: 'demote', id: a.lift_id };
+  if (a.type === 'lift') {
+    const reps = Object.fromEntries((a.reps || []).map(x => [x.set - 1, x.reps]));
+    if (S.lifts[a.lift_id]) return { type: 'lift', id: a.lift_id, w: a.weight, reps };
+    // A lift the app has never seen. If the name is one it does know, use that one.
+    const name = String(a.name || '').trim();
+    const old = Object.values(S.lifts).find(l => l.name.toLowerCase() === name.toLowerCase());
+    if (old) return { type: 'lift', id: old.id, w: a.weight, reps };
+    if (name) return { type: 'lift', name, kind: a.equipment, sets: a.sets, w: a.weight, reps };
   }
   return null;
 }
 
-// What the AI reader needs to know to read a message: today's lifts and the usual foods.
+// What the AI reader needs to know to read a message: every lift he has, with what is
+// remembered for each, and the usual foods.
 function readerContext(day) {
   return {
     day,
-    lifts: S.order[day].map(id => { const l = S.lifts[id]; return { id, name: l.name, sets: l.sets, planned_reps: l.targets, weight: l.weight }; }),
-    other_lifts: Object.entries(S.order).filter(([d]) => d !== day).flatMap(([, ids]) => ids.map(id => S.lifts[id].name)),
+    lifts: Object.entries(S.order).flatMap(([d, ids]) => ids.map(id => { const l = S.lifts[id], m = E.remembered(l); return { id, name: l.name, usual_day: d, assumed_today: d === day && !l.opt, sets: l.sets, reps: m.reps, weight: m.w }; })),
     usuals: E.usuals(S, new Date().getHours()).slice(0, 40).map(f => ({ name: f.name, protein: f.protein, calories: f.calories || 0, carbs: f.carbs || 0, fat: f.fat || 0 })),
     known: (S.known || []).slice(-60).map(f => ({ name: f.name, place: f.place, amount: f.amount, protein: f.protein, calories: f.calories, carbs: f.carbs, fat: f.fat })),
     recent: S.messages.slice(-6).map(m => ({ said: m.text, did: m.did || '' })),
@@ -1304,11 +1342,13 @@ async function handleText(raw) {
   const day = S.draft?.day ?? E.dayFor(S, today());
   const r = read(S, raw, S.order[day]);
 
-  // The phone reads the common messages itself, with no wait.
+  // The phone reads the common messages itself, with no wait. With no connection it
+  // also takes its own best reading of a lift it has never seen.
   if (r.type !== 'unread' || !Sync.connected()) {
     const snap = snapshot();
-    const [msg, undo] = act(r, t, day);
-    remember(raw, r.type, msg);
+    const use = r.type === 'unread' && r.maybe ? r.maybe : r;
+    const [msg, undo] = act(use, t, day);
+    remember(raw, use.type, msg);
     say(msg, undo ? snap : null);
     return;
   }
@@ -1339,6 +1379,8 @@ async function handleText(raw) {
     if (!done.length) { say(out.note || 'Nothing in that to log.'); return; }
     say(done.map(d => d[0]).join(' ') + (out.note ? ' ' + out.note : ''), done.some(d => d[1]) ? snap : null);
   } catch (e) {
+    // The reader could not be reached. A lift is still logged from the phone's own reading.
+    if (r.maybe) { const snap = snapshot(); const [msg, undo] = act(r.maybe, t, day); remember(raw, 'lift', msg); say(msg, undo ? snap : null); return; }
     remember(raw, 'unread');
     const why = e instanceof TypeError || e?.name === 'TimeoutError' ? 'offline' : e.message;
     say(`${problem(why)} For now, type a usual, grams, or a lift and reps.`);
@@ -1399,6 +1441,8 @@ if (!S.baseline1) commit(S => E.applyBaseline(S, today()));
 // Then his real program (all three days, the weekly schedule, and Monday's push) goes in once.
 if (!S.baseline2) commit(S => E.applyBaseline2(S));
 if (!S.baseline3) commit(S => E.applyBaseline3(S));
+// He does not do rows as a rule, so they stop being assumed.
+if (!S.baseline4) commit(S => E.applyBaseline4(S));
 
 shell();
 wake();

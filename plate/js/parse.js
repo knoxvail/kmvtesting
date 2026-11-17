@@ -8,7 +8,7 @@ const ALIASES = {
   fly: ['chest fly', 'flies', 'flys', 'fly'],
   latraise: ['lateral raise', 'lat raise', 'laterals', 'lateral', 'raises'],
   pushdown: ['tricep pushdown', 'pushdowns', 'pushdown', 'push down', 'triceps', 'tricep'],
-  curl: ['incline curl', 'curls', 'curl'],
+  curl: ['seated incline curl', 'incline bicep curl', 'incline biceps', 'incline bicep', 'incline curls', 'incline curl', 'curls', 'curl'],
   squat: ['squats', 'squat'],
   rdl: ['romanian deadlift', 'romanian', 'rdls', 'rdl'],
   dbbench: ['dumbbell bench', 'db bench', 'dumbbell press'],
@@ -31,13 +31,24 @@ const ALIASES = {
 };
 const ORDINAL = { first: 0, '1st': 0, second: 1, '2nd': 1, third: 2, '3rd': 2, fourth: 3, '4th': 3, fifth: 4, '5th': 4 };
 
+// Words that can sit in front of a lift's name without changing which lift it is.
+const PLAIN = new Set(("i i'm we my the a an some and then also just did do done doing hit added add got finished in on for of at to with too no not never skip skipped skipping missed didn't don't " +
+  "stop assuming counting adding take out more any heavy light last first second third final extra few today today's push pull legs leg day set sets reps x").split(' '));
+
 function findLift(S, text) {
   let best = null;
   for (const l of Object.values(S.lifts)) {
     const names = [...(ALIASES[l.id] || []), l.name.toLowerCase()];
     for (const a of names) {
       const at = text.indexOf(a);
-      if (at >= 0 && (!best || a.length > best.alias.length)) best = { lift: l, alias: a };
+      if (at < 0) continue;
+      // A one-word name with another word in front is a different lift:
+      // "hammer curls" is not his curl, "cable rows" is not his barbell row.
+      if (!a.includes(' ')) {
+        const prev = text.slice(0, at).trim().split(' ').pop();
+        if (prev && /^[a-z'-]+$/.test(prev) && !PLAIN.has(prev)) continue;
+      }
+      if (!best || a.length > best.alias.length) best = { lift: l, alias: a };
     }
   }
   return best;
@@ -55,7 +66,38 @@ function findFood(S, text) {
 
 const COUNT = { a: 1, an: 1, one: 1, two: 2, double: 2, three: 3, triple: 3, four: 4, half: 0.5 };
 
+// The weight and reps in what is left of a lift message once the name is taken out.
+// Returns null when there are numbers it cannot place.
+function numbers(rest, sets, top) {
+  let w = null, m;
+  const reps = {};
+  // "3 sets of 10", "3x10" comes out first, so "40 for 3 sets of 10" reads as 40 pounds.
+  const sx = rest.match(/\b(\d)\s*(?:sets?\s*(?:of|x|×)?|x|×)\s*(\d{1,2})\b/);
+  if (sx) rest = rest.replace(sx[0], ' ');
+  const wr = sx ? null : rest.match(/(\d{2,3}(?:\.5)?)s?\s*(?:x|×|for)\s*(\d{1,2})/);
+  if (wr) w = +wr[1];
+  let body = (wr ? rest.replace(wr[0], ' ') : rest).replace(/(?:at|with|@)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)|\b(\d{2,3})s\b/g, (_, a, b, c) => { w = +(a ?? b ?? c); return ' '; });
+  if (sx) {
+    if (w == null && (m = body.match(/\b\d{2,3}(?:\.5)?\b/))) w = +m[0];
+    for (let i = 0; i < Math.min(8, +sx[1]); i++) reps[i] = +sx[2];
+    return { w, reps, sets: +sx[1] };
+  }
+  if (wr) { for (let i = 0; i < (top ? 1 : sets); i++) reps[i] = +wr[2]; return { w, reps }; }
+  if ((m = body.match(/(?:last|final)(?:\s+set)?\D{0,10}(\d{1,2})|(\d{1,2})\D{0,12}(?:last|final)/))) reps[sets - 1] = +(m[1] ?? m[2]);
+  else if ((m = body.match(/(first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)(?:\s+set)?\D{0,10}(\d{1,2})/))) reps[ORDINAL[m[1]]] = +m[2];
+  else if ((m = body.match(/set\s*(\d)\D{1,10}(\d{1,2})/))) reps[+m[1] - 1] = +m[2];
+  else {
+    const nums = (body.match(/\b\d{1,2}\b/g) || []).map(Number);
+    if (nums.length === sets) nums.forEach((n, i) => { reps[i] = n; });
+    else if (nums.length === 1) reps[sets - 1] = nums[0];
+    else if (nums.length > 1) return null;
+  }
+  return { w, reps };
+}
+
 // Returns { type, ... } or { type: 'unread' }.
+// An unread message can carry "maybe": the phone's own best reading of a lift it has
+// never seen, used when the AI reader cannot be reached.
 export function read(S, raw, dayIds) {
   const text = raw.toLowerCase().replace(/[,;!]/g, ' ').replace(/\s+/g, ' ').trim();
   if (!text) return { type: 'empty' };
@@ -77,25 +119,17 @@ export function read(S, raw, dayIds) {
   if (hit) {
     const l = hit.lift;
     const rest = text.replace(hit.alias, ' ');
-    if (/\b(skip|skipped|skipping|no|didn'?t do)\b/.test(rest)) return { type: 'skip', id: l.id };
-    let w = null;
-    const wr = rest.match(/(\d{2,3})s?\s*(?:x|×|for)\s*(\d{1,2})/);
-    if (wr) w = +wr[1];
-    let body = (wr ? rest.replace(wr[0], ' ') : rest).replace(/(?:at|with|@)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)/g, (_, a, b) => { w = +(a ?? b); return ' '; });
-    const reps = {};
-    if (wr) for (let i = 0; i < (l.style === 'top' ? 1 : l.sets); i++) reps[i] = +wr[2];
-    m = wr ? null : body.match(/(?:last|final)(?:\s+set)?\D{0,10}(\d{1,2})|(\d{1,2})\D{0,12}(?:last|final)/);
-    if (m) reps[l.sets - 1] = +(m[1] ?? m[2]);
-    else if ((m = body.match(/(first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)(?:\s+set)?\D{0,10}(\d{1,2})/))) reps[ORDINAL[m[1]]] = +m[2];
-    else if ((m = body.match(/set\s*(\d)\D{1,10}(\d{1,2})/))) reps[+m[1] - 1] = +m[2];
-    else {
-      const nums = (body.match(/\b\d{1,2}\b/g) || []).map(Number);
-      if (nums.length === l.sets) nums.forEach((n, i) => { reps[i] = n; });
-      else if (nums.length === 1) reps[l.sets - 1] = nums[0];
-      else if (nums.length > 1) return { type: 'unread' };
+    // "I don't do rows", "stop assuming rows": it stops being assumed from now on.
+    if (/\b(?:don'?t do|do not do|never do|stop (?:assuming|counting|adding)|take (?:it |that |them )?out|no more)\b/.test(rest)) return { type: 'demote', id: l.id };
+    if (/\b(skip|skipped|skipping|no|not doing|didn'?t do|did not do|missed)\b/.test(rest)) return { type: 'skip', id: l.id };
+    const got = numbers(rest, l.sets, l.style === 'top');
+    if (!got) return { type: 'unread' };
+    if (got.w == null && !Object.keys(got.reps).length) {
+      // Just the name, or "did incline curls": he did it, at what is remembered.
+      const bare = !rest.replace(/\b(i|just|also|did|done|do|hit|added|add|threw in|finished|got|some|a|an|the|my|today|too|and|then|as well|sets?|in)\b/g, ' ').trim();
+      return bare ? { type: 'lift', id: l.id, w: null, reps: {}, inDay: dayIds.includes(l.id) } : { type: 'unread' };
     }
-    if (w == null && !Object.keys(reps).length) return { type: 'unread' };
-    return { type: 'lift', id: l.id, w, reps, inDay: dayIds.includes(l.id) };
+    return { type: 'lift', id: l.id, w: got.w, reps: got.reps, inDay: dayIds.includes(l.id) };
   }
 
   // A day you did not lift. Only when no lift is named, so "skipped curls" still skips curls.
@@ -125,6 +159,17 @@ export function read(S, raw, dayIds) {
     const name = text.replace(grams[0], ' ').replace(cals ? cals[0] : '', ' ')
       .replace(/\b(of|protein|ate|had|i|a|an|the|with|for|and|about|around)\b/g, ' ').replace(/\s+/g, ' ').trim();
     return { type: 'food', name: name ? name[0].toUpperCase() + name.slice(1) : '', protein: g, calories: cals ? +cals[1] : 0, n: 1, source: 'typed' };
+  }
+
+  // "did hammer curls 35 for 10": a lift the app has never seen. The AI reader gets
+  // the first look, since it can tell a new lift from a garbled old one.
+  m = text.match(/^(?:i\s+)?(?:also\s+|just\s+|then\s+)?(?:did|added|add|threw in|hit)\s+(?:some\s+|a\s+|an\s+|in\s+)?([a-z][a-z' -]{2,38}?)(?=\s+\d|\s+at\b|\s+for\b|\s+with\b|\s*$)/);
+  if (m && !/\b(protein|calories|cals?|grams?|ate|eaten|slept|sleep|it|that|this|everything|nothing|all|today|workout)\b/.test(m[1])) {
+    const got = numbers(text.slice(m[0].length), 3, false);
+    if (got) {
+      const name = m[1].trim().replace(/s$/, '').replace(/^./, c => c.toUpperCase());
+      return { type: 'unread', maybe: { type: 'lift', name, w: got.w, reps: got.reps, sets: got.sets || null } };
+    }
   }
 
   return { type: 'unread' };
