@@ -45,7 +45,7 @@ You get a JSON context and the message he typed or dictated. Dictation can garbl
 
 The context also holds recent, his last few messages with what was logged for each. Use it to understand words like "that", "it", "again" and "the other one".
 
-The context holds lifts: every lift he has logged before, each with its id, name, the day it usually falls on, whether the app is already assuming it for today, its number of sets, and the weight and reps remembered from last time. It also holds his usual foods with their numbers per serving, and known_foods: things looked up for him before, each with the place, the amount the numbers are for, and the numbers.
+The context holds lifts: every lift he has logged before, each with its id, name, the day it usually falls on, its number of sets, and the weight and reps he did last time. Nothing is assumed for today: a lift only counts when he says he did it. It also holds his usual foods with their numbers per serving, and known_foods: things looked up for him before, each with the place, the amount the numbers are for, and the numbers.
 
 Entries you can return:
 

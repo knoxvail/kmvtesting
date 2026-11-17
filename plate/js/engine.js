@@ -295,6 +295,14 @@ export const liveIds = (S, d) => idsOf(S, d.day, d.log).filter(id => isLive(S.li
 // what he did on it, so "did incline curls" is enough to log it.
 export const remembered = l => ({ w: l.weight ?? null, reps: l.targets || l.history[l.history.length - 1]?.reps || null });
 
+// Record one lift. With no written workout, what is remembered for next time is
+// exactly what he did, not a plan that asks for more.
+function record(S, l, w, reps, date) {
+  const note = applyResult(l, w, reps, date);
+  if (S.free) { l.weight = w; l.targets = [...reps]; l.missStreak = 0; note.kind = 'noted'; note.next = null; }
+  return note;
+}
+
 // A lift he names that the app has never seen goes straight into the memory,
 // as one that only counts when he says he did it.
 export function addLift(S, { id, name, kind, sets, day }) {
@@ -325,10 +333,21 @@ export function addToSession(S, date, id, w, said) {
   if (!s || !l) return false;
   const g = { reps: [] };
   for (const [i, n] of Object.entries(said || {})) if (+i < l.sets) g.reps[+i] = n;
-  const ww = w ?? l.weight, reps = ww == null ? [] : repsFor(l, g);
+  const ww = w ?? remembered(l).w, reps = ww == null ? [] : repsFor(l, g);
   s.notes = s.notes.filter(n => n.id !== id);
   if (!reps.length) { if (w != null) l.weight = w; s.notes.push({ id, name: l.name, kind: 'noted' }); return true; }
-  s.notes.push(applyResult(l, ww, reps, date));
+  s.notes.push(record(S, l, ww, reps, date));
+  return true;
+}
+
+// No written workout at all. Nothing is assumed, on any day. He says what he did
+// and that is what is logged and tracked.
+export function applyBaseline5(S) {
+  if (S.baseline5) return false;
+  for (const l of Object.values(S.lifts)) l.opt = true;
+  S.auto = false;
+  S.free = true;
+  S.baseline5 = true;
   return true;
 }
 
@@ -421,14 +440,14 @@ export function finalize(S) {
       continue;
     }
     l.skips = 0;
-    const w = g.w ?? l.weight;
+    const w = g.w ?? remembered(l).w;
     const reps = w == null ? [] : repsFor(l, g);
     if (!reps.length) {
       // He did it, but there are no numbers for it yet. It is still on the record.
       if (d.log[id]) { if (g.w != null) l.weight = g.w; notes.push({ id, name: l.name, kind: 'noted' }); }
       continue;
     }
-    notes.push(applyResult(l, w, reps, d.date));
+    notes.push(record(S, l, w, reps, d.date));
   }
   S.sessions.push({ date: d.date, day: d.day, notes });
   S.pointer = (S.pointer + 1) % S.rotation.length;

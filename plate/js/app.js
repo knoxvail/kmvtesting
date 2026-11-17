@@ -87,7 +87,21 @@ function drawHome() {
   }).join('');
 
   let title = day, sub = '', button = '', list = '', under = '';
-  if (done) {
+  if (S.free) {
+    // No written workout. The screen shows what he has said he did today, with the numbers.
+    title = 'today';
+    const log = d?.date === t ? d.log : null;
+    const rows = log ? E.idsOf(S, d.day, log).filter(id => log[id] && !log[id].skip).map(id => {
+      const l = S.lifts[id], g = log[id], m = E.remembered(l), w = g.w ?? m.w;
+      const said = g.reps.filter(x => x != null);
+      const reps = said.length ? (said.length === l.sets ? said : g.reps.map((x, i) => x ?? m.reps?.[i]).filter(x => x != null)) : m.reps;
+      const state = w != null && reps?.length ? `${E.fmtW(w)} × ${E.fmtReps(reps.slice(0, l.sets))}` : 'no numbers yet';
+      return `<li><button type="button" data-act="lift" data-id="${id}"><span>${esc(l.name)}</span><b>${state}</b></button></li>`;
+    }).join('') : '';
+    const past = done ? done.notes.filter(n => n.kind !== 'skipped').map(n => `<li><button type="button" data-act="lift" data-id="${n.id}"><span>${esc(n.name)}</span><b>${n.reps ? `${E.fmtW(n.w)} × ${E.fmtReps(n.reps)}` : 'no numbers yet'}</b></button></li>`).join('') : '';
+    list = past + rows;
+    if (!list) sub = S.off?.[t] ? 'Marked as a day you did not lift.' : 'Nothing logged yet. Say what you lifted and it goes here.';
+  } else if (done) {
     const nextDay = E.dayFor(V, addDays(t, 1));
     title = done.day;
     sub = `Done today. ${cap(nextDay)} is next:`;
@@ -1224,6 +1238,8 @@ function act(r, t, day) {
     msg = from ? `${what}, ${r.protein} g protein, ${r.calories} cal. ${from}${r.where ? ', ' + r.where : ''}.` : `${what}, ${r.source === 'estimate' ? 'about ' : ''}${r.protein} g.`;
   } else if (r.type === 'done') {
     if (closed || S.draft?.done) { msg = 'Today is already logged.'; undo = false; }
+    else if (S.free && !E.draftActive(S.draft)) { msg = 'Nothing is logged for today yet. Tell me what you lifted.'; undo = false; }
+    else if (S.free) { msg = 'Today is saved. Anything you add later still goes in.'; undo = false; }
     else if (!E.canAssume(S, day) && !E.draftActive(S.draft)) { msg = `${cap(day)} is still learning your numbers. Log the sets in lifting mode.`; undo = false; }
     else { commit(S => { E.ensureDraft(S, t).done = true; }); msg = `${cap(day)} logged as written.`; }
   } else if (r.type === 'off') {
@@ -1261,7 +1277,7 @@ function act(r, t, day) {
     if (fresh && !r.name) { msg = 'Could not tell which lift that was. Say its name again.'; undo = false; }
     else {
       const before = fresh ? { w: null, reps: null } : E.remembered(S.lifts[id]);
-      const plan = fresh ? null : S.lifts[id].targets;
+      const plan = fresh || S.free ? null : S.lifts[id].targets;
       commit(S => {
         if (fresh) E.addLift(S, { id, name: r.name, kind: r.kind, sets: r.sets || (Object.keys(r.reps).length > 1 ? Object.keys(r.reps).length : 0), day });
         const l = S.lifts[id];
@@ -1443,6 +1459,8 @@ if (!S.baseline2) commit(S => E.applyBaseline2(S));
 if (!S.baseline3) commit(S => E.applyBaseline3(S));
 // He does not do rows as a rule, so they stop being assumed.
 if (!S.baseline4) commit(S => E.applyBaseline4(S));
+// No written workout: nothing is assumed, he says what he did.
+if (!S.baseline5) commit(S => E.applyBaseline5(S));
 
 shell();
 wake();
