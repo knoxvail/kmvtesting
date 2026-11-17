@@ -16,9 +16,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* A census flowsheet: ruled paper, one pen, one highlighter.
+    /* A census flowsheet: ruled paper and one pen.
        paper / ink / muted are text and surface; rule and rule-strong are the
-       sheet's lines; pen is the only data color; marker is the selected day. */
+       sheet's lines; pen is the only data color, and the line that reads a
+       day; wash is a pale tint of the pen for a selected row in a table. */
     :root {
       --paper: #FFFFFF;
       --ink: #14171C;
@@ -26,7 +27,7 @@
       --rule: #D5DCE4;
       --rule-strong: #AEB9C5;
       --pen: #2456A6;
-      --marker: #FFF1A8;
+      --wash: #E9EFF9;
       --weekend: #F4F6F8;
       --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       --cond: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
@@ -105,7 +106,7 @@
 
     /* phone: the count with its day beside it, then the three payer boxes in a row */
     .readout { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 16px; align-items: end; border-top: 1px solid var(--rule-strong); padding-top: 12px; }
-    .readout > .lbl { grid-column: 1 / -1; }
+    .r-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 24px; }
     .r-num { font: 600 68px/0.95 var(--sans); letter-spacing: -0.03em; margin-top: 4px; }
     .r-when { min-width: 0; padding-bottom: 3px; }
     .r-day { font-weight: 500; }
@@ -119,11 +120,15 @@
     .r-pay dd { font: 500 19px/1.2 var(--mono); }
     .r-pay dd.pct { color: var(--muted); font-weight: 400; font-size: 15px; }
 
-    .r-latest { grid-column: 1 / -1; justify-self: start; margin-top: 10px; min-height: 44px; padding: 0 14px; border: 1px solid var(--rule-strong); font: 500 15px/1 var(--sans); }
-    .r-latest[hidden] { display: none; }
+    /* always takes its place in the row, shown or not, so pinning a day never
+       moves the sheet under the pointer; the negative margin gives it a tall
+       touch target without making the row taller */
+    .r-latest { visibility: hidden; margin: -12px 0; padding: 12px 0 12px 12px; font: 500 15px/1 var(--sans); white-space: nowrap; text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 3px; }
+    .r-latest.show { visibility: visible; }
+    .r-latest:hover { text-decoration-color: var(--ink); }
 
     .flow { min-width: 0; outline-offset: 4px; }
-    .flow svg { display: block; width: 100%; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+    .flow svg { display: block; width: 100%; touch-action: pan-y; -webkit-user-select: none; user-select: none; cursor: crosshair; }
     .flow-note { margin-top: 10px; color: var(--muted); font-size: 15.5px; }
 
     .say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -135,7 +140,8 @@
     .t-end { font: 600 15px/1 var(--mono); fill: var(--ink); }
     .t-end.small { font-size: 13.5px; }
     .t-note { font: 500 12px/1 var(--mono); fill: var(--muted); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
-    .t-tag { font: 500 12.5px/1 var(--mono); fill: var(--ink); }
+    .t-read-v { font: 600 13.5px/1 var(--mono); fill: var(--ink); }
+    .t-read-d { font: 500 12.5px/1 var(--mono); fill: var(--muted); }
 
     .t-end.halo { paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
 
@@ -179,10 +185,10 @@
 
     .months tbody tr { cursor: pointer; }
     .months tbody tr:hover td { background: var(--weekend); }
-    .months tbody tr.on td { background: var(--marker); }
+    .months tbody tr.on td { background: var(--wash); }
     .months td button { font: inherit; text-align: left; text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 3px; }
 
-    .log tbody tr.on td { background: var(--marker); }
+    .log tbody tr.on td { background: var(--wash); }
 
     .text-btn { min-height: 44px; padding: 0 2px; font: 500 15.5px/1 var(--sans); text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 3px; }
     .text-btn:hover { text-decoration-color: var(--ink); }
@@ -227,7 +233,6 @@
       .r-pay div:first-child { border-top: 0; }
       .r-pay dt { grid-column: auto; margin-bottom: 0; }
       .r-pay dd { font-size: 17px; text-align: right; }
-      .r-latest { margin-top: 16px; }
       .facts { grid-template-columns: repeat(5, 1fr); }
       .facts > div.full { grid-column: auto; border-top: 0; border-left: 1px solid var(--rule); }
     }
@@ -275,7 +280,10 @@
 
       <div class="work">
         <aside class="readout" aria-label="The selected day">
-          <span class="lbl">In house</span>
+          <div class="r-head">
+            <span class="lbl">In house</span>
+            <button type="button" class="r-latest" id="r-latest">Back to latest</button>
+          </div>
           <p class="r-num" id="r-num"></p>
           <div class="r-when">
             <p class="r-day" id="r-day"></p>
@@ -286,12 +294,11 @@
             <div><dt>Medicaid</dt><dd id="r-medicaid"></dd><dd class="pct" id="r-medicaid-pct"></dd></div>
             <div><dt>Skilled</dt><dd id="r-snf"></dd><dd class="pct" id="r-snf-pct"></dd></div>
           </dl>
-          <button type="button" class="r-latest" id="r-latest" hidden>Back to the latest day</button>
         </aside>
 
         <figure class="flow" id="flow" tabindex="0" role="group">
           <div id="flow-svg"></div>
-          <figcaption class="flow-note">Move across the sheet to read any day. The three payer rows share one scale, so a step of one resident is the same height in each.</figcaption>
+          <figcaption class="flow-note">Move across the sheet to read any day, and click or tap to hold one. The three payer rows share one scale, so a step of one resident is the same height in each.</figcaption>
           <p class="say" id="flow-say" aria-live="polite"></p>
         </figure>
       </div>
@@ -397,8 +404,9 @@
       byDate: {},
       span: { kind: 'trail', n: 30 },
       cols: [],            // one column per calendar day in the span; d is null where nothing is logged
-      sel: null,           // column index being read, null = the latest day in the span
-      pinned: false,       // the selection was set by touch or keys, so it stays put
+      colOf: {},           // date -> column, for days that have a count
+      pin: null,           // date held by a click, a tap, a drag or the arrow keys
+      hover: null,         // date under the mouse right now
       logAll: false,
       drawn: false,
       geo: null
@@ -487,6 +495,8 @@
       var r = spanRange(), a = dayNum(r.from), b = dayNum(r.to), cols = [];
       for (var n = a; n <= b; n++) { var iso = isoOf(n); cols.push({ date: iso, d: S.byDate[iso] || null }); }
       S.cols = cols;
+      S.colOf = {};
+      cols.forEach(function (c, i) { if (c.d) S.colOf[c.date] = i; });
     }
 
     function logged() { return S.cols.filter(function (c) { return c.d; }).map(function (c) { return c.d; }); }
@@ -502,8 +512,8 @@
 
     function setSpan(span, quiet) {
       S.span = span;
-      S.sel = null;
-      S.pinned = false;
+      S.pin = null;
+      S.hover = null;
       S.logAll = false;
       if (!quiet) {
         var h = span.kind === 'month' ? span.month : String(span.n);
@@ -637,9 +647,6 @@
         });
       }
 
-      // the selected day, under the ink
-      o.push('<rect id="fl-band" x="0" y="' + (bandH - 20) + '" width="' + px(Math.max(cw, 3)) + '" height="' + (H - bandH + 19) + '" fill="var(--marker)" visibility="hidden"/>');
-
       // total row: value lines
       var g0 = geoRows[0];
       g0.ticks.forEach(function (t) {
@@ -769,17 +776,21 @@
         }
       });
 
-      // the reading for the selected day: a ring on each trace and the date in the band
-      o.push('<g id="fl-read" visibility="hidden">');
+      // The reading for one day: a pen line down the sheet from under the date
+      // band (so it never runs through the day numbers), a ring where it meets
+      // each trace, and the count and date in a small tag beside the point on
+      // the total. Drawn last, so it sits over everything it crosses.
+      o.push('<g id="fl-read" visibility="hidden">' +
+        '<line id="fl-line" x1="0" x2="0" y1="' + (bandH + 1) + '" y2="' + (H - 1) + '" stroke="var(--pen)" stroke-width="1.5"/>');
       geoRows.forEach(function (g, r) { o.push('<circle id="fl-ring-' + r + '" r="5.5" fill="var(--paper)" stroke="var(--pen)" stroke-width="2.5"/>'); });
-      o.push('<text class="t-tag" id="fl-tag" y="' + (bandH - 7) + '" text-anchor="middle"></text></g>');
+      o.push('<rect id="fl-label-bg" x="0" y="0" width="10" height="22" fill="var(--paper)" stroke="var(--pen)" stroke-width="1"/>' +
+        '<text id="fl-label-text"><tspan id="fl-label-v" class="t-read-v"></tspan><tspan id="fl-label-d" class="t-read-d" dx="7"></tspan></text></g>');
 
-      var first = !S.drawn;
       var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var first = !S.drawn && !still;
       S.drawn = true;
       host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" height="' + H + '" aria-hidden="true"' + (first ? ' class="drawing inking"' : '') + '>' + o.join('') + '</svg>';
-      S.geo = { W: W, x0: x0, x1: x1, cw: cw, n: n, rows: geoRows, bandH: bandH, cx: cx };
+      S.geo = { W: W, H: H, x0: x0, x1: x1, cw: cw, n: n, rows: geoRows, bandH: bandH, cx: cx };
 
       // the pen draws the traces once, when the sheet first opens
       if (first) {
@@ -815,16 +826,35 @@
         '. Low ' + Math.min.apply(null, vals) + ', high ' + Math.max.apply(null, vals) + '.';
     }
 
-    // which column the readout is on
-    function current() { return S.sel === null ? lastLoggedCol() : S.sel; }
+    // ---------- which day is being read ----------
+    // Three layers, and the first that applies wins: the day under the mouse,
+    // then a day that was held (a click, a tap, a drag, the arrow keys), then
+    // the latest day in the span, where the sheet rests. Days are kept by
+    // date, not by column, so a reading survives the sheet being redrawn.
+    function colOfDate(date) { return date && Object.prototype.hasOwnProperty.call(S.colOf, date) ? S.colOf[date] : -1; }
+    function restDate() { var i = lastLoggedCol(); return i >= 0 ? S.cols[i].date : null; }
+    function readDate() {
+      if (colOfDate(S.hover) >= 0) return S.hover;
+      if (colOfDate(S.pin) >= 0) return S.pin;
+      return restDate();
+    }
+    function current() { return colOfDate(readDate()); }
+    function isReading() { var d = readDate(); return !!d && d !== restDate(); }
+    function showReading() { placeReading(); readout(); }
+    function setHover(date) { if (date === S.hover) return; S.hover = date; showReading(); }
+    // holding the latest day is the same as holding nothing: that is where the sheet rests
+    function setPin(date) { var next = date && date !== restDate() ? date : null; if (next === S.pin) return; S.pin = next; showReading(); }
+    function togglePin(date) { if (date) setPin(date === S.pin ? null : date); }
 
     function placeReading() {
-      var g = S.geo, i = current(), band = $('fl-band'), read = $('fl-read');
-      if (!g || !band || !read) return;
-      if (i < 0 || !S.cols[i] || !S.cols[i].d) { band.setAttribute('visibility', 'hidden'); read.setAttribute('visibility', 'hidden'); return; }
-      var d = S.cols[i].d, w = Math.max(g.cw, 3), x = g.cx(i);
-      band.setAttribute('x', (x - w / 2).toFixed(1));
-      band.setAttribute('visibility', 'visible');
+      var g = S.geo, read = $('fl-read');
+      if (!g || !read) return;
+      var i = current();
+      if (i < 0 || !isReading()) { read.setAttribute('visibility', 'hidden'); return; }
+      var d = S.cols[i].d, x = g.cx(i), xl = Math.round(x) + 0.5;
+      var line = $('fl-line');
+      line.setAttribute('x1', xl);
+      line.setAttribute('x2', xl);
       g.rows.forEach(function (row, r) {
         var ring = $('fl-ring-' + r), v = d[row.key];
         if (!isNum(v)) { ring.setAttribute('visibility', 'hidden'); return; }
@@ -832,14 +862,30 @@
         ring.setAttribute('cx', x.toFixed(1));
         ring.setAttribute('cy', row.y(v).toFixed(1));
       });
-      var tag = $('fl-tag');
-      tag.textContent = dayName(d.date);
-      var half = 46;
-      tag.setAttribute('x', Math.max(g.x0 + half, Math.min(g.x1 - half, x)).toFixed(1));
-      // the date tag only shows while a day other than the resting one is being read
-      var reading = S.sel !== null;
-      tag.setAttribute('visibility', reading ? 'inherit' : 'hidden');
-      read.setAttribute('visibility', reading ? 'visible' : 'hidden');
+
+      // the tag: count first, then the date, beside the point on the total
+      var total = g.rows[0], y = total.y(d.total), words = dayName(d.date);
+      $('fl-label-v').textContent = d.total;
+      $('fl-label-d').textContent = words;
+      var text = $('fl-label-text'), bg = $('fl-label-bg'), tw = 0;
+      try { tw = text.getBBox().width; } catch (e) {} // the drawn width, gap between count and date included
+      if (!tw) tw = (String(d.total).length + words.length) * 7.8 + 7; // not laid out yet: go by character count
+      var w = Math.ceil(tw) + 14, h = 22, gap = 11;
+      var left = x + gap;                                  // to the right of the line,
+      if (left + w > g.x1 - 2) left = x - gap - w;         // or to its left near the right edge,
+      left = Math.max(g.x0 + 2, Math.min(g.x1 - 2 - w, left));  // and never off the sheet
+      var top = y - gap - h;                               // just above the point,
+      var roof = total.top + 22, floor = total.top + total.h - h - 4;
+      if (top < roof) top = y + gap;                       // or just below it when the point is near the top
+      top = Math.round(Math.max(roof, Math.min(floor, top)));
+      left = Math.round(left);
+      bg.setAttribute('x', left + 0.5);
+      bg.setAttribute('y', top + 0.5);
+      bg.setAttribute('width', w);
+      bg.setAttribute('height', h);
+      text.setAttribute('x', left + 7.5);
+      text.setAttribute('y', top + 15.5);
+      read.setAttribute('visibility', 'visible');
     }
 
     var TRI_UP = '<svg width="11" height="11" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8.5H1z" fill="currentColor"/></svg>';
@@ -864,21 +910,11 @@
         $('r-' + k).textContent = isNum(v) ? v : '–';
         $('r-' + k + '-pct').textContent = isNum(v) && d.total ? Math.round(v * 100 / d.total) + '%' : '';
       });
-      $('r-latest').hidden = !(S.pinned && S.sel !== null);
+      // the way back only shows while a day is held
+      $('r-latest').classList.toggle('show', colOfDate(S.pin) >= 0);
       // mark the same day in the log
-      var rows = $('log-body').children;
-      for (var r = 0; r < rows.length; r++) rows[r].classList.toggle('on', S.sel !== null && rows[r].getAttribute('data-date') === d.date);
-    }
-
-    function select(i, pinned) {
-      var k = i === null ? null : nearestLogged(i);
-      if (k === -1) k = null;
-      if (k === lastLoggedCol()) k = null; // the latest day is where the sheet rests, so reading it is the same as no selection
-      if (k === S.sel && pinned === S.pinned) return;
-      S.sel = k;
-      S.pinned = k !== null && !!pinned;
-      placeReading();
-      readout();
+      var reading = isReading(), rows = $('log-body').children;
+      for (var r = 0; r < rows.length; r++) rows[r].classList.toggle('on', reading && rows[r].getAttribute('data-date') === d.date);
     }
 
     function facts() {
@@ -987,44 +1023,75 @@
       if (ds.length) downloadCsv(ds, 'health-center-census_' + ds[0].date + '_to_' + ds[ds.length - 1].date + '.csv');
     });
     $('csv-all').addEventListener('click', function () { downloadCsv(S.days, 'health-center-census_' + S.days[0].date + '_to_' + latest().date + '.csv'); });
-    $('r-latest').addEventListener('click', function () { select(null); });
+    $('r-latest').addEventListener('click', function () { S.pin = null; S.hover = null; showReading(); });
     $('state-retry').addEventListener('click', function () { show('state', 'Loading the census log.', false); refresh(); });
 
-    // reading the sheet: the mouse reads as it moves and lets go when it leaves;
-    // a finger or the arrow keys leave the day selected
-    var flow = $('flow');
-    function colAt(clientX) {
-      var g = S.geo, svg = $('flow-svg').firstChild;
-      if (!g || !svg) return -1;
+    // ---------- reading the sheet ----------
+    // Mouse: the line follows the pointer over the sheet and lets go when the
+    // pointer leaves the sheet itself (not the caption under it). A click
+    // holds that day; a click on the held day lets it go.
+    // Finger: a sideways drag reads days as it goes and leaves the last one
+    // held; a tap holds or releases a day. Nothing happens on touch-down, so
+    // a scroll that starts on the sheet does not pick a day by accident.
+    // Keys: left and right step a day, Home and End jump, Escape lets go.
+    var flow = $('flow'), sheet = $('flow-svg'), finger = null, press = null;
+
+    function dateAt(clientX) {
+      var g = S.geo, svg = sheet.firstChild;
+      if (!g || !svg) return null;
       var r = svg.getBoundingClientRect();
-      var x = (clientX - r.left) * (g.W / r.width);
-      return Math.floor((x - g.x0) / g.cw);
+      if (!r.width) return null;
+      var i = nearestLogged(Math.floor(((clientX - r.left) * (g.W / r.width) - g.x0) / g.cw));
+      return i >= 0 ? S.cols[i].date : null;
     }
-    flow.addEventListener('pointermove', function (e) {
-      if (e.target.closest && !e.target.closest('#flow-svg')) return;
-      if (e.pointerType === 'mouse') select(colAt(e.clientX), false);
-      else if (e.buttons || e.pressure > 0) select(colAt(e.clientX), true);
+
+    sheet.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse') { if (e.button === 0) press = { x: e.clientX, y: e.clientY }; }
+      else finger = { x: e.clientX, y: e.clientY, t: Date.now(), dragging: false };
     });
-    flow.addEventListener('pointerdown', function (e) {
-      if (e.target.closest && !e.target.closest('#flow-svg')) return;
-      if (e.pointerType !== 'mouse') select(colAt(e.clientX), true);
+
+    sheet.addEventListener('pointermove', function (e) {
+      if (e.pointerType === 'mouse') { setHover(dateAt(e.clientX)); return; }
+      if (!finger) return;
+      var dx = Math.abs(e.clientX - finger.x), dy = Math.abs(e.clientY - finger.y);
+      if (!finger.dragging && dx > 8 && dx > dy) finger.dragging = true;
+      if (finger.dragging) setPin(dateAt(e.clientX));
     });
-    flow.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse' && !S.pinned) select(null); });
+
+    sheet.addEventListener('pointerup', function (e) {
+      if (e.pointerType === 'mouse') {
+        if (press && Math.abs(e.clientX - press.x) < 5 && Math.abs(e.clientY - press.y) < 5) togglePin(dateAt(e.clientX));
+        press = null;
+        return;
+      }
+      var tap = finger && !finger.dragging && Date.now() - finger.t < 600 && Math.abs(e.clientX - finger.x) < 10 && Math.abs(e.clientY - finger.y) < 10;
+      finger = null;
+      if (tap) togglePin(dateAt(e.clientX));
+    });
+
+    // the browser took the gesture for scrolling
+    sheet.addEventListener('pointercancel', function () { finger = null; press = null; });
+    sheet.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') setHover(null); });
+    // the page moved under a still pointer, so whatever it was on is no longer under it
+    window.addEventListener('scroll', function () { if (S.hover) setHover(null); }, { passive: true });
+
     flow.addEventListener('keydown', function (e) {
-      var i = current(), next = null;
+      if (e.key === 'Escape') { S.pin = null; S.hover = null; showReading(); $('flow-say').textContent = ''; return; }
+      var i = current(), next;
       if (e.key === 'ArrowLeft') next = i - 1;
       else if (e.key === 'ArrowRight') next = i + 1;
       else if (e.key === 'Home') next = 0;
       else if (e.key === 'End') next = S.cols.length - 1;
-      else if (e.key === 'Escape') { select(null); $('flow-say').textContent = ''; return; }
       else return;
       e.preventDefault();
       // step over days with nothing logged, in the direction of travel
       var dir = next < i ? -1 : 1;
       while (next >= 0 && next < S.cols.length && !S.cols[next].d) next += dir;
       if (next < 0 || next >= S.cols.length) return;
-      select(next, true);
-      var d = S.cols[current()].d;
+      S.hover = null; // the keys take over from a pointer resting on the sheet
+      S.pin = S.cols[next].date === restDate() ? null : S.cols[next].date;
+      showReading();
+      var d = S.cols[next].d;
       $('flow-say').textContent = fullDate(d.date) + ': ' + d.total + ' in house. ' + d.private + ' private pay, ' + d.medicaid + ' Medicaid, ' + d.snf + ' skilled.';
     });
 

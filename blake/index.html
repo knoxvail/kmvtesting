@@ -636,11 +636,12 @@
     .cc-spark svg { display: block; overflow: visible; }
     .cc-axis { font-size: 12px; fill: var(--viz-ink-2); }
 
+    /* the day being read: placed beside its point, inside the graph, so nothing
+       above the card (the sticky header) can cut it off */
     .cc-tip {
       position: absolute;
-      top: -26px;
+      top: 0;
       left: 0;
-      transform: translateX(-50%);
       padding: 2px 8px;
       border-radius: 7px;
       background: #fff;
@@ -1806,7 +1807,7 @@
       var svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true">' +
         '<path d="' + line + ' L' + xs[last].toFixed(1) + ' ' + base + ' L' + xs[0].toFixed(1) + ' ' + base + ' Z" fill="var(--series-1)" fill-opacity="0.1"/>' +
         (labels ? '<line x1="0" x2="' + w + '" y1="' + (base + 0.5) + '" y2="' + (base + 0.5) + '" stroke="var(--viz-grid)"/>' : '') +
-        '<line id="cc-rule" x1="0" x2="0" y1="' + padT + '" y2="' + base + '" stroke="var(--viz-axis)" visibility="hidden"/>' +
+        '<line id="cc-rule" x1="0" x2="0" y1="' + padT + '" y2="' + base + '" stroke="var(--series-1)" stroke-width="1.5" visibility="hidden"/>' +
         '<path d="' + line + '" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
         '<circle cx="' + xs[last].toFixed(1) + '" cy="' + ys[last].toFixed(1) + '" r="4" fill="var(--series-1)" stroke="#fff" stroke-width="2"/>' +
         '<circle id="cc-mark" r="4.5" fill="#fff" stroke="var(--series-1)" stroke-width="2" visibility="hidden"/>';
@@ -1815,7 +1816,7 @@
           '<text class="cc-axis" x="' + w + '" y="' + (h - 4) + '" text-anchor="end">' + esc(shortDate(pts[last].date)) + '</text>';
       }
       box.innerHTML = svg + '</svg><span class="cc-tip" id="cc-tip" hidden></span>';
-      cardTrend = { pts: pts, xs: xs, ys: ys, w: w, lo: lo, hi: hi };
+      cardTrend = { pts: pts, xs: xs, ys: ys, w: w, h: h, lo: lo, hi: hi };
     }
 
     // the day nearest the mouse: a rule, a ring on the line, and its count
@@ -1830,10 +1831,18 @@
       mark.setAttribute('cx', t.xs[best]);
       mark.setAttribute('cy', t.ys[best]);
       mark.setAttribute('visibility', 'visible');
-      tip.textContent = longDate(t.pts[best].date) + ' · ' + t.pts[best].total;
+      tip.textContent = t.pts[best].total + ' · ' + longDate(t.pts[best].date);
       tip.hidden = false;
-      var half = tip.offsetWidth / 2;
-      tip.style.left = Math.max(half, Math.min(t.w - half, t.xs[best])) + 'px';
+      // beside the point: to the right of the rule, or to its left near the
+      // right edge; above the point when there is room, and never off the graph
+      var w = tip.offsetWidth, h = tip.offsetHeight, x = t.xs[best], y = t.ys[best], gap = 10;
+      var left = x + gap;
+      if (left + w > t.w) left = x - gap - w;
+      left = Math.max(0, Math.min(t.w - w, left));
+      var top = y - gap - h;
+      if (top < 0) top = Math.min(y + gap, t.h - h);
+      tip.style.left = Math.round(left) + 'px';
+      tip.style.top = Math.round(Math.max(0, top)) + 'px';
     }
 
     function hideCardPoint() {
@@ -1847,6 +1856,8 @@
       if (e.pointerType === 'mouse') showCardPoint(e.clientX - this.getBoundingClientRect().left);
     });
     $('cc-spark').addEventListener('pointerleave', hideCardPoint);
+    // the page moved under a still pointer, so it is no longer over that day
+    window.addEventListener('scroll', hideCardPoint, { passive: true });
 
     function tileHtml(label, key, upIsGood, days, since) {
       var cur = days[days.length - 1][key];
