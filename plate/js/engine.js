@@ -293,15 +293,32 @@ export const liveIds = (S, d) => idsOf(S, d.day, d.log).filter(id => isLive(S.li
 // ---------- The memory of his lifts ----------
 // The app does not write his workout. It remembers every lift he has done and
 // what he did on it, so "did incline curls" is enough to log it.
-export const remembered = l => ({ w: l.weight ?? null, reps: l.targets || l.history[l.history.length - 1]?.reps || null });
+export const remembered = l => ({ w: l.weight ?? null, reps: l.targets || l.history[l.history.length - 1]?.reps || null, ...(l.ws ? { ws: l.ws } : {}) });
 
 // Record one lift. With no written workout, what is remembered for next time is
 // exactly what he did, not a plan that asks for more.
-function record(S, l, w, reps, date) {
+function record(S, l, w, reps, date, ws) {
   const note = applyResult(l, w, reps, date);
-  if (S.free) { l.weight = w; l.targets = [...reps]; l.missStreak = 0; note.kind = 'noted'; note.next = null; }
+  // The weight can change from set to set, on a drop set or working up. When it does,
+  // each set keeps its own weight.
+  const per = reps.map((_, i) => ws?.[i] ?? w);
+  const mixed = per.some(x => x !== w);
+  if (mixed) { note.ws = per; l.history[l.history.length - 1].ws = [...per]; }
+  if (S.free) {
+    l.weight = w; l.targets = [...reps]; l.missStreak = 0; note.kind = 'noted'; note.next = null;
+    if (mixed) l.ws = [...per]; else delete l.ws;
+  }
   return note;
 }
+
+// The weight of each set: its own if he gave one, or the lift's weight.
+export const perSet = (w, reps, ws) => reps.map((_, i) => ws?.[i] ?? w);
+// "120 × 10 · 9 · 8", or "120×10 · 90×8" when the weight changed.
+export function fmtSets(w, reps, ws) {
+  const per = perSet(w, reps, ws);
+  return per.some(x => x !== per[0]) ? reps.map((r, i) => `${fmtW(per[i])}×${r}`).join(' · ') : `${fmtW(per[0])} × ${fmtReps(reps)}`;
+}
+export const moved = (w, reps, ws) => perSet(w, reps, ws).reduce((a, x, i) => a + (x || 0) * reps[i], 0);
 
 // A lift he names that the app has never seen goes straight into the memory,
 // as one that only counts when he says he did it.
@@ -312,6 +329,13 @@ export function addLift(S, { id, name, kind, sets, day }) {
   S.lifts[id] = l;
   if (!Object.values(S.order).flat().includes(id)) S.order[DAYS.includes(day) ? day : DAYS[0]].push(id);
   return l;
+}
+
+// The weights he gave for single sets today. When he gave none, the pattern from last
+// time is used only if he gave no numbers at all ("did pushdowns").
+function wsFor(l, g) {
+  if (g.ws?.some(x => x != null)) return g.ws;
+  return g.w == null && !g.reps.some(x => x != null) ? remembered(l).ws : null;
 }
 
 // The reps for one lift in one session: what he said, then what is remembered.
@@ -328,15 +352,19 @@ export function repsFor(l, g) {
 }
 
 // He names a lift after the day was already closed out. It still goes in.
-export function addToSession(S, date, id, w, said) {
+export function addToSession(S, date, id, w, said, ws) {
   const s = sessionOn(S, date), l = S.lifts[id];
   if (!s || !l) return false;
   const g = { reps: [] };
   for (const [i, n] of Object.entries(said || {})) if (+i < l.sets) g.reps[+i] = n;
+  for (const [i, x] of Object.entries(ws || {})) if (+i < l.sets) (g.ws ||= [])[+i] = x;
+  // Said again on the same day, it replaces the first entry, it does not count twice.
+  const hi = l.history.findIndex(e => e.d === date);
+  if (hi >= 0 && s.notes.some(n => n.id === id && n.reps)) { l.history.splice(hi, 1); l.sessions = Math.max(0, l.sessions - 1); }
   const ww = w ?? remembered(l).w, reps = ww == null ? [] : repsFor(l, g);
   s.notes = s.notes.filter(n => n.id !== id);
   if (!reps.length) { if (w != null) l.weight = w; s.notes.push({ id, name: l.name, kind: 'noted' }); return true; }
-  s.notes.push(record(S, l, ww, reps, date));
+  s.notes.push(record(S, l, ww, reps, date, wsFor(l, g)));
   return true;
 }
 
@@ -440,14 +468,14 @@ export function finalize(S) {
       continue;
     }
     l.skips = 0;
-    const w = g.w ?? remembered(l).w;
+    const w = g.w ?? g.ws?.find(x => x != null) ?? remembered(l).w;
     const reps = w == null ? [] : repsFor(l, g);
     if (!reps.length) {
       // He did it, but there are no numbers for it yet. It is still on the record.
       if (d.log[id]) { if (g.w != null) l.weight = g.w; notes.push({ id, name: l.name, kind: 'noted' }); }
       continue;
     }
-    notes.push(record(S, l, w, reps, d.date));
+    notes.push(record(S, l, w, reps, d.date, wsFor(l, g)));
   }
   S.sessions.push({ date: d.date, day: d.day, notes });
   S.pointer = (S.pointer + 1) % S.rotation.length;

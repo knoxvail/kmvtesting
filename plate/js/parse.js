@@ -74,6 +74,13 @@ function numbers(rest, sets, top) {
   // "3 sets of 10", "3x10" comes out first, so "40 for 3 sets of 10" reads as 40 pounds.
   const sx = rest.match(/\b(\d)\s*(?:sets?\s*(?:of|x|×)?|x|×)\s*(\d{1,2})\b/);
   if (sx) rest = rest.replace(sx[0], ' ');
+  // "120 for 10 90 for 8": the weight changed between sets, as on a drop set.
+  const all = sx ? [] : [...rest.matchAll(/(\d{2,3}(?:\.5)?)s?\s*(?:x|×|for)\s*(\d{1,2})\b/g)];
+  if (all.length > 1) {
+    const ws = {};
+    all.slice(0, 8).forEach((m, i) => { ws[i] = +m[1]; reps[i] = +m[2]; });
+    return { w: ws[0], reps, ws, sets: Math.min(8, all.length) };
+  }
   const wr = sx ? null : rest.match(/(\d{2,3}(?:\.5)?)s?\s*(?:x|×|for)\s*(\d{1,2})/);
   if (wr) w = +wr[1];
   let body = (wr ? rest.replace(wr[0], ' ') : rest).replace(/(?:at|with|@)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)|\b(\d{2,3})s\b/g, (_, a, b, c) => { w = +(a ?? b ?? c); return ' '; });
@@ -143,7 +150,7 @@ export function read(S, raw, dayIds) {
       const bare = !rest.replace(/\b(i|just|also|did|done|do|hit|added|add|threw in|finished|got|some|a|an|the|my|today|too|and|then|as well|sets?|in)\b/g, ' ').trim();
       return bare ? { type: 'lift', id: l.id, w: null, reps: {}, inDay: dayIds.includes(l.id) } : { type: 'unread' };
     }
-    return { type: 'lift', id: l.id, w: got.w, reps: got.reps, inDay: dayIds.includes(l.id) };
+    return { type: 'lift', id: l.id, w: got.w, reps: got.reps, ...(got.ws ? { ws: got.ws } : {}), inDay: dayIds.includes(l.id) };
   }
 
   // A day you did not lift. Only when no lift is named, so "skipped curls" still skips curls.
@@ -185,7 +192,7 @@ export function read(S, raw, dayIds) {
     const got = numbers(text.slice(m[0].length), 3, false);
     if (got) {
       const name = m[1].trim().replace(/s$/, '').replace(/^./, c => c.toUpperCase());
-      return { type: 'unread', maybe: { type: 'lift', name, w: got.w, reps: got.reps, sets: got.sets || null } };
+      return { type: 'unread', maybe: { type: 'lift', name, w: got.w, reps: got.reps, ...(got.ws ? { ws: got.ws } : {}), sets: got.sets || null } };
     }
   }
 

@@ -92,13 +92,14 @@ function drawHome() {
     title = 'today';
     const log = d?.date === t ? d.log : null;
     const rows = log ? E.idsOf(S, d.day, log).filter(id => log[id] && !log[id].skip).map(id => {
-      const l = S.lifts[id], g = log[id], m = E.remembered(l), w = g.w ?? m.w;
+      const l = S.lifts[id], g = log[id], m = E.remembered(l), w = g.w ?? g.ws?.find(x => x != null) ?? m.w;
+      const ws = g.ws?.some(x => x != null) ? g.ws : (g.w == null && !g.reps.some(x => x != null) ? m.ws : null);
       const said = g.reps.filter(x => x != null);
       const reps = said.length ? (said.length === l.sets ? said : g.reps.map((x, i) => x ?? m.reps?.[i]).filter(x => x != null)) : m.reps;
-      const state = w != null && reps?.length ? `${E.fmtW(w)} × ${E.fmtReps(reps.slice(0, l.sets))}` : 'no numbers yet';
+      const state = w != null && reps?.length ? E.fmtSets(w, reps.slice(0, l.sets), ws) : 'no numbers yet';
       return `<li><button type="button" data-act="lift" data-id="${id}"><span>${esc(l.name)}</span><b>${state}</b></button></li>`;
     }).join('') : '';
-    const past = done ? done.notes.filter(n => n.kind !== 'skipped').map(n => `<li><button type="button" data-act="lift" data-id="${n.id}"><span>${esc(n.name)}</span><b>${n.reps ? `${E.fmtW(n.w)} × ${E.fmtReps(n.reps)}` : 'no numbers yet'}</b></button></li>`).join('') : '';
+    const past = done ? done.notes.filter(n => n.kind !== 'skipped').map(n => `<li><button type="button" data-act="lift" data-id="${n.id}"><span>${esc(n.name)}</span><b>${n.reps ? E.fmtSets(n.w, n.reps, n.ws) : 'no numbers yet'}</b></button></li>`).join('') : '';
     list = past + rows;
     if (!list) sub = S.off?.[t] ? 'Marked as a day you did not lift.' : 'Nothing logged yet. Say what you lifted and it goes here.';
   } else if (done) {
@@ -701,6 +702,9 @@ const PROBLEM = {
   not_set_up: 'The server is not set up yet.',
   offline: 'No connection right now.',
   bad_ai_key: 'The AI key on the server is not working.',
+  ai_rejected: 'The AI reader turned the message down. That is a fault in the app, not in what you said.',
+  ai_unreachable: 'The AI reader did not answer.',
+  bad_request: 'That message was too long for the AI reader.',
   busy: 'The AI is busy. Try again in a minute.',
   too_big: 'There is too much data to save in one go.',
   no_speech_key: 'Voice needs its own key on the server, and that is not set up yet.',
@@ -819,21 +823,23 @@ function liftLog(id) {
   // One empty box past the last set, so another set can be added.
   const n = Math.min(8, Math.max(l.sets, now?.reps.length || 0) + 1);
   const total = now?.reps.length ? now.reps.reduce((a, b) => a + b, 0) : 0;
+  const nws = g ? (g.ws?.some(x => x != null) ? g.ws : (g.w == null && !g.reps.some(x => x != null) ? m.ws : null)) : note?.ws;
+  const per = now ? E.perSet(now.w, now.reps, nws) : [];
+  const mixed = per.some(x => x !== per[0]);
   const kinds = [['barbell', 'Barbell'], ['dumbbell', 'Dumbbells'], ['stack', 'Cable or machine stack'], ['other', 'Something else']];
   openSheet(esc(l.name),
     (best ? `<p class="sub">Best: ${E.fmtW(best.w)} × ${Math.max(...best.reps)}, ${date(best.d)}. Logged ${l.history.length} ${l.history.length === 1 ? 'time' : 'times'}.</p>` : '<p class="sub">No numbers saved for this one yet.</p>') +
     (now
       ? `<h3 class="cap">Today</h3>` +
-        (total ? `<p class="didline"><b>${now.w != null ? E.fmtW(now.w) : '?'}</b><span>lb ×</span><b>${now.reps.join(' · ')}</b><span>${now.reps.length} ${now.reps.length === 1 ? 'set' : 'sets'}, ${total} reps${now.w ? `, ${lb(now.w * total)} lb moved` : ''}</span></p>` : '<p class="sub">Counted, with no numbers. Put them in below.</p>') +
-        field('Weight, pounds', stepper('w', now.w ?? '', l.jump, 0, 1000, 'Weight in pounds').replace(' required', '')) +
-        `<div class="setrow">${Array.from({ length: n }, (_, i) => `<label class="field"><span class="cap">Set ${i + 1}</span><input name="r${i}" type="number" inputmode="numeric" min="0" max="100" value="${now.reps[i] ?? ''}" aria-label="Set ${i + 1} reps"></label>`).join('')}</div>` +
+        (total ? `<p class="didline${mixed ? ' mix' : ''}">${mixed ? `<b>${E.fmtSets(now.w, now.reps, nws)}</b>` : `<b>${now.w != null ? E.fmtW(now.w) : '?'}</b><span>lb ×</span><b>${now.reps.join(' · ')}</b>`}<span>${now.reps.length} ${now.reps.length === 1 ? 'set' : 'sets'}, ${total} reps${now.w ? `, ${lb(E.moved(now.w, now.reps, nws))} lb moved` : ''}</span></p>` : '<p class="sub">Counted, with no numbers. Put them in below.</p>') +
+        `<div class="setgrid"><span></span><span class="cap">Pounds</span><span></span><span class="cap">Reps</span>${Array.from({ length: n }, (_, i) => `<span class="cap">Set ${i + 1}</span><input name="w${i}" type="number" inputmode="decimal" step="any" min="0" max="2000" value="${i < now.reps.length ? per[i] ?? '' : ''}" placeholder="${i < now.reps.length ? '' : 'same'}" aria-label="Set ${i + 1} weight in pounds"><span class="x">×</span><input name="r${i}" type="number" inputmode="numeric" min="0" max="100" value="${now.reps[i] ?? ''}" aria-label="Set ${i + 1} reps">`).join('')}</div>` +
         `<button class="link quiet" name="do" value="undo">Take it off today</button>`
       : `<h3 class="cap">Last time</h3>` +
-        (m.w != null && m.reps ? `<p class="didline"><b>${E.fmtW(m.w)}</b><span>lb ×</span><b>${m.reps.slice(0, l.sets).join(' · ')}</b><span>${date(l.history[l.history.length - 1]?.d || t)}</span></p>` : '') +
+        (m.w != null && m.reps ? `<p class="didline mix"><b>${E.fmtSets(m.w, m.reps.slice(0, l.sets), m.ws)}</b><span>${date(l.history[l.history.length - 1]?.d || t)}</span></p>` : '') +
         `<button class="btn line" name="do" value="count">I did it today</button>`) +
     (past.length ? `<h3 class="cap">Before</h3><ul class="eaten hist">${past.slice(0, 30).map(([e, i]) => `<li><span class="when">${date(e.d)}</span>
-      <span class="what">${E.fmtW(e.w)}</span>
-      <span class="marks">${e.reps.map(r => `<span class="mk">${r}</span>`).join('')}</span>
+      ${e.ws ? `<span class="marks wide">${e.reps.map((r, k) => `<span class="mk">${E.fmtW(e.ws[k])}×${r}</span>`).join('')}</span>` : `<span class="what">${E.fmtW(e.w)}</span>
+      <span class="marks">${e.reps.map(r => `<span class="mk">${r}</span>`).join('')}</span>`}
       <button class="iconbtn sm" name="do" value="rm:${i}" aria-label="Remove ${date(e.d)}">${icon.close}</button></li>`).join('')}</ul>` : '') +
     `<details class="more"><summary>Lift settings</summary>
       <div class="pair">${field('Sets', stepper('sets', l.sets, 1, 1, 8, 'Sets'))}${field('Step, pounds', stepper('jump', l.jump, 2.5, 1, 50, 'Pounds per tap'))}</div>
@@ -857,22 +863,31 @@ function liftLog(id) {
         l.jump = +f.jump || l.jump;
         l.kind = f.kind;
         if (!now) return;
-        const w = f.w === '' || f.w == null ? null : +f.w;
-        const reps = [];
-        for (let i = 0; i < n; i++) { if (f['r' + i] === '' || f['r' + i] == null) break; reps.push(Math.max(0, Math.round(+f['r' + i]))); }
+        // A set with no weight typed is at the same weight as the set before it.
+        const reps = [], each = [];
+        for (let i = 0; i < n; i++) {
+          if (f['r' + i] === '' || f['r' + i] == null) break;
+          reps.push(Math.max(0, Math.round(+f['r' + i])));
+          each.push(f['w' + i] === '' || f['w' + i] == null ? (each[i - 1] ?? null) : +f['w' + i]);
+        }
+        const w = each[0] ?? null;
+        const ws = each.some(x => x !== w) ? each : null;
         if (reps.length > l.sets) l.sets = reps.length;
         const g = S.draft?.date === t ? S.draft.log[id] : null;
         if (g) {
           delete g.skip;
           if (w != null) g.w = w; else delete g.w;
           g.reps = reps;
+          if (ws) g.ws = ws; else delete g.ws;
           if (reps.length) delete g.did; else g.did = true;
         } else if (sess) {
           const note = sess.notes.find(x => x.id === id);
           if (!note || w == null || !reps.length) return;
           Object.assign(note, { w, reps: [...reps], kind: 'noted' });
-          if (hi >= 0) Object.assign(l.history[hi], { w, reps: [...reps] });
-          else { l.history.push({ d: t, w, reps: [...reps], plan: null, planW: null }); l.sessions++; }
+          if (hi < 0) { l.history.push({ d: t, w, reps: [...reps], plan: null, planW: null }); l.sessions++; }
+          const h = l.history[hi < 0 ? l.history.length - 1 : hi];
+          Object.assign(h, { w, reps: [...reps] });
+          for (const o of [note, h, l]) { if (ws) o.ws = [...ws]; else delete o.ws; }
           l.weight = w; l.targets = [...reps];
         }
       });
@@ -1360,23 +1375,31 @@ function act(r, t, day) {
         if (fresh) E.addLift(S, { id, name: r.name, kind: r.kind, sets: r.sets || (Object.keys(r.reps).length > 1 ? Object.keys(r.reps).length : 0), day });
         const l = S.lifts[id];
         if (S.off?.[t]) delete S.off[t];
-        if (closed) { E.addToSession(S, t, id, r.w, r.reps); return; }
+        // He did more sets than usual: the lift takes as many as he says.
+        const top = Math.max(-1, ...Object.keys(r.reps).map(Number));
+        if (top >= l.sets) l.sets = Math.min(8, top + 1);
+        if (closed) { E.addToSession(S, t, id, r.w, r.reps, r.ws); return; }
         const g = E.entry(E.ensureDraft(S, t), id);
         delete g.skip;
         if (r.w != null) g.w = r.w;
+        // New numbers for the whole lift replace a set-by-set pattern said earlier.
+        if (r.ws || r.w != null) delete g.ws;
         for (const [i, n] of Object.entries(r.reps)) if (+i < l.sets) g.reps[+i] = n;
+        for (const [i, x] of Object.entries(r.ws || {})) if (+i < l.sets) (g.ws ||= [])[+i] = x;
         if (!g.reps.some(x => x != null)) g.did = true;
       });
       const l = S.lifts[id], n = Object.keys(r.reps).length;
       tag = l.name;
       const same = n > 1 && new Set(Object.values(r.reps)).size === 1 && n === l.sets;
-      const bits = same ? [`${n} × ${Object.values(r.reps)[0]}`] : Object.entries(r.reps).map(([i, x]) => `set ${+i + 1}, ${x}${plan ? ` (plan ${plan[+i]})` : ''}`);
-      if (same && r.w != null) bits[0] = `${E.fmtW(r.w)} × ${Object.values(r.reps)[0]}, ${n} sets`;
+      const mixed = r.ws && new Set(Object.values(r.ws)).size > 1;
+      const bits = mixed ? [Object.entries(r.reps).map(([i, x]) => `${E.fmtW(r.ws[i] ?? r.w)}×${x}`).join(' · ')] : same ? [`${n} × ${Object.values(r.reps)[0]}`] : Object.entries(r.reps).map(([i, x]) => `set ${+i + 1}, ${x}${plan ? ` (plan ${plan[+i]})` : ''}`);
+      if (mixed) { /* already says each weight */ }
+      else if (same && r.w != null) bits[0] = `${E.fmtW(r.w)} × ${Object.values(r.reps)[0]}, ${n} sets`;
       else if (r.w != null) bits.unshift(`at ${E.fmtW(r.w)}`);
       const w = r.w ?? before.w;
       if (fresh) msg = bits.length ? `New lift, ${l.name}: ${bits.join('; ')}. I will remember it.` : `${l.name} is in your lifts now and counted for today. Tell me the weight and reps once and I will remember them.`;
       else if (n) msg = `${l.name}: ${bits.join('; ')}.`;
-      else if (w != null && before.reps) msg = `${l.name}: ${E.fmtW(w)} × ${E.fmtReps(before.reps.slice(0, l.sets))}, as remembered.`;
+      else if (w != null && before.reps) msg = `${l.name}: ${E.fmtSets(w, before.reps.slice(0, l.sets), before.ws)}, as remembered.`;
       else msg = `${l.name} is counted for today. Tell me the weight and reps once and I will remember them.`;
     }
   } else {
@@ -1391,7 +1414,7 @@ function act(r, t, day) {
 const sum = done => (done.length > 2 ? `Logged ${done.length}: ${done.map(d => d[2] || d[0].replace(/\.$/, '')).join(', ')}.` : done.map(d => d[0]).join(' '));
 
 // A message with several things in it, read on the phone one piece at a time.
-function applyParts(raw, bits, t, day) {
+function applyParts(raw, bits, t, day, why = '') {
   const snap = snapshot(), done = [], missed = [];
   for (const b of bits) {
     const x = read(S, b, S.order[day]);
@@ -1399,7 +1422,7 @@ function applyParts(raw, bits, t, day) {
     if (!use || use.type === 'empty') { missed.push(b); continue; }
     done.push(act(use, t, day));
   }
-  const msg = [sum(done), missed.length ? `Could not read: ${missed.join('; ')}.` : ''].filter(Boolean).join(' ');
+  const msg = [why, sum(done), missed.length ? `${why ? 'On its own the phone could not read' : 'Could not read'}: ${missed.join('; ')}.` : ''].filter(Boolean).join(' ');
   remember(raw, 'many', msg);
   say(msg, done.some(d => d[1]) ? snap : null);
 }
@@ -1414,12 +1437,15 @@ function fromReader(a) {
   if (a.type === 'drop_lift' && S.lifts[a.lift_id]) return { type: 'demote', id: a.lift_id };
   if (a.type === 'lift') {
     const reps = Object.fromEntries((a.reps || []).map(x => [x.set - 1, x.reps]));
-    if (S.lifts[a.lift_id]) return { type: 'lift', id: a.lift_id, w: a.weight, reps };
+    // A weight on single sets means the weight changed between sets.
+    const each = (a.reps || []).filter(x => x.weight != null);
+    if (each.length) a = { ...a, ws: Object.fromEntries((a.reps || []).map(x => [x.set - 1, x.weight ?? a.weight])), weight: a.weight ?? each[0].weight };
+    if (S.lifts[a.lift_id]) return { type: 'lift', id: a.lift_id, w: a.weight, reps, ...(a.ws ? { ws: a.ws } : {}) };
     // A lift the app has never seen. If the name is one it does know, use that one.
     const name = String(a.name || '').trim();
     const old = Object.values(S.lifts).find(l => l.name.toLowerCase() === name.toLowerCase());
-    if (old) return { type: 'lift', id: old.id, w: a.weight, reps };
-    if (name) return { type: 'lift', name, kind: a.equipment, sets: a.sets, w: a.weight, reps };
+    if (old) return { type: 'lift', id: old.id, w: a.weight, reps, ...(a.ws ? { ws: a.ws } : {}) };
+    if (name) return { type: 'lift', name, kind: a.equipment, sets: a.sets, w: a.weight, reps, ...(a.ws ? { ws: a.ws } : {}) };
   }
   return null;
 }
@@ -1429,7 +1455,7 @@ function fromReader(a) {
 function readerContext(day) {
   return {
     day,
-    lifts: Object.entries(S.order).flatMap(([d, ids]) => ids.map(id => { const l = S.lifts[id], m = E.remembered(l); return { id, name: l.name, usual_day: d, assumed_today: d === day && !l.opt, sets: l.sets, reps: m.reps, weight: m.w }; })),
+    lifts: Object.entries(S.order).flatMap(([d, ids]) => ids.map(id => { const l = S.lifts[id], m = E.remembered(l); return { id, name: l.name, usual_day: d, sets: l.sets, reps: m.reps, weight: m.w, ...(m.ws ? { set_weights: m.ws } : {}) }; })),
     usuals: E.usuals(S, new Date().getHours()).slice(0, 40).map(f => ({ name: f.name, protein: f.protein, calories: f.calories || 0, carbs: f.carbs || 0, fat: f.fat || 0 })),
     known: (S.known || []).slice(-60).map(f => ({ name: f.name, place: f.place, amount: f.amount, protein: f.protein, calories: f.calories, carbs: f.carbs, fat: f.fat })),
     recent: S.messages.slice(-6).map(m => ({ said: m.text, did: m.did || '' })),
@@ -1497,11 +1523,11 @@ async function handleText(raw) {
     say(sum(done) + (out.note ? ' ' + out.note : ''), done.some(d => d[1]) ? snap : null);
   } catch (e) {
     // The reader could not be reached. A lift is still logged from the phone's own reading.
-    if (many) { applyParts(raw, bits, t, day); return; }
+    const why = problem(e instanceof TypeError || e?.name === 'TimeoutError' || e?.name === 'AbortError' ? 'offline' : e.message);
+    if (many) { applyParts(raw, bits, t, day, why); return; }
     if (r.type !== 'unread' || r.maybe) { const snap = snapshot(); const [msg, undo] = act(r.maybe || r, t, day); remember(raw, 'lift', msg); say(msg, undo ? snap : null); return; }
     remember(raw, 'unread');
-    const why = e instanceof TypeError || e?.name === 'TimeoutError' ? 'offline' : e.message;
-    say(`${problem(why)} For now, type a usual, grams, or a lift and reps.`);
+    say(`${why} For now, type a usual, grams, or a lift and reps.`);
   }
 }
 
