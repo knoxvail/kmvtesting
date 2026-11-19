@@ -111,7 +111,7 @@ export function disconnect() {
 
 // Send one message the phone could not read. Throws a short code on failure.
 export async function ask(text, context) {
-  const r = await call('read', 'POST', { text, context });
+  const r = await call('read', 'POST', { text, context }, cfg.key, 60000);
   if (r.status !== 200) throw new Error(code(r));
   return r.json;
 }

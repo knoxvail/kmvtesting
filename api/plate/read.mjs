@@ -13,6 +13,9 @@ import { allow, aiKey } from './_shared.mjs';
 // photo and speech steps. It still costs a fraction of a cent a message.
 const MODEL = 'claude-sonnet-5-5';
 
+// A long message with a whole session in it takes longer to read.
+export const config = { maxDuration: 60 };
+
 // Every field is always present, with null where it does not apply.
 const Action = z.object({
   type: z.enum(['food', 'lift', 'skip_lift', 'drop_lift', 'sleep', 'session_done', 'remove_last_food']),
@@ -39,7 +42,7 @@ const Reading = z.object({
   note: z.string(),                     // empty unless something could not be logged
 });
 
-const SYSTEM = `You turn one short message from a lifter into entries for his training log. The app is a memory of his lifts. It does not write his workout or tell him what to do. He decides what he lifts each day, and it changes: he adds lifts partway through a session, drops ones he is not doing, and does lifts on days they do not usually fall on. Your job is to record what he says he did. Food and sleep are logged as they happen.
+const SYSTEM = `You turn one message from a lifter into entries for his training log. The message can be one line or a long run of speech covering a whole session and a meal: go through all of it and return one entry for every lift, food and sleep it mentions, in the order he said them. Do not stop early and do not merge two lifts into one. The app is a memory of his lifts. It does not write his workout or tell him what to do. He decides what he lifts each day, and it changes: he adds lifts partway through a session, drops ones he is not doing, and does lifts on days they do not usually fall on. Your job is to record what he says he did. Food and sleep are logged as they happen.
 
 You get a JSON context and the message he typed or dictated. Dictation can garble a word, so read for what he meant.
 
@@ -121,7 +124,7 @@ export default async function handler(req, res) {
   if (!aiKey()) { res.status(503).json({ error: 'not_set_up' }); return; }
 
   const { text, context } = req.body || {};
-  if (typeof text !== 'string' || !text.trim() || text.length > 600 || !context || typeof context !== 'object') {
+  if (typeof text !== 'string' || !text.trim() || text.length > 4000 || !context || typeof context !== 'object') {
     res.status(400).json({ error: 'bad_request' });
     return;
   }
@@ -138,12 +141,12 @@ export default async function handler(req, res) {
   try {
     const response = await client.messages.parse({
       model: MODEL,
-      max_tokens: 2048,
+      max_tokens: 8192,
       output_config: { effort: 'low', format: zodOutputFormat(Reading) },
       system: SYSTEM,
       messages: [{ role: 'user', content: `Context:\n${brief}\n\nMessage:\n${text.trim()}` }],
     });
-    if (response.stop_reason === 'refusal' || !response.parsed_output) {
+    if (response.stop_reason === 'refusal' || response.stop_reason === 'max_tokens' || !response.parsed_output) {
       res.status(200).json({ actions: [], note: 'Could not read that one.' });
       return;
     }

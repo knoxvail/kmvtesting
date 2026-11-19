@@ -351,6 +351,21 @@ button.what:active { opacity: .6; }
 .eaten.hist .what { font-weight: 700; font-size: 17px; }
 
 .marks { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+
+/* One lift's record: what was done today, large, then the sets to correct. */
+.didline { display: grid; grid-template-columns: auto auto 1fr; min-width: 0; align-items: baseline; gap: 2px 8px; margin-top: -4px; }
+.didline b { font-weight: 700; font-size: 34px; line-height: 1; }
+.didline b + span { color: var(--knurl); font-size: 14px; }
+.didline span:last-child { grid-column: 1 / -1; color: var(--knurl); font-size: 14px; }
+.setrow { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 12px; }
+.setrow input { text-align: center; padding: 0 4px; font-weight: 700; font-size: 20px; }
+.more { display: grid; gap: 18px; }
+.more > summary { list-style: none; min-height: 44px; display: flex; align-items: center; color: var(--knurl); font-size: 15px; cursor: pointer; }
+.more > summary::-webkit-details-marker { display: none; }
+.more > summary::after { content: '+'; margin-left: auto; font-size: 22px; }
+.more[open] > summary::after { content: '−'; }
+.more[open] > * + * { margin-top: 18px; }
+.say { max-height: 40dvh; overflow-y: auto; }
 .mk { font-weight: 700; font-size: 18px; line-height: 1; }
 .mk.short s { color: var(--knurl); text-decoration-thickness: 2px; margin-right: 5px; font-weight: 500; }
 

@@ -95,6 +95,20 @@ function numbers(rest, sets, top) {
   return { w, reps };
 }
 
+// A long message is several things said at once. This cuts it where one thing ends
+// and the next starts. A piece with no name of its own ("9", "then 245 for 4") stays
+// with the piece before it.
+const FILL = /\b(?:for|reps?|sets?|and|then|the|last|first|second|third|final|pounds?|lbs?|with|got|did|was|at)\b/gi;
+export function parts(raw) {
+  const bits = String(raw).split(/\n+|[,;.]+(?=\s|$)|\s+(?:and then|and also|and|then|also|plus)\s+/i).map(s => s.trim()).filter(Boolean);
+  const out = [];
+  for (const b of bits) {
+    if (out.length && !/[a-z]{3,}/i.test(b.replace(FILL, ' '))) out[out.length - 1] += ' ' + b;
+    else out.push(b);
+  }
+  return out;
+}
+
 // Returns { type, ... } or { type: 'unread' }.
 // An unread message can carry "maybe": the phone's own best reading of a lift it has
 // never seen, used when the AI reader cannot be reached.
@@ -163,7 +177,10 @@ export function read(S, raw, dayIds) {
 
   // "did hammer curls 35 for 10": a lift the app has never seen. The AI reader gets
   // the first look, since it can tell a new lift from a garbled old one.
-  m = text.match(/^(?:i\s+)?(?:also\s+|just\s+|then\s+)?(?:did|added|add|threw in|hit)\s+(?:some\s+|a\s+|an\s+|in\s+)?([a-z][a-z' -]{2,38}?)(?=\s+\d|\s+at\b|\s+for\b|\s+with\b|\s*$)/);
+  // With a weight and reps after it, the name alone is enough: "face pulls 60 for 12".
+  m = text.match(/^(?:i\s+)?(?:also\s+|just\s+|then\s+)?(?:did|added|add|threw in|hit)\s+(?:some\s+|a\s+|an\s+|in\s+)?([a-z][a-z' -]{2,38}?)(?=\s+\d|\s+at\b|\s+for\b|\s+with\b|\s*$)/) ||
+      text.match(/^()?([a-z][a-z' -]{2,38}?)(?=\s+\d{2,3}s?\s*(?:x|×|for)\s*\d)/);
+  if (m && m[2]) m = Object.assign([m[0], m[2]], { index: 0 });
   if (m && !/\b(protein|calories|cals?|grams?|ate|eaten|slept|sleep|it|that|this|everything|nothing|all|today|workout)\b/.test(m[1])) {
     const got = numbers(text.slice(m[0].length), 3, false);
     if (got) {

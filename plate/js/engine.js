@@ -315,7 +315,7 @@ export function addLift(S, { id, name, kind, sets, day }) {
 }
 
 // The reps for one lift in one session: what he said, then what is remembered.
-function repsFor(l, g) {
+export function repsFor(l, g) {
   const base = remembered(l).reps;
   const reps = [];
   let last = null;

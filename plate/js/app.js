@@ -1,6 +1,6 @@
 import { S, commit, save, today, weekOf, addDays, snapshot, restore, subscribe, uid, adopt } from './store.js';
 import * as E from './engine.js';
-import { read } from './parse.js';
+import { read, parts } from './parse.js';
 import { rig, icon } from './draw.js';
 import * as Sync from './sync.js';
 
@@ -804,7 +804,84 @@ function weighSheet(date = today()) {
 // lands on next time's plan and not on today's record.
 const settle = S => { if (S.draft?.done) E.finalize(S); };
 
+// What he did on one lift: today's sets, editable, and every time before.
+function liftLog(id) {
+  const l = S.lifts[id], t = today();
+  const g = S.draft?.date === t ? S.draft.log[id] : null;
+  const note = g ? null : E.sessionOn(S, t)?.notes.find(n => n.id === id && n.kind !== 'skipped');
+  const m = E.remembered(l);
+  const now = g && !g.skip ? { w: g.w ?? m.w, reps: (g.w ?? m.w) == null ? g.reps.filter(x => x != null) : E.repsFor(l, g) }
+    : note ? { w: note.w ?? null, reps: note.reps || [] } : null;
+  const date = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const lb = n => Math.round(n).toLocaleString('en-US');
+  const past = l.history.map((e, i) => [e, i]).filter(([e]) => !(now && e.d === t)).sort((a, b) => (a[0].d < b[0].d ? 1 : a[0].d > b[0].d ? -1 : b[1] - a[1]));
+  const best = l.history.reduce((b, e) => (!b || e.w > b.w || (e.w === b.w && Math.max(...e.reps) > Math.max(...b.reps)) ? e : b), null);
+  // One empty box past the last set, so another set can be added.
+  const n = Math.min(8, Math.max(l.sets, now?.reps.length || 0) + 1);
+  const total = now?.reps.length ? now.reps.reduce((a, b) => a + b, 0) : 0;
+  const kinds = [['barbell', 'Barbell'], ['dumbbell', 'Dumbbells'], ['stack', 'Cable or machine stack'], ['other', 'Something else']];
+  openSheet(esc(l.name),
+    (best ? `<p class="sub">Best: ${E.fmtW(best.w)} × ${Math.max(...best.reps)}, ${date(best.d)}. Logged ${l.history.length} ${l.history.length === 1 ? 'time' : 'times'}.</p>` : '<p class="sub">No numbers saved for this one yet.</p>') +
+    (now
+      ? `<h3 class="cap">Today</h3>` +
+        (total ? `<p class="didline"><b>${now.w != null ? E.fmtW(now.w) : '?'}</b><span>lb ×</span><b>${now.reps.join(' · ')}</b><span>${now.reps.length} ${now.reps.length === 1 ? 'set' : 'sets'}, ${total} reps${now.w ? `, ${lb(now.w * total)} lb moved` : ''}</span></p>` : '<p class="sub">Counted, with no numbers. Put them in below.</p>') +
+        field('Weight, pounds', stepper('w', now.w ?? '', l.jump, 0, 1000, 'Weight in pounds').replace(' required', '')) +
+        `<div class="setrow">${Array.from({ length: n }, (_, i) => `<label class="field"><span class="cap">Set ${i + 1}</span><input name="r${i}" type="number" inputmode="numeric" min="0" max="100" value="${now.reps[i] ?? ''}" aria-label="Set ${i + 1} reps"></label>`).join('')}</div>` +
+        `<button class="link quiet" name="do" value="undo">Take it off today</button>`
+      : `<h3 class="cap">Last time</h3>` +
+        (m.w != null && m.reps ? `<p class="didline"><b>${E.fmtW(m.w)}</b><span>lb ×</span><b>${m.reps.slice(0, l.sets).join(' · ')}</b><span>${date(l.history[l.history.length - 1]?.d || t)}</span></p>` : '') +
+        `<button class="btn line" name="do" value="count">I did it today</button>`) +
+    (past.length ? `<h3 class="cap">Before</h3><ul class="eaten hist">${past.slice(0, 30).map(([e, i]) => `<li><span class="when">${date(e.d)}</span>
+      <span class="what">${E.fmtW(e.w)}</span>
+      <span class="marks">${e.reps.map(r => `<span class="mk">${r}</span>`).join('')}</span>
+      <button class="iconbtn sm" name="do" value="rm:${i}" aria-label="Remove ${date(e.d)}">${icon.close}</button></li>`).join('')}</ul>` : '') +
+    `<details class="more"><summary>Lift settings</summary>
+      <div class="pair">${field('Sets', stepper('sets', l.sets, 1, 1, 8, 'Sets'))}${field('Step, pounds', stepper('jump', l.jump, 2.5, 1, 50, 'Pounds per tap'))}</div>
+      ${field('Equipment', `<select name="kind">${kinds.map(([v, k]) => `<option value="${v}" ${l.kind === v ? 'selected' : ''}>${k}</option>`).join('')}</select>`)}
+      <button class="link quiet" name="do" value="retire">Remove this lift from my lifts</button></details>`,
+    'Save',
+    (f, do_) => {
+      if (do_ === 'count') { const snap = snapshot(); const [msg] = act({ type: 'lift', id, w: null, reps: {} }, t, S.draft?.day ?? E.dayFor(S, t)); say(msg, snap); return; }
+      const snap = snapshot();
+      commit(S => {
+        const l = S.lifts[id];
+        const sess = E.sessionOn(S, t), hi = l.history.findIndex(e => e.d === t);
+        if (do_ === 'retire') { for (const k of Object.keys(S.order)) S.order[k] = S.order[k].filter(x => x !== id); if (S.draft) delete S.draft.log[id]; return; }
+        if (do_ && do_.startsWith('rm:')) { l.history.splice(+do_.slice(3), 1); l.sessions = Math.max(0, l.sessions - 1); return; }
+        if (do_ === 'undo') {
+          if (S.draft?.date === t) delete S.draft.log[id];
+          else if (sess) { sess.notes = sess.notes.filter(x => x.id !== id); if (hi >= 0) { l.history.splice(hi, 1); l.sessions = Math.max(0, l.sessions - 1); } }
+          return;
+        }
+        l.sets = Math.max(1, Math.min(8, Math.round(+f.sets || l.sets)));
+        l.jump = +f.jump || l.jump;
+        l.kind = f.kind;
+        if (!now) return;
+        const w = f.w === '' || f.w == null ? null : +f.w;
+        const reps = [];
+        for (let i = 0; i < n; i++) { if (f['r' + i] === '' || f['r' + i] == null) break; reps.push(Math.max(0, Math.round(+f['r' + i]))); }
+        if (reps.length > l.sets) l.sets = reps.length;
+        const g = S.draft?.date === t ? S.draft.log[id] : null;
+        if (g) {
+          delete g.skip;
+          if (w != null) g.w = w; else delete g.w;
+          g.reps = reps;
+          if (reps.length) delete g.did; else g.did = true;
+        } else if (sess) {
+          const note = sess.notes.find(x => x.id === id);
+          if (!note || w == null || !reps.length) return;
+          Object.assign(note, { w, reps: [...reps], kind: 'noted' });
+          if (hi >= 0) Object.assign(l.history[hi], { w, reps: [...reps] });
+          else { l.history.push({ d: t, w, reps: [...reps], plan: null, planW: null }); l.sessions++; }
+          l.weight = w; l.targets = [...reps];
+        }
+      });
+      if (do_ === 'undo') say(`${l.name} is off today.`, snap);
+    });
+}
+
 function liftSheet(id) {
+  if (S.free) { liftLog(id); return; }
   const l = S.lifts[id], s = E.status(l);
   const hist = l.history.map((e, i) => [e, i]).slice(-5).reverse().map(([e, i]) => `<li><span class="when">${new Date(e.d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
       <span class="what">${E.fmtW(e.w)}</span>
@@ -1222,17 +1299,18 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && str
 // Put one reading into the log. Returns the line to show and whether it can be undone.
 function act(r, t, day) {
   const closed = !S.draft && E.sessionOn(S, t);
-  let msg, undo = true;
+  let msg, undo = true, tag = '';
 
   if (r.type === 'sleep') {
     commit(S => { S.sleep[t] = r.hours; });
-    msg = `Sleep: ${fmtH(r.hours)}.`;
+    msg = `Sleep: ${fmtH(r.hours)}.`; tag = 'sleep';
   } else if (r.type === 'food') {
     commit(S => {
       E.logFood(S, { name: r.name, protein: r.protein, calories: r.calories, carbs: r.carbs || 0, fat: r.fat || 0, source: r.source, where: r.where, keep: false, ...now(), id: uid() });
       // Looked up once, kept for next time.
       if (r.lookup && r.source !== 'estimate') E.keepKnown(S, r);
     });
+    tag = r.name || 'protein';
     const what = r.n === 0.5 ? 'Half a ' + r.name.toLowerCase() : (r.n !== 1 ? r.n + ' × ' : '') + (r.name || 'Protein');
     const from = ['published', 'matched', 'saved', 'standard'].includes(r.source) ? SOURCE[r.source] : '';
     msg = from ? `${what}, ${r.protein} g protein, ${r.calories} cal. ${from}${r.where ? ', ' + r.where : ''}.` : `${what}, ${r.source === 'estimate' ? 'about ' : ''}${r.protein} g.`;
@@ -1290,6 +1368,7 @@ function act(r, t, day) {
         if (!g.reps.some(x => x != null)) g.did = true;
       });
       const l = S.lifts[id], n = Object.keys(r.reps).length;
+      tag = l.name;
       const same = n > 1 && new Set(Object.values(r.reps)).size === 1 && n === l.sets;
       const bits = same ? [`${n} × ${Object.values(r.reps)[0]}`] : Object.entries(r.reps).map(([i, x]) => `set ${+i + 1}, ${x}${plan ? ` (plan ${plan[+i]})` : ''}`);
       if (same && r.w != null) bits[0] = `${E.fmtW(r.w)} × ${Object.values(r.reps)[0]}, ${n} sets`;
@@ -1304,7 +1383,25 @@ function act(r, t, day) {
     msg = 'Could not read that. Try "shake", "40g chicken", "slept 7.5" or "bench last set 6".';
     undo = false;
   }
-  return [msg, undo];
+  return [msg, undo, tag];
+}
+
+// One line for everything a message logged. More than two things are named, not spelled out:
+// the numbers are on the home screen.
+const sum = done => (done.length > 2 ? `Logged ${done.length}: ${done.map(d => d[2] || d[0].replace(/\.$/, '')).join(', ')}.` : done.map(d => d[0]).join(' '));
+
+// A message with several things in it, read on the phone one piece at a time.
+function applyParts(raw, bits, t, day) {
+  const snap = snapshot(), done = [], missed = [];
+  for (const b of bits) {
+    const x = read(S, b, S.order[day]);
+    const use = x.type === 'unread' ? x.maybe : x;
+    if (!use || use.type === 'empty') { missed.push(b); continue; }
+    done.push(act(use, t, day));
+  }
+  const msg = [sum(done), missed.length ? `Could not read: ${missed.join('; ')}.` : ''].filter(Boolean).join(' ');
+  remember(raw, 'many', msg);
+  say(msg, done.some(d => d[1]) ? snap : null);
 }
 
 // What the AI reader sends back, put into the shape the phone's own reader uses.
@@ -1339,7 +1436,7 @@ function readerContext(day) {
   };
 }
 
-const remember = (words, type, did = '') => commit(S => { S.messages.push({ at: Date.now(), text: words, type, did: String(did).slice(0, 160) }); if (S.messages.length > 300) S.messages.shift(); });
+const remember = (words, type, did = '') => commit(S => { S.messages.push({ at: Date.now(), text: String(words).slice(0, 600), type, did: String(did).slice(0, 300) }); if (S.messages.length > 300) S.messages.shift(); });
 
 // Show estimated foods one at a time with the numbers editable. Saving one as a
 // usual means the next time it is exact, not guessed.
@@ -1360,7 +1457,11 @@ async function handleText(raw) {
 
   // The phone reads the common messages itself, with no wait. With no connection it
   // also takes its own best reading of a lift it has never seen.
-  if (r.type !== 'unread' || !Sync.connected()) {
+  // A message that names several things is read whole by the AI reader, so none of it
+  // is dropped. With no connection the phone takes it one piece at a time.
+  const bits = parts(raw), many = bits.length > 1;
+  if (many && !Sync.connected()) { applyParts(raw, bits, t, day); return; }
+  if (!many && (r.type !== 'unread' || !Sync.connected())) {
     const snap = snapshot();
     const use = r.type === 'unread' && r.maybe ? r.maybe : r;
     const [msg, undo] = act(use, t, day);
@@ -1391,12 +1492,13 @@ async function handleText(raw) {
     const est = read_.filter(a => a.type === 'food' && a.source === 'estimate');
     const done = read_.filter(a => !est.includes(a)).map(a => act(a, t, day));
     remember(raw, 'ai', done.map(d => d[0]).join(' ') || out.note || '');
-    if (est.length) { say(done.length ? done.map(d => d[0]).join(' ') + ' Check the estimate next.' : 'Check the estimate before it is logged.'); setTimeout(() => reviewFoods(est), 60); return; }
+    if (est.length) { say(done.length ? sum(done) + ' Check the estimate next.' : 'Check the estimate before it is logged.'); setTimeout(() => reviewFoods(est), 60); return; }
     if (!done.length) { say(out.note || 'Nothing in that to log.'); return; }
-    say(done.map(d => d[0]).join(' ') + (out.note ? ' ' + out.note : ''), done.some(d => d[1]) ? snap : null);
+    say(sum(done) + (out.note ? ' ' + out.note : ''), done.some(d => d[1]) ? snap : null);
   } catch (e) {
     // The reader could not be reached. A lift is still logged from the phone's own reading.
-    if (r.maybe) { const snap = snapshot(); const [msg, undo] = act(r.maybe, t, day); remember(raw, 'lift', msg); say(msg, undo ? snap : null); return; }
+    if (many) { applyParts(raw, bits, t, day); return; }
+    if (r.type !== 'unread' || r.maybe) { const snap = snapshot(); const [msg, undo] = act(r.maybe || r, t, day); remember(raw, 'lift', msg); say(msg, undo ? snap : null); return; }
     remember(raw, 'unread');
     const why = e instanceof TypeError || e?.name === 'TimeoutError' ? 'offline' : e.message;
     say(`${problem(why)} For now, type a usual, grams, or a lift and reps.`);
